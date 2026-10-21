@@ -1,0 +1,101 @@
+﻿Issue Type,Summary,Description,Acceptance Criteria,Priority,Labels
+Story,[MHAI-001] Project foundation,"Create Android Kotlin/Compose and FastAPI foundations, typed contracts, environment examples, and setup docs.
+Requirements: R1
+Dependencies: None
+Skills: Android; Kotlin; FastAPI
+Kiro prompt: docs/jira/kiro-prompts/mhai-001-implementation.md",Android launches; API health endpoint works; placeholders for secrets; setup docs complete.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-002] Local data model and offline repository,"Define Room entities for documents, extracted fields, medicines, review events, and sync state. Preserve unknown status.
+Requirements: R1;R3;R6
+Dependencies: MHAI-001
+Skills: Android; Room; Data Modeling
+Kiro prompt: docs/jira/kiro-prompts/mhai-002-implementation.md",Records persist and view offline; unknown distinct from current/past; migrations tested; no medical content in logs.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-003] Prescription capture and import,"Implement CameraX capture and image/PDF import. Preserve original files and handle invalid/large files safely.
+Requirements: R1
+Dependencies: MHAI-001;MHAI-002
+Skills: Android; CameraX; File Handling
+Kiro prompt: docs/jira/kiro-prompts/mhai-003-implementation.md",Capture/import works; original reopens; errors actionable; formats documented.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-004] Document library,"Build searchable/filterable library by date, type, and doctor label, with preview and extraction status.
+Requirements: R1;R3
+Dependencies: MHAI-003
+Skills: Android; Compose; UX
+Kiro prompt: docs/jira/kiro-prompts/mhai-004-implementation.md",Search/filter/open works; missing metadata shown as unknown; originals linked; empty/error states tested.,Medium,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-005] OCR extraction service,"Add provider-neutral OCR interface returning typed fields, confidence, and source location where available.
+Requirements: R2
+Dependencies: MHAI-003
+Skills: Python; OCR; API
+Kiro prompt: docs/jira/kiro-prompts/mhai-005-implementation.md",Malformed output rejected; uncertain fields flagged; missing values stay missing; synthetic OCR tests pass.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-006] OCR review UI,"Show original beside extracted fields, confidence/review state, edit/save actions. Keep raw OCR separate from normalized data.
+Requirements: R2
+Dependencies: MHAI-005
+Skills: Android; Compose; OCR Review
+Kiro prompt: docs/jira/kiro-prompts/mhai-006-implementation.md",Uncertain values marked; edits save; source opens; unresolved data never appears confirmed.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-007] Medicine normalization,"Build reference adapter; preserve raw names; handle ambiguous mappings and combination products.
+Requirements: R2;R4
+Dependencies: MHAI-005;MHAI-006
+Skills: Medicine Data; Backend; Safety
+Kiro prompt: docs/jira/kiro-prompts/mhai-007-implementation.md",Verified mappings return ingredient IDs; ambiguous mappings unresolved; combination products and misspellings tested.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-008] Medication history,"Show history grouped by current/past/unknown, source, date, strength, and review status.
+Requirements: R3
+Dependencies: MHAI-006;MHAI-007
+Skills: Android; Data Modeling; UX
+Kiro prompt: docs/jira/kiro-prompts/mhai-008-implementation.md",Every medicine links to source; status explicit; filters work; no automatic current assumption.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-009] Duplicate matching engine,"Compare verified ingredient IDs and show source dates, strengths, formulation, and mapping status.
+Requirements: R4
+Dependencies: MHAI-007;MHAI-008
+Skills: Medication Safety; Rules Engine; Testing
+Kiro prompt: docs/jira/kiro-prompts/mhai-009-implementation.md",Matches flagged conservatively; strengths distinct; ambiguous mappings not definitive; evidence/disclaimer included.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-010] Duplicate review UI,"Show side-by-side findings with ingredient evidence, strength/date differences, and source links.
+Requirements: R4
+Dependencies: MHAI-009
+Skills: Android; Safety UX
+Kiro prompt: docs/jira/kiro-prompts/mhai-010-implementation.md",Evidence/sources shown; uncertainty labeled; no medication-change advice; review does not erase source.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-011] New Doctor Mode,"Build report builder with patient-entered details, confirmed allergies/conditions, medicine statuses, duplicate findings, reports, and source index.
+Requirements: R5
+Dependencies: MHAI-004;MHAI-008;MHAI-010
+Skills: Android; PDF; UX
+Kiro prompt: docs/jira/kiro-prompts/mhai-011-implementation.md",Unconfirmed facts labeled; statuses separated; sources present; preview works; no facts invented.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-012] PDF export,"Generate readable PDF with selected sections, date, source index, limitations, and explicit share confirmation.
+Requirements: R5;R7
+Dependencies: MHAI-011
+Skills: Android; PDF; Privacy
+Kiro prompt: docs/jira/kiro-prompts/mhai-012-implementation.md",Only selected sections included; readable PDF; sharing requires action; file handled safely.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-013] Account and authentication,"Implement authentication, session handling, and server-side patient-scoped authorization.
+Requirements: R6;R7
+Dependencies: MHAI-001
+Skills: Backend; Auth; Security
+Kiro prompt: docs/jira/kiro-prompts/mhai-013-implementation.md",Unauthorized requests fail; cross-user access blocked; tokens not logged/insecurely stored; tests pass.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-014] Encrypted cloud backup,"Implement opt-in backup, authenticated upload/download, encrypted object storage, retryable sync, and status.
+Requirements: R6
+Dependencies: MHAI-002;MHAI-003;MHAI-013
+Skills: Android; Backend; Cloud; Security
+Kiro prompt: docs/jira/kiro-prompts/mhai-014-implementation.md",Backup off until opt-in; status/errors visible; ownership enforced; retries safe; no sensitive logs.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-015] Conflict-safe sync,"Add versioning and conflict resolution for edits, extraction versions, deletion markers, and retryable jobs.
+Requirements: R6
+Dependencies: MHAI-014
+Skills: Sync; Offline; Testing
+Kiro prompt: docs/jira/kiro-prompts/mhai-015-implementation.md",Confirmed edits not silently overwritten; conflicts visible; uploads idempotent; offline/retry tests pass.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-016] Privacy controls,"Implement backup opt-in/out, export, deletion of local/cloud records, and retention explanations.
+Requirements: R6;R7
+Dependencies: MHAI-013;MHAI-014
+Skills: Privacy; Security; Android
+Kiro prompt: docs/jira/kiro-prompts/mhai-016-implementation.md",Consent recorded; deletion behavior documented/tested; retention limits visible; export usable.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-017] Consent-based sharing,"Share selected records/report after preview and explicit confirmation; use Android Sharesheet for MVP.
+Requirements: R7
+Dependencies: MHAI-011;MHAI-012;MHAI-016
+Skills: Android; Privacy; Security
+Kiro prompt: docs/jira/kiro-prompts/mhai-017-implementation.md",No automatic sharing; selection/preview required; secure links only if approved; access tests pass.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-018] Security and privacy testing,"Test cross-account access, IDOR, secrets, sensitive logs, local file exposure, transport, and deletion.
+Requirements: R6;R7
+Dependencies: MHAI-013;MHAI-014;MHAI-016;MHAI-017
+Skills: Security Testing; Privacy; QA
+Kiro prompt: docs/jira/kiro-prompts/mhai-018-implementation.md",No critical/high issue remains for release; no medical content in logs; authorization tests pass.,High,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-019] Accessibility and resilience,"Add scalable text, TalkBack labels, contrast, touch targets, offline/error/loading states, low-storage handling.
+Requirements: R1;R2;R5;R6
+Dependencies: MHAI-002;MHAI-003;MHAI-006;MHAI-011;MHAI-014
+Skills: Accessibility; Android; QA
+Kiro prompt: docs/jira/kiro-prompts/mhai-019-implementation.md",Critical flows accessible; offline viewing works; errors actionable; UI states tested.,Medium,"medihistory-ai,android,ai-sdlc"
+Story,[MHAI-020] MVP release readiness,"Run end-to-end workflows with synthetic data; validate backup, report export, duplicate findings, deletion, accessibility, release notes.
+Requirements: R1-R8
+Dependencies: MHAI-018;MHAI-019
+Skills: QA; Release; Documentation
+Kiro prompt: docs/jira/kiro-prompts/mhai-020-implementation.md",Acceptance evidence complete; no release-blocking security issue; setup/rollback notes; limitations clear.,High,"medihistory-ai,android,ai-sdlc"

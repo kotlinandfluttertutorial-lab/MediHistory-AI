@@ -1,0 +1,12 @@
+# Privacy and Security Steering
+- Medical records are highly sensitive; collect only necessary data.
+- Encrypt in transit and at rest; create a threat model before production.
+- Enforce patient-scoped authorization for every server-side resource.
+- Cloud backup is opt-in with visible status, failures, and recovery implications.
+- Sharing requires explicit user action and preview; private by default.
+- Never log prescription text, medicine details, access tokens, or document contents.
+- Provide export/deletion and explain cloud-backup retention limitations.
+- Keep credentials in managed secret storage; no API keys in Android.
+- Use synthetic data in tests and demos.
+- Obtain qualified legal/security review of applicable India requirements before launch. This is not a compliance certification.
+- Cross-account exposure or critical/high security issues block release.

@@ -1,0 +1,11 @@
+# Skill: Medication Safety and Duplicate Matching
+- Prefer verified active ingredient identifiers from a maintained reference dataset.
+- Normalize brands only when mapping is verified and unambiguous.
+- Distinguish same ingredient, same product, and same strength.
+- Different strengths are potential overlaps requiring professional review; never infer the right dose.
+- Represent combination products explicitly.
+- Uncertain mapping means “Unable to confirm ingredient — review needed.”
+- Show source prescriptions, dates, and current/past/unknown status.
+- Never assume an old prescription is current.
+- Use “Potential duplicate ingredient” and “Please review with your doctor or pharmacist.”
+- Test exact duplicates, different brands/same ingredient, different strengths, combination products, misspellings, ambiguous OCR, historical records, and unresolved mappings.

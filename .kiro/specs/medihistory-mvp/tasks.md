@@ -1,0 +1,14 @@
+# Implementation Tasks
+- [ ] T1 Domain entities, API contracts, synthetic fixtures.
+- [ ] T2 Android navigation, design system, offline repository.
+- [ ] T3 Camera capture and image/PDF import; preserve originals.
+- [ ] T4 OCR adapter with confidence/source metadata.
+- [ ] T5 OCR review/correction UI.
+- [ ] T6 Medication history and current/past/unknown status.
+- [ ] T7 Medicine reference adapter and duplicate engine.
+- [ ] T8 Duplicate review UI and safety language.
+- [ ] T9 New Doctor Mode report builder and PDF preview/export.
+- [ ] T10 Opt-in encrypted cloud backup and sync status.
+- [ ] T11 Consent-based sharing, export, deletion.
+- [ ] T12 Security, offline, accessibility, end-to-end tests.
+- [ ] T13 Release readiness review and open-risk documentation.

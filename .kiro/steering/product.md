@@ -1,0 +1,12 @@
+# Product Steering — MediHistory AI
+- Preserve original prescriptions unchanged; OCR never replaces the source.
+- Link every extracted medicine/fact to the source document.
+- Treat OCR/AI as fallible; show confidence and review state.
+- Separate current, past, and unknown medication status.
+- Use verified active ingredient identity, not brand text alone, for duplicate matching.
+- Label findings as potential duplicates, not clinical conclusions.
+- Never advise starting/stopping/changing medicines.
+- Privacy, consent, export, deletion, and offline access are core features.
+- Use plain language and accessible Android-native interactions.
+- MVP excludes diagnosis, prescribing, dose optimization, pharmacy ordering, KYC, and automated medication changes.
+- Done means acceptance criteria pass, tests exist, privacy is reviewed, and docs/traceability are updated.
