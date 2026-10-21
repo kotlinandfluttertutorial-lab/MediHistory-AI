@@ -1,0 +1,67 @@
+%%{init: {'theme': 'default'}}%%
+C4Component
+    title MediHistory AI — Component Architecture
+
+    Container_Boundary(android, "Android Application") {
+        Component(ui, "Compose UI Layer", "Kotlin / Jetpack Compose / Material 3", "Screens: Dashboard, Prescriptions, Medicine Explorer, Duplicate Alerts, Medical History, New Doctor Mode, Reminders, Settings")
+        Component(vm, "ViewModels", "Kotlin / Jetpack ViewModel", "Holds UI state as StateFlow. Delegates data operations to repositories via coroutines.")
+        Component(repo_if, "Repository Interfaces", "Kotlin interfaces (domain layer)", "PrescriptionRepository, MedicineRepository, DuplicateAlertRepository, HistoryRepository, ReminderRepository")
+        Component(repo_impl, "Repository Implementations", "Kotlin (data layer)", "Wires Room DAOs and remote API clients. Handles offline-first merge logic.")
+        Component(room, "Room Database", "Room / SQLite", "Tables: patients, doctors, prescriptions, prescription_medicines, medicines, duplicate_alerts, medical_history_summaries, reminders, dose_logs, audit_log")
+        Component(file_store, "App-Private File Storage", "Android Internal Storage", "Prescription images and PDFs. SHA-256 integrity check on read. Not accessible to other apps.")
+        Component(workers, "WorkManager Jobs", "Kotlin / WorkManager", "OcrWorker, SyncWorker, ExportWorker, DuplicateDetectionWorker")
+        Component(keystore, "Android Keystore", "Android Keystore System", "Key management for DB encryption, backup encryption, export signing")
+        Component(camera, "CameraX / Photo Picker", "CameraX / Android Photo Picker", "Captures and imports prescription images and PDFs")
+        Component(http_client, "HTTP Client", "Retrofit or Ktor (TBD — AD-003)", "Authenticated API calls to FastAPI backend")
+    }
+
+    Container_Boundary(backend, "FastAPI Backend (optional sync)") {
+        Component(api_routes, "API Routes", "Python / FastAPI", "Auth, Patients, Prescriptions, Medicines, Duplicates, History, Export, Reminders, Interactions")
+        Component(auth_mw, "Auth Middleware", "Python / FastAPI Dependency", "JWT validation + patient-scoped authorisation on every request. No endpoint exemptions.")
+        Component(rate_limit, "Rate Limiter", "slowapi or equivalent", "Per-endpoint rate limiting. Returns 429 with Retry-After on breach.")
+        Component(services, "Service Layer", "Python", "OcrService, ExtractionService, NormalizationService, DuplicateDetectionService, SummarizationService — all provider-independent interfaces")
+        Component(pg, "PostgreSQL", "PostgreSQL + asyncpg + SQLAlchemy", "Persistent patient data when sync is enabled. Alembic migrations.")
+        Component(migrations, "Alembic Migrations", "Alembic", "Versioned schema migrations. No fallback-to-destructive in production.")
+    }
+
+    Container_Boundary(ai_services, "AI / OCR Services (provider-independent)") {
+        Component(ocr_svc, "OCR Service", "Provider: Google Document AI / AWS Textract / Azure / custom (AD-004)", "Converts prescription image/PDF to structured text. Confidence per field.")
+        Component(extract_svc, "Extraction Service", "Provider: LLM or rule-based (AD-005)", "Extracts structured medicine fields. Validated against Pydantic schema. Never infers absent fields.")
+        Component(norm_svc, "Normalization Service", "Provider: medicine reference + LLM (AD-005)", "Maps brand names to canonical active ingredient identity. Confidence scored.")
+        Component(summ_svc, "Summarization Service", "Provider: LLM (AD-005)", "Generates doctor-ready summary from reviewed records only. Source-referenced. No clinical invention.")
+    }
+
+    Container_Boundary(cloud, "Cloud Storage (opt-in backup)") {
+        Component(backup_store, "Encrypted Backup Store", "S3-compatible / provider TBD", "Client-encrypted backups. Opt-in only. Visible status in settings.")
+    }
+
+    %% Android internal relationships
+    Rel(ui, vm, "Observes state, sends events")
+    Rel(vm, repo_if, "Calls via coroutines")
+    Rel(repo_impl, repo_if, "Implements")
+    Rel(repo_impl, room, "Reads/writes via DAOs")
+    Rel(repo_impl, http_client, "Remote API calls (when sync enabled)")
+    Rel(repo_impl, file_store, "Stores and retrieves documents")
+    Rel(workers, repo_if, "Uses repository to read/write")
+    Rel(workers, http_client, "OCR/sync API calls")
+    Rel(keystore, room, "Provides DB encryption key")
+    Rel(keystore, backup_store, "Provides backup encryption key")
+    Rel(camera, repo_impl, "Delivers captured files")
+
+    %% Android to backend
+    Rel(http_client, api_routes, "HTTPS / TLS 1.2+", "REST/JSON")
+
+    %% Backend internal
+    Rel(api_routes, auth_mw, "Every request validated")
+    Rel(api_routes, rate_limit, "Every public request rate-checked")
+    Rel(api_routes, services, "Delegates business logic")
+    Rel(services, pg, "Reads/writes via SQLAlchemy async")
+
+    %% Backend to AI services
+    Rel(services, ocr_svc, "Document bytes → OcrResult")
+    Rel(services, extract_svc, "OCR text → ExtractionResult")
+    Rel(services, norm_svc, "Medicine name → NormalizationResult")
+    Rel(services, summ_svc, "Reviewed records → SummaryResult")
+
+    %% Backend to cloud
+    Rel(services, backup_store, "Encrypted backup upload/restore (opt-in)")
