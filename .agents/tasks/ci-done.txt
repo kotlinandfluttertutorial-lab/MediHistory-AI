@@ -1,0 +1,8 @@
+CI workflow files created successfully.
+
+Files created:
+- .github/workflows/android-ci.yml  (Android lint + unit tests, triggers: PR→main/develop, push→develop)
+- .github/workflows/backend-ci.yml  (Python lint/type-check/pytest, triggers: PR→main/develop, push→develop)
+- .github/workflows/pr-checks.yml   (PR gate for main: secrets check + android-ci + backend-ci + pr-gate)
+
+Timestamp: 2025-07-14
