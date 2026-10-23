@@ -1,0 +1,10 @@
+specs-created: 2025
+files:
+  - .kiro/specs/foundation/requirements.md
+  - .kiro/specs/android-ui/requirements.md
+  - .kiro/specs/prescription-management/requirements.md
+  - .kiro/specs/medicine-intelligence/requirements.md
+  - .kiro/specs/medical-history/requirements.md
+  - .kiro/specs/medication-safety/requirements.md
+  - .kiro/specs/security-and-release/requirements.md
+status: all 7 spec files created; none were pre-existing
