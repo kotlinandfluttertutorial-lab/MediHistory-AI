@@ -1,0 +1,27 @@
+batch2-done
+Created: 2025-01-31
+Files created: MHA-043.md through MHA-062.md (20 files)
+Location: docs/jira/kiro-prompts/
+Status: All 20 files created successfully. No existing files were overwritten.
+
+Files:
+- MHA-043.md — Duplicate alert list screen
+- MHA-044.md — Duplicate alert detail screen
+- MHA-045.md — Mark-as-reviewed action and alert state persistence
+- MHA-046.md — Combination medicine handling in duplicate detection
+- MHA-047.md — Duplicate alert — backend FastAPI API
+- MHA-048.md — Medical history — Room entity and version model
+- MHA-049.md — History generation service interface and AI summarisation integration
+- MHA-050.md — Medical history screen — list and detail views
+- MHA-051.md — History source confidence display
+- MHA-052.md — History generation trigger and exclusion list
+- MHA-053.md — Medical history — backend FastAPI API
+- MHA-054.md — New Doctor Mode — content selection UI
+- MHA-055.md — PDF generation service — on-device PDF creation
+- MHA-056.md — PDF preview screen
+- MHA-057.md — Consent confirmation screen and share action
+- MHA-058.md — Share and export — backend API for audit logging
+- MHA-059.md — Reminder — Room entity, DAO, and repository
+- MHA-060.md — Reminder setup UI — create and edit reminders
+- MHA-061.md — WorkManager notification scheduling for reminders
+- MHA-062.md — Dose logging — taken, skipped, and missed
