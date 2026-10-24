@@ -1,8 +1,8 @@
-# Navigation Map — MediHistory AI
+﻿# Navigation Map — MediHistory AI
 
 **Version:** 1.0  
 **Last updated:** 2025  
-**Figma reference:** [FIGMA_URL_TBD] — Page 17: `17 — Flows & Nav Map`
+**Figma reference:** https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis — Page 17: `17 — Flows & Nav Map`
 
 ---
 

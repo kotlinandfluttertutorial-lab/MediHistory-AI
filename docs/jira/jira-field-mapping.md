@@ -1,4 +1,4 @@
-# Jira CSV Field Mapping Guide — MediHistory AI
+﻿# Jira CSV Field Mapping Guide — MediHistory AI
 
 **Document version:** 1.0  
 **Status:** Draft  
@@ -25,7 +25,7 @@ This guide explains every column in `jira-ticket-master.csv`, the expected Jira 
 | **Requirement IDs** | Comma-separated Functional Requirement IDs from `product-requirements.md` (e.g. `FR-005, FR-006`). | Custom text field: `Requirement IDs` | Create as **Text field (single line)**. Used for traceability queries. |
 | **Feature IDs** | Comma-separated Feature IDs from `feature-catalog.md` (e.g. `F02, F03`). | Custom text field: `Feature IDs` | Create as **Text field (single line)**. |
 | **Screen IDs** | Comma-separated Screen IDs from `screen-inventory.md` (e.g. `SCR-03, SCR-04`). | Custom text field: `Screen IDs` | Create as **Text field (single line)**. |
-| **Figma References** | Placeholder Figma URL or `[FIGMA_URL_TBD]` for screens not yet designed. Replace with actual Figma node links after design handoff. | Custom text field: `Figma References` | Create as **URL** or **Text (single line)** field. |
+| **Figma References** | Placeholder Figma URL or `https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis` for screens not yet designed. Replace with actual Figma node links after design handoff. | Custom text field: `Figma References` | Create as **URL** or **Text (single line)** field. |
 | **Test Requirements** | Summary of required test coverage: positive, negative, edge case, security. Multi-line, wrapped in double quotes. | Custom text field: `Test Requirements` | Create as **Paragraph (multi-line text)**. |
 | **Skills** | Comma-separated Kiro skill names or implementation prompt references (e.g. `kiro-android-room`, `kiro-backend-fastapi`). | Custom text field: `Skills` | Create as **Text field (single line)**. |
 | **Story Points** | Effort estimate in story points. Values: `1`, `2`, `3`, `5`, `8`. | Story Points (system field in Jira Software) | In Jira Cloud this may be labelled `Story point estimate`. In Jira Server it is a custom field. |
@@ -127,5 +127,5 @@ Jira's Epic Link field cannot be resolved from a local text ID during bulk CSV i
 2. **Create issue links:** For every dependency in the `Dependencies` column, create a `blocks` / `is blocked by` link between the corresponding Jira issues.
 3. **Assign to sprints:** Use the Jira board backlog view to drag issues into sprints. Suggested sprint mapping is in `jira-import-guide.md`.
 4. **Verify traceability:** Run a Jira filter for each Requirement ID (e.g. `"Requirement IDs" ~ "FR-005"`) and confirm the expected tickets are returned.
-5. **Link Figma:** Replace `[FIGMA_URL_TBD]` in the `Figma References` field once design handoff is complete.
+5. **Link Figma:** Replace `https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis` in the `Figma References` field once design handoff is complete.
 6. **Validate component assignment:** Filter by `Component is EMPTY` and assign missing components.

@@ -1,8 +1,8 @@
-# Figma Import and Handoff Guide — MediHistory AI
+﻿# Figma Import and Handoff Guide — MediHistory AI
 
 **Version:** 1.0  
 **Last updated:** 2025  
-**Figma file:** [FIGMA_URL_TBD]  
+**Figma file:** https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis  
 **Status:** Awaiting Figma file creation after Google Stitch export
 
 ---

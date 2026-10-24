@@ -1,8 +1,8 @@
-# Figma Design Tokens — MediHistory AI
+﻿# Figma Design Tokens — MediHistory AI
 
 **Version:** 1.0  
 **Last updated:** 2025  
-**Figma file:** [FIGMA_URL_TBD]  
+**Figma file:** https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis  
 **Figma page:** Page 2 — `01 — Design Tokens`
 
 ---

@@ -1,4 +1,4 @@
-# MediHistory AI — Artifact Completion Report
+﻿# MediHistory AI — Artifact Completion Report
 
 **Generated:** 2025  
 **Repository:** `j:\Android\AndroidStudioProjects\Kiro\MediHistory-AI`  
@@ -200,7 +200,7 @@ The prompts in `docs/design/google-stitch/` must be run manually through Google 
 - `09-shared-components-prompt.md` — Shared component library
 
 **Figma**
-Import the generated mockups using the guide in `docs/design/figma/figma-import-and-handoff.md`. Update all `[FIGMA_URL_TBD]` and `[FIGMA_NODE_TBD]` placeholders in `docs/design/screen-inventory.md` and any kiro-prompt files once Figma URLs are assigned.
+Import the generated mockups using the guide in `docs/design/figma/figma-import-and-handoff.md`. Update all `https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis` and `[FIGMA_NODE_TBD]` placeholders in `docs/design/screen-inventory.md` and any kiro-prompt files once Figma URLs are assigned.
 
 **Jira CSV import**
 Import `docs/jira/jira-ticket-master.csv` (or `docs/jira/medihistory-jira-simple-import.csv` for simpler tools) using the steps in `docs/jira/jira-import-guide.md`. The epic IDs MHA-E01 through MHA-E12 are local placeholders — Jira will assign its own numeric IDs on import.
@@ -395,7 +395,7 @@ An ordered action list for the team:
 
 2. **Run Google Stitch prompts** in `docs/design/google-stitch/` to generate UI mockups. Start with `00-master-stitch-prompt.md` to establish the design language, then run prompts 01–09 in order.
 
-3. **Import mockups into Figma** and follow `docs/design/figma/figma-import-and-handoff.md`. Update all `[FIGMA_URL_TBD]` and `[FIGMA_NODE_TBD]` placeholders in `docs/design/screen-inventory.md` and in any kiro-prompt files once Figma URLs are assigned.
+3. **Import mockups into Figma** and follow `docs/design/figma/figma-import-and-handoff.md`. Update all `https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis` and `[FIGMA_NODE_TBD]` placeholders in `docs/design/screen-inventory.md` and in any kiro-prompt files once Figma URLs are assigned.
 
 4. **Review and merge the steering files** (`.kiro/steering/`) — team agreement is required on `tech.md`, `testing.md`, `medical-safety.md`, and `privacy-security.md` before implementation begins. These files are injected into every Kiro session and govern all code generation.
 
@@ -414,7 +414,7 @@ An ordered action list for the team:
     - Formal threat model review (`docs/architecture/security-threat-model.md`).
     - Full accessibility audit with TalkBack on a real device covering all 13 screen IDs in `docs/design/screen-inventory.md`.
     - SQLCipher encryption evaluation and key derivation strategy decision (see `MHA-068.md` and `MHA-069.md`).
-    - Review of all `[FIGMA_URL_TBD]` placeholders — none should remain unresolved in a release build.
+    - Review of all `https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis` placeholders — none should remain unresolved in a release build.
     - Never deploy to production or incur cloud costs without explicit team authorisation and security sign-off.
 
 ---

@@ -1,8 +1,8 @@
-# Figma Component Specification — MediHistory AI
+﻿# Figma Component Specification — MediHistory AI
 
 **Version:** 1.0  
 **Last updated:** 2025  
-**Figma file:** [FIGMA_URL_TBD]  
+**Figma file:** https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis  
 **Component library page:** Page 3 — `02 — Component Library`
 
 ---

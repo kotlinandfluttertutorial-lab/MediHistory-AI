@@ -1,0 +1,10 @@
+skills-done
+created: 2025-07-14
+files:
+  .kiro/skills/android-development/SKILL.md
+  .kiro/skills/backend-development/SKILL.md
+  .kiro/skills/prescription-ocr/SKILL.md
+  .kiro/skills/medicine-normalization/SKILL.md
+  .kiro/skills/medical-history-summarization/SKILL.md
+  .kiro/skills/medical-data-security/SKILL.md
+  .kiro/skills/testing-and-quality/SKILL.md

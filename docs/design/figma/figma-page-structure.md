@@ -1,8 +1,8 @@
-# Figma File Page Structure — MediHistory AI
+﻿# Figma File Page Structure — MediHistory AI
 
 **Version:** 1.0  
 **Last updated:** 2025  
-**Figma file:** [FIGMA_URL_TBD]
+**Figma file:** https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis
 
 ---
 
@@ -334,7 +334,7 @@ Use Figma connector arrows between thumbnail-sized screen frames. Label each arr
 - Duplicate flow: Dashboard → Duplicate Review → Medicine Detail
 - New Doctor flow: History → New Doctor → PDF Preview → Share
 
-Prototype link: [FIGMA_URL_TBD]
+Prototype link: https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis
 
 ---
 

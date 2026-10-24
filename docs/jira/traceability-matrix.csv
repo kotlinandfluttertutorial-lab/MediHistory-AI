@@ -1,41 +1,41 @@
-FR ID,Feature ID,Screen IDs,Stitch Prompt File,Figma Ref,Jira Ticket IDs,Kiro Prompt File,Test Types,AC IDs,Status
-FR-001,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,[FIGMA_URL_TBD],MHA-024,kiro-prompts/e01-foundation.md,"Integration, UI",AC-001 AC-002,Planned
-FR-002,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,[FIGMA_URL_TBD],MHA-024,kiro-prompts/e01-foundation.md,UI,AC-003,Planned
-FR-003,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,[FIGMA_URL_TBD],MHA-010,kiro-prompts/e02-design-system.md,UI,AC-004,Planned
-FR-004,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,[FIGMA_URL_TBD],MHA-011,kiro-prompts/e02-design-system.md,UI,AC-005,Planned
-FR-005,F02,SCR-03,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],MHA-026,kiro-prompts/e04-prescriptions.md,"Integration, Security",AC-006 AC-007,Planned
-FR-006,F02,SCR-03,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],MHA-027,kiro-prompts/e04-prescriptions.md,"Integration, Security",AC-006 AC-008,Planned
-FR-007,F02,SCR-05,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],"MHA-017, MHA-019, MHA-020",kiro-prompts/e03-records.md,"Integration, UI",AC-009 AC-010,Planned
-FR-008,F02,SCR-03,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],MHA-020,kiro-prompts/e03-records.md,UI,AC-011,Planned
-FR-009,F02,"SCR-02, SCR-04",docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],"MHA-024, MHA-025",kiro-prompts/e04-prescriptions.md,UI,AC-012 AC-013,Planned
-FR-010,F02,SCR-04,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],"MHA-023, MHA-071",kiro-prompts/e04-prescriptions.md,"Integration, Security",AC-014 AC-055,Planned
-FR-011,F03,SCR-06,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],"MHA-028, MHA-031",kiro-prompts/e04-prescriptions.md,"Integration, UI",AC-015 AC-016,Planned
-FR-012,F03,SCR-07,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],"MHA-028, MHA-029",kiro-prompts/e04-prescriptions.md,Unit,AC-017 AC-018,Planned
-FR-013,F03,SCR-07,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],"MHA-029, MHA-030",kiro-prompts/e04-prescriptions.md,"Unit, UI",AC-019 AC-020,Planned
-FR-014,F03,SCR-07,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],MHA-030,kiro-prompts/e04-prescriptions.md,"Integration, UI",AC-021 AC-022,Planned
-FR-015,F03,SCR-06,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],MHA-031,kiro-prompts/e04-prescriptions.md,"Integration, UI",AC-023,Planned
-FR-016,F03,SCR-08,docs/design/google-stitch/02-prescriptions-prompt.md,[FIGMA_URL_TBD],MHA-032,kiro-prompts/e04-prescriptions.md,"Unit, UI",AC-024,Planned
-FR-017,F04,SCR-09,docs/design/google-stitch/03-medicine-explorer-prompt.md,[FIGMA_URL_TBD],"MHA-034, MHA-035, MHA-040",kiro-prompts/e05-medicine-explorer.md,"Integration, UI",AC-025 AC-026,Planned
-FR-018,F04,SCR-09,docs/design/google-stitch/03-medicine-explorer-prompt.md,[FIGMA_URL_TBD],"MHA-036, MHA-040",kiro-prompts/e05-medicine-explorer.md,Integration,AC-027,Planned
-FR-019,F04,SCR-10,docs/design/google-stitch/03-medicine-explorer-prompt.md,[FIGMA_URL_TBD],MHA-037,kiro-prompts/e05-medicine-explorer.md,"Integration, UI",AC-028 AC-029,Planned
-FR-020,F04,"SCR-09, SCR-10",docs/design/google-stitch/03-medicine-explorer-prompt.md,[FIGMA_URL_TBD],"MHA-035, MHA-038",kiro-prompts/e05-medicine-explorer.md,UI,AC-030,Planned
-FR-021,F04,"SCR-09, SCR-10",docs/design/google-stitch/03-medicine-explorer-prompt.md,[FIGMA_URL_TBD],MHA-039,kiro-prompts/e05-medicine-explorer.md,Integration,AC-031,Planned
-FR-022,F05,SCR-11,docs/design/google-stitch/04-duplicate-checker-prompt.md,[FIGMA_URL_TBD],"MHA-041, MHA-042, MHA-047",kiro-prompts/e06-duplicates.md,"Integration, Unit",AC-032 AC-033,Planned
-FR-023,F05,SCR-12,docs/design/google-stitch/04-duplicate-checker-prompt.md,[FIGMA_URL_TBD],MHA-044,kiro-prompts/e06-duplicates.md,Integration,AC-034,Planned
-FR-024,F05,SCR-12,docs/design/google-stitch/04-duplicate-checker-prompt.md,[FIGMA_URL_TBD],"MHA-044, MHA-045, MHA-047",kiro-prompts/e06-duplicates.md,"Integration, UI",AC-035 AC-036,Planned
-FR-025,F05,SCR-12,docs/design/google-stitch/04-duplicate-checker-prompt.md,[FIGMA_URL_TBD],MHA-046,kiro-prompts/e06-duplicates.md,Unit,AC-037,Planned
-FR-026,F05,SCR-11,docs/design/google-stitch/04-duplicate-checker-prompt.md,[FIGMA_URL_TBD],MHA-043,kiro-prompts/e06-duplicates.md,UI,AC-038,Planned
-FR-027,F06,"SCR-13, SCR-14, SCR-15",docs/design/google-stitch/05-medical-history-prompt.md,[FIGMA_URL_TBD],"MHA-048, MHA-049, MHA-052, MHA-053",kiro-prompts/e07-history.md,"Integration, Unit",AC-039 AC-040,Planned
-FR-028,F06,"SCR-14, SCR-15",docs/design/google-stitch/05-medical-history-prompt.md,[FIGMA_URL_TBD],"MHA-050, MHA-051",kiro-prompts/e07-history.md,UI,AC-041,Planned
-FR-029,F06,SCR-14,docs/design/google-stitch/05-medical-history-prompt.md,[FIGMA_URL_TBD],"MHA-049, MHA-052",kiro-prompts/e07-history.md,"Unit, Security",AC-042 AC-043,Planned
-FR-030,F06,SCR-14,docs/design/google-stitch/05-medical-history-prompt.md,[FIGMA_URL_TBD],MHA-050,kiro-prompts/e07-history.md,UI,AC-044,Planned
-FR-031,F06,SCR-13,docs/design/google-stitch/05-medical-history-prompt.md,[FIGMA_URL_TBD],"MHA-048, MHA-053",kiro-prompts/e07-history.md,Integration,AC-045,Planned
-FR-032,F07,SCR-16,docs/design/google-stitch/06-new-doctor-mode-prompt.md,[FIGMA_URL_TBD],"MHA-054, MHA-057",kiro-prompts/e08-new-doctor.md,"Integration, UI",AC-046 AC-047,Planned
-FR-033,F07,"SCR-17, SCR-18",docs/design/google-stitch/06-new-doctor-mode-prompt.md,[FIGMA_URL_TBD],"MHA-055, MHA-056",kiro-prompts/e08-new-doctor.md,"Integration, Security",AC-048,Planned
-FR-034,F07,SCR-18,docs/design/google-stitch/06-new-doctor-mode-prompt.md,[FIGMA_URL_TBD],"MHA-057, MHA-058, MHA-074",kiro-prompts/e08-new-doctor.md,"UI, Security",AC-049 AC-056,Planned
-FR-035,F08,"SCR-19, SCR-20",docs/design/google-stitch/07-reminders-prompt.md,[FIGMA_URL_TBD],"MHA-059, MHA-060, MHA-061, MHA-063",kiro-prompts/e09-reminders.md,"Integration, UI",AC-050,Planned
-FR-036,F08,SCR-21,docs/design/google-stitch/07-reminders-prompt.md,[FIGMA_URL_TBD],"MHA-062, MHA-063",kiro-prompts/e09-reminders.md,"Unit, Integration",AC-051,Planned
-FR-037,F09,"SCR-22, SCR-23",docs/design/google-stitch/08-safety-center-prompt.md,[FIGMA_URL_TBD],"MHA-064, MHA-065, MHA-067",kiro-prompts/e10-interaction.md,"Integration, UI",AC-052,Planned
-FR-038,F09,SCR-22,docs/design/google-stitch/08-safety-center-prompt.md,[FIGMA_URL_TBD],"MHA-064, MHA-066",kiro-prompts/e10-interaction.md,"UI, Integration",AC-053,Planned
-FR-039,F10,"SCR-24, SCR-25",docs/design/google-stitch/08-safety-center-prompt.md,[FIGMA_URL_TBD],"MHA-068, MHA-069, MHA-070, MHA-071, MHA-074",kiro-prompts/e11-security.md,"Integration, Security",AC-054 AC-055,Planned
-FR-040,F10,"SCR-24, SCR-26",docs/design/google-stitch/08-safety-center-prompt.md,[FIGMA_URL_TBD],"MHA-072, MHA-073",kiro-prompts/e11-security.md,"Integration, Security",AC-057 AC-058,Planned
+﻿FR ID,Feature ID,Screen IDs,Stitch Prompt File,Figma Ref,Jira Ticket IDs,Kiro Prompt File,Test Types,AC IDs,Status
+FR-001,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-024,kiro-prompts/e01-foundation.md,"Integration, UI",AC-001 AC-002,Planned
+FR-002,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-024,kiro-prompts/e01-foundation.md,UI,AC-003,Planned
+FR-003,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-010,kiro-prompts/e02-design-system.md,UI,AC-004,Planned
+FR-004,F01,SCR-01,docs/design/google-stitch/01-dashboard-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-011,kiro-prompts/e02-design-system.md,UI,AC-005,Planned
+FR-005,F02,SCR-03,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-026,kiro-prompts/e04-prescriptions.md,"Integration, Security",AC-006 AC-007,Planned
+FR-006,F02,SCR-03,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-027,kiro-prompts/e04-prescriptions.md,"Integration, Security",AC-006 AC-008,Planned
+FR-007,F02,SCR-05,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-017, MHA-019, MHA-020",kiro-prompts/e03-records.md,"Integration, UI",AC-009 AC-010,Planned
+FR-008,F02,SCR-03,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-020,kiro-prompts/e03-records.md,UI,AC-011,Planned
+FR-009,F02,"SCR-02, SCR-04",docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-024, MHA-025",kiro-prompts/e04-prescriptions.md,UI,AC-012 AC-013,Planned
+FR-010,F02,SCR-04,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-023, MHA-071",kiro-prompts/e04-prescriptions.md,"Integration, Security",AC-014 AC-055,Planned
+FR-011,F03,SCR-06,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-028, MHA-031",kiro-prompts/e04-prescriptions.md,"Integration, UI",AC-015 AC-016,Planned
+FR-012,F03,SCR-07,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-028, MHA-029",kiro-prompts/e04-prescriptions.md,Unit,AC-017 AC-018,Planned
+FR-013,F03,SCR-07,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-029, MHA-030",kiro-prompts/e04-prescriptions.md,"Unit, UI",AC-019 AC-020,Planned
+FR-014,F03,SCR-07,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-030,kiro-prompts/e04-prescriptions.md,"Integration, UI",AC-021 AC-022,Planned
+FR-015,F03,SCR-06,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-031,kiro-prompts/e04-prescriptions.md,"Integration, UI",AC-023,Planned
+FR-016,F03,SCR-08,docs/design/google-stitch/02-prescriptions-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-032,kiro-prompts/e04-prescriptions.md,"Unit, UI",AC-024,Planned
+FR-017,F04,SCR-09,docs/design/google-stitch/03-medicine-explorer-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-034, MHA-035, MHA-040",kiro-prompts/e05-medicine-explorer.md,"Integration, UI",AC-025 AC-026,Planned
+FR-018,F04,SCR-09,docs/design/google-stitch/03-medicine-explorer-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-036, MHA-040",kiro-prompts/e05-medicine-explorer.md,Integration,AC-027,Planned
+FR-019,F04,SCR-10,docs/design/google-stitch/03-medicine-explorer-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-037,kiro-prompts/e05-medicine-explorer.md,"Integration, UI",AC-028 AC-029,Planned
+FR-020,F04,"SCR-09, SCR-10",docs/design/google-stitch/03-medicine-explorer-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-035, MHA-038",kiro-prompts/e05-medicine-explorer.md,UI,AC-030,Planned
+FR-021,F04,"SCR-09, SCR-10",docs/design/google-stitch/03-medicine-explorer-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-039,kiro-prompts/e05-medicine-explorer.md,Integration,AC-031,Planned
+FR-022,F05,SCR-11,docs/design/google-stitch/04-duplicate-checker-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-041, MHA-042, MHA-047",kiro-prompts/e06-duplicates.md,"Integration, Unit",AC-032 AC-033,Planned
+FR-023,F05,SCR-12,docs/design/google-stitch/04-duplicate-checker-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-044,kiro-prompts/e06-duplicates.md,Integration,AC-034,Planned
+FR-024,F05,SCR-12,docs/design/google-stitch/04-duplicate-checker-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-044, MHA-045, MHA-047",kiro-prompts/e06-duplicates.md,"Integration, UI",AC-035 AC-036,Planned
+FR-025,F05,SCR-12,docs/design/google-stitch/04-duplicate-checker-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-046,kiro-prompts/e06-duplicates.md,Unit,AC-037,Planned
+FR-026,F05,SCR-11,docs/design/google-stitch/04-duplicate-checker-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-043,kiro-prompts/e06-duplicates.md,UI,AC-038,Planned
+FR-027,F06,"SCR-13, SCR-14, SCR-15",docs/design/google-stitch/05-medical-history-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-048, MHA-049, MHA-052, MHA-053",kiro-prompts/e07-history.md,"Integration, Unit",AC-039 AC-040,Planned
+FR-028,F06,"SCR-14, SCR-15",docs/design/google-stitch/05-medical-history-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-050, MHA-051",kiro-prompts/e07-history.md,UI,AC-041,Planned
+FR-029,F06,SCR-14,docs/design/google-stitch/05-medical-history-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-049, MHA-052",kiro-prompts/e07-history.md,"Unit, Security",AC-042 AC-043,Planned
+FR-030,F06,SCR-14,docs/design/google-stitch/05-medical-history-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,MHA-050,kiro-prompts/e07-history.md,UI,AC-044,Planned
+FR-031,F06,SCR-13,docs/design/google-stitch/05-medical-history-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-048, MHA-053",kiro-prompts/e07-history.md,Integration,AC-045,Planned
+FR-032,F07,SCR-16,docs/design/google-stitch/06-new-doctor-mode-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-054, MHA-057",kiro-prompts/e08-new-doctor.md,"Integration, UI",AC-046 AC-047,Planned
+FR-033,F07,"SCR-17, SCR-18",docs/design/google-stitch/06-new-doctor-mode-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-055, MHA-056",kiro-prompts/e08-new-doctor.md,"Integration, Security",AC-048,Planned
+FR-034,F07,SCR-18,docs/design/google-stitch/06-new-doctor-mode-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-057, MHA-058, MHA-074",kiro-prompts/e08-new-doctor.md,"UI, Security",AC-049 AC-056,Planned
+FR-035,F08,"SCR-19, SCR-20",docs/design/google-stitch/07-reminders-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-059, MHA-060, MHA-061, MHA-063",kiro-prompts/e09-reminders.md,"Integration, UI",AC-050,Planned
+FR-036,F08,SCR-21,docs/design/google-stitch/07-reminders-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-062, MHA-063",kiro-prompts/e09-reminders.md,"Unit, Integration",AC-051,Planned
+FR-037,F09,"SCR-22, SCR-23",docs/design/google-stitch/08-safety-center-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-064, MHA-065, MHA-067",kiro-prompts/e10-interaction.md,"Integration, UI",AC-052,Planned
+FR-038,F09,SCR-22,docs/design/google-stitch/08-safety-center-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-064, MHA-066",kiro-prompts/e10-interaction.md,"UI, Integration",AC-053,Planned
+FR-039,F10,"SCR-24, SCR-25",docs/design/google-stitch/08-safety-center-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-068, MHA-069, MHA-070, MHA-071, MHA-074",kiro-prompts/e11-security.md,"Integration, Security",AC-054 AC-055,Planned
+FR-040,F10,"SCR-24, SCR-26",docs/design/google-stitch/08-safety-center-prompt.md,https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis,"MHA-072, MHA-073",kiro-prompts/e11-security.md,"Integration, Security",AC-057 AC-058,Planned

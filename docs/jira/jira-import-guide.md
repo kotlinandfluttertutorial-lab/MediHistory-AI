@@ -1,4 +1,4 @@
-# Jira Import Guide — MediHistory AI
+﻿# Jira Import Guide — MediHistory AI
 
 **Document version:** 1.0  
 **Status:** Draft  
@@ -262,7 +262,7 @@ Add the following Definition of Done to the project or sprint:
 
 ### 6.1 Figma links
 
-After the Figma design handoff, replace all `[FIGMA_URL_TBD]` values in the `Figma References` field with actual Figma node URLs. The format should be:
+After the Figma design handoff, replace all `https://www.figma.com/design/xLPxdsIl7CBJOJTtliHKj5/MediHis` values in the `Figma References` field with actual Figma node URLs. The format should be:
 
 ```
 https://www.figma.com/design/{file-id}/MediHistory-AI?node-id={node-id}
