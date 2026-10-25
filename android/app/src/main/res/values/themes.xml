@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme — the Compose theme (Theme.kt) manages all Compose styling.
+         This style exists only to satisfy the manifest android:theme reference. -->
+    <style name="Theme.MediHistoryAI" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
