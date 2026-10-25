@@ -22,6 +22,12 @@ val backendBaseUrl: String =
         ?: System.getenv("BACKEND_BASE_URL")
         ?: ""
 
+val enableCloudBackup: Boolean =
+    (localProperties.getProperty("enable.cloud.backup") ?: System.getenv("ENABLE_CLOUD_BACKUP") ?: "false").toBoolean()
+
+val enableInteractionCheck: Boolean =
+    (localProperties.getProperty("enable.interaction.check") ?: System.getenv("ENABLE_INTERACTION_CHECK") ?: "false").toBoolean()
+
 android {
     namespace = "com.medihistory.ai"
     compileSdk = 35
@@ -38,8 +44,10 @@ android {
             useSupportLibrary = true
         }
 
-        // BuildConfig field — value comes from local.properties or env var, never hardcoded.
+        // BuildConfig fields — values come from local.properties or env vars, never hardcoded.
         buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
+        buildConfigField("boolean", "ENABLE_CLOUD_BACKUP", "$enableCloudBackup")
+        buildConfigField("boolean", "ENABLE_INTERACTION_CHECK", "$enableInteractionCheck")
     }
 
     buildTypes {
