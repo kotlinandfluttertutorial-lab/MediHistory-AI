@@ -1,0 +1,18 @@
+# =============================================================
+# MediHistory AI — local.properties template
+# Copy this file to local.properties and fill in real values.
+# local.properties is git-ignored and must NEVER be committed.
+# =============================================================
+
+# Path to your Android SDK installation.
+sdk.dir=/path/to/Android/Sdk
+
+# Base URL of the FastAPI backend.
+# Android emulator uses 10.0.2.2 to reach the host machine's localhost.
+backend.base.url=http://10.0.2.2:8000
+
+# Feature flag: opt-in cloud backup (F10). Set to true to enable locally.
+enable.cloud.backup=false
+
+# Feature flag: drug interaction checking (F09, optional MVP). Set to true to enable locally.
+enable.interaction.check=false

@@ -5,3 +5,11 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.ksp) apply false
 }
+
+// Dependency locking — all configurations locked to exact versions.
+// Regenerate with: ./gradlew dependencies --write-locks
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+}
