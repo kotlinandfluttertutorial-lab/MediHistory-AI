@@ -33,7 +33,9 @@ val MhOnErrorContainer    = Color(0xFF410002)
 
 // Warning palette (custom extension — no Material 3 slot)
 val MhWarning             = Color(0xFF7D5700)
+val MhOnWarning           = Color(0xFFFFFFFF)
 val MhWarningContainer    = Color(0xFFFFDEA8)
+val MhOnWarningContainer  = Color(0xFF271900)
 
 // Background / surface / neutral palette
 val MhBackground          = Color(0xFFF5FAFB)
@@ -81,3 +83,9 @@ val MhDarkInverseSurface       = Color(0xFFDEE3E5)
 val MhDarkInverseOnSurface     = Color(0xFF2B3133)
 val MhDarkInversePrimary       = Color(0xFF006874)
 val MhDarkScrim                = Color(0xFF000000)
+
+// Dark warning palette (custom extension — no Material 3 slot)
+val MhDarkWarning              = Color(0xFFFFBA3B)
+val MhDarkOnWarning            = Color(0xFF000000)
+val MhDarkWarningContainer     = Color(0xFF5E4100)
+val MhDarkOnWarningContainer   = Color(0xFFFFDEA8)

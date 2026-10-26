@@ -1,0 +1,8 @@
+{
+  "url": "https://github.com/kotlinandfluttertutorial-lab/MediHistory-AI/pull/14",
+  "number": 14,
+  "title": "feat(db): Room database setup — schema v1, Hilt module, converters, test harness [MA-18]",
+  "branch": "feature/MA-18-room-database",
+  "base": "develop",
+  "repo": "kotlinandfluttertutorial-lab/MediHistory-AI"
+}

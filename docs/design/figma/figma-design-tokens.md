@@ -47,6 +47,7 @@ Color does not carry meaning alone. Every colored state also uses an icon and/or
 | `error-container` | `color/error-container` | `#FFDAD6` | Error state backgrounds |
 | `on-error-container` | `color/on-error-container` | `#410002` | Content inside error-container |
 | `warning` | `color/warning` | `#7D5700` | Low-confidence, duplicate alerts, pending review |
+| `on-warning` | `color/on-warning` | `#FFFFFF` | Text/icons on warning color |
 | `warning-container` | `color/warning-container` | `#FFDEA8` | Warning state backgrounds |
 | `on-warning-container` | `color/on-warning-container` | `#271900` | Content inside warning-container |
 | `surface` | `color/surface` | `#F5FAFB` | Screen backgrounds |
@@ -93,10 +94,17 @@ Dark theme uses Material 3 dynamic color. All tokens above have a dark-mode coun
 | `on-secondary` | `#1B3439` |
 | `secondary-container` | `#324B50` |
 | `on-secondary-container` | `#CCE8ED` |
+| `tertiary` | `#B8C4EE` |
+| `on-tertiary` | `#223160` |
+| `tertiary-container` | `#394778` |
+| `on-tertiary-container` | `#DAE2FF` |
 | `error` | `#FFB4AB` |
 | `on-error` | `#690005` |
+| `error-container` | `#93000A` |
+| `on-error-container` | `#FFDAD6` |
 | `warning` | `#FFBA3B` |
 | `warning-container` | `#5E4100` |
+| `on-warning-container` | `#FFDEA8` |
 | `surface` | `#0E1415` |
 | `on-surface` | `#DEE3E5` |
 | `surface-variant` | `#3F484A` |
@@ -104,6 +112,11 @@ Dark theme uses Material 3 dynamic color. All tokens above have a dark-mode coun
 | `background` | `#0E1415` |
 | `on-background` | `#DEE3E5` |
 | `outline` | `#899294` |
+| `outline-variant` | `#3F484A` |
+| `inverse-surface` | `#DEE3E5` |
+| `inverse-on-surface` | `#2B3133` |
+| `inverse-primary` | `#006874` |
+| `scrim` | `#000000` |
 
 ### 1.5 Material 3 Dynamic Color Mapping
 

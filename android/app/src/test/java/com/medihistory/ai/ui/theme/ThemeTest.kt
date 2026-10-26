@@ -55,4 +55,17 @@ class ThemeTest {
                 Color.Unspecified, color)
         }
     }
+
+    @Test
+    fun should_have_no_unspecified_colors_in_extended_dark_colors() {
+        val c = DarkExtendedColors
+        listOf(
+            c.warning, c.onWarning, c.warningContainer, c.onWarningContainer,
+            c.statusCurrent, c.statusPast, c.statusUnknown,
+            c.ocrReview, c.ocrFailed, c.confidenceHigh, c.onConfidenceHigh,
+        ).forEachIndexed { i, color ->
+            assertNotEquals("Extended dark colour field $i must not be Color.Unspecified",
+                Color.Unspecified, color)
+        }
+    }
 }
