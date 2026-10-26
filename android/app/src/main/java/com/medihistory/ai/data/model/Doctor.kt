@@ -10,9 +10,7 @@ import androidx.room.PrimaryKey
  * - [patientId] is always set and used as a scope on every DAO query.
  * - No field here must be logged or transmitted without explicit patient consent.
  *
- * NOTE: This entity is intentionally NOT registered in [MediHistoryDatabase] yet.
- * It will be added (with a migration) when this branch is merged after MA-25,
- * which adds the Patient entity and bumps the schema version.
+ * Registered in [MediHistoryDatabase] with the version 2 schema migration.
  */
 @Entity(tableName = "doctors")
 data class Doctor(

@@ -38,12 +38,12 @@ class MediHistoryDatabaseTest {
     }
 
     @Test
-    fun `should report schema version 2`() {
+    fun `should report schema version 3`() {
         val context: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         val version = db!!.openHelper.readableDatabase.version
-        assertEquals("Schema version must be 2 (Doctor entity added in MA-25)", 2, version)
+        assertEquals("Schema version must be 3 (patients table added)", 3, version)
     }
 }
