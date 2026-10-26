@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Backend foundation: create minimum FastAPI application with Pydantic Settings config, requirements.txt with pinned versions, env example templates, and pytest config tests. Independent of FEAT-001 (no Android dependency).",
+  "status": "pending",
+  "steps": [
+    "1. Create backend/requirements.txt with the following exact pinned versions (one package per line): fastapi==0.111.0, uvicorn[standard]==0.30.1, pydantic==2.7.4, pydantic-settings==2.3.4, sqlalchemy==2.0.31, alembic==1.13.2, psycopg2-binary==2.9.9, python-jose[cryptography]==3.3.0, passlib[bcrypt]==1.7.4, python-multipart==0.0.9, ruff==0.5.0, black==24.4.2, mypy==1.10.1, pytest==8.2.2, pytest-cov==5.0.0, httpx==0.27.0.",
+    "2. Create backend/app/__init__.py as an empty file (just a module marker — no content).",
+    "3. Create backend/app/core/__init__.py as an empty file.",
+    "4. Create backend/app/core/config.py. Use pydantic-settings BaseSettings. Class name: Settings. Fields: env: str = Field(default='local', description='Runtime environment: local or cloud'), database_url: str = Field(default='sqlite:///:memory:', description='SQLAlchemy database URL'), jwt_secret: str = Field(description='JWT signing secret — required, no default'), jwt_algorithm: str = Field(default='HS256'), access_token_expire_minutes: int = Field(default=30), testing: bool = Field(default=False), log_level: str = Field(default='INFO'), docs_enabled: bool | None = Field(default=None, description='Override docs availability. None means auto: enabled when env=local'). Property: is_local (returns self.env == 'local'), is_cloud (returns self.env == 'cloud'), effective_docs_enabled (returns self.docs_enabled if not None else self.is_local). model_config = SettingsConfigDict(env_file='.env.local', env_file_encoding='utf-8', extra='ignore'). Add @lru_cache() decorated get_settings() function that returns Settings(). Add module docstring explaining the config system. Import from pydantic import Field, from pydantic_settings import BaseSettings, SettingsConfigDict, from functools import lru_cache.",
+    "5. Create backend/app/main.py. Minimal FastAPI app that: imports FastAPI, imports get_settings from app.core.config, creates settings = get_settings(), creates app = FastAPI(title='MediHistory AI API', version='0.1.0', docs_url='/docs' if settings.effective_docs_enabled else None, redoc_url='/redoc' if settings.effective_docs_enabled else None). Adds a GET /health endpoint that returns {'status': 'ok', 'env': settings.env} — never log or return sensitive values. Add module docstring. Never log jwt_secret or database_url.",
+    "6. Create backend/.env.local.example: template for local development environment. Include: ENV=local, DATABASE_URL=postgresql://medihistory:changeme@localhost:5432/medihistory_local, JWT_SECRET=replace-with-a-long-random-secret-for-local-dev-only, JWT_ALGORITHM=HS256, ACCESS_TOKEN_EXPIRE_MINUTES=30, LOG_LEVEL=DEBUG, DOCS_ENABLED=true, TESTING=false. Header comment: 'Copy to .env.local and fill in real values. NEVER commit .env.local.'",
+    "7. Create backend/.env.cloud.example: template for cloud/staging/production. Include: ENV=cloud, DATABASE_URL=postgresql://medihistory:REPLACE_WITH_SECRET@db-host:5432/medihistory_cloud, JWT_SECRET=REPLACE_WITH_LONG_RANDOM_SECRET, JWT_ALGORITHM=HS256, ACCESS_TOKEN_EXPIRE_MINUTES=15, LOG_LEVEL=WARNING, DOCS_ENABLED=false, TESTING=false. Header comment: 'Cloud/staging/production environment template. All values are secrets — use your deployment secret manager.'",
+    "8. Create backend/tests/__init__.py as an empty file.",
+    "9. Create backend/tests/test_config.py. Tests for the Settings class. Use pytest. Import Settings from app.core.config. Test cases: test_default_env_is_local — instantiate Settings(jwt_secret='test-secret') with no other args, assert settings.env == 'local'. test_is_local_true_when_env_local — assert settings.is_local is True, settings.is_cloud is False. test_is_cloud_true_when_env_cloud — Settings(env='cloud', jwt_secret='test-secret'), assert is_cloud True and is_local False. test_effective_docs_enabled_auto_local — Settings(env='local', jwt_secret='test-secret'), assert effective_docs_enabled is True. test_effective_docs_enabled_auto_cloud — Settings(env='cloud', jwt_secret='test-secret'), assert effective_docs_enabled is False. test_effective_docs_enabled_override — Settings(env='cloud', jwt_secret='test-secret', docs_enabled=True), assert effective_docs_enabled is True. test_testing_flag_defaults_false — assert Settings(jwt_secret='test-secret').testing is False. test_jwt_secret_required — pytest.raises(ValidationError) when constructing Settings() with no jwt_secret. Add a conftest note: all tests use synthetic secrets (e.g. 'test-only-synthetic-secret'). Follow naming: test_[outcome]_[condition]. Import ValidationError from pydantic.",
+    "10. Create backend/pytest.ini (or pyproject.toml section): configure pytest with testpaths = ['tests'], addopts = '--tb=short', and ensure test discovery works. Use a standalone pytest.ini file with [pytest] section. Also create backend/mypy.ini with [mypy] section: python_version = 3.12, strict = true, ignore_missing_imports = true.",
+    "11. Verify: cd backend && pip install -r requirements.txt && pytest tests/test_config.py -v. All tests must pass. Also run mypy app/ and ruff check app/ with zero errors."
+  ],
+  "acceptance_criteria": [
+    "pytest tests/test_config.py passes all 8 test cases",
+    "Settings() raises ValidationError when jwt_secret is omitted",
+    "effective_docs_enabled returns True for local env, False for cloud env when docs_enabled is not overridden",
+    "GET /health endpoint returns {status: ok, env: local} when ENV=local",
+    "mypy app/ passes with strict=true and zero errors",
+    "ruff check app/ passes with zero errors",
+    "No real secrets in any committed file — .env.local.example and .env.cloud.example contain only placeholder values",
+    "requirements.txt has all packages at exact pinned versions (no + or range operators)"
+  ],
+  "verification": [
+    "cd backend && pip install -r requirements.txt && pytest tests/test_config.py -v",
+    "cd backend && mypy app/",
+    "cd backend && ruff check app/"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
