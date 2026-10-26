@@ -2,41 +2,15 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "5bd4a4c8e736791d956205ce5470c71c",
+    "identityHash": "4334fa4c01fe84d2e2e56aee008f7316",
     "entities": [
       {
-        "tableName": "db_init_placeholder",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "tableName": "patients",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `dateOfBirth` INTEGER, `bloodGroup` TEXT, `allergies` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "doctors",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `patientId` TEXT NOT NULL, `name` TEXT NOT NULL, `specialty` TEXT NOT NULL, `specialtyOther` TEXT, `clinicName` TEXT, `contactNotes` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "patientId",
-            "columnName": "patientId",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -47,26 +21,20 @@
             "notNull": true
           },
           {
-            "fieldPath": "specialty",
-            "columnName": "specialty",
-            "affinity": "TEXT",
-            "notNull": true
+            "fieldPath": "dateOfBirth",
+            "columnName": "dateOfBirth",
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
-            "fieldPath": "specialtyOther",
-            "columnName": "specialtyOther",
+            "fieldPath": "bloodGroup",
+            "columnName": "bloodGroup",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "clinicName",
-            "columnName": "clinicName",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "contactNotes",
-            "columnName": "contactNotes",
+            "fieldPath": "allergies",
+            "columnName": "allergies",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -96,7 +64,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5bd4a4c8e736791d956205ce5470c71c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4334fa4c01fe84d2e2e56aee008f7316')"
     ]
   }
 }
