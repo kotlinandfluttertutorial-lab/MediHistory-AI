@@ -96,7 +96,13 @@ function Invoke-External {
     # Guard against the PowerShell range-operator trap: 1..0 evaluates to @(1,0)
     # not an empty array, so $Arguments[1..($Arguments.Length-1)] with a one-element
     # input would pass spurious arguments. Use an explicit length check instead.
-    $rest = if ($Arguments.Length -gt 1) { $Arguments[1..($Arguments.Length-1)] } else { @() }
+    # Also note: with exactly two elements the slice returns a bare string (not array),
+    # so we force [string[]] to ensure @rest always splats correctly.
+    if ($Arguments.Length -gt 1) {
+        [string[]]$rest = $Arguments[1..($Arguments.Length-1)]
+    } else {
+        [string[]]$rest = @()
+    }
     if ($CaptureOutput) {
         try {
             $output = & $Arguments[0] @rest 2>&1
