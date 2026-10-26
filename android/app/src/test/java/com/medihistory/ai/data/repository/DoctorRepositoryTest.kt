@@ -22,7 +22,7 @@ import org.robolectric.annotation.Config
  * Integration tests for [RoomDoctorRepository] using an in-memory Room database.
  *
  * Runs on the JVM via Robolectric — no emulator required.
- * Uses [MediHistoryDatabase] version 2 (Doctor entity added in MA-25).
+ * Uses [MediHistoryDatabase] version 3 (both Patient and Doctor entities registered).
  * All fixtures use synthetic data only (no real patient or doctor names).
  */
 @RunWith(RobolectricTestRunner::class)
