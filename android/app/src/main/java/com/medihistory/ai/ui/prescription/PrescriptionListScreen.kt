@@ -1,0 +1,121 @@
+package com.medihistory.ai.ui.prescription
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.medihistory.ai.ui.components.EmptyStateView
+import com.medihistory.ai.ui.components.LoadingIndicator
+
+/**
+ * Prescription list screen — top-level destination for feature F02.
+ *
+ * Displays all prescriptions as a scrollable list of [PrescriptionCard] items. While data is
+ * loading, shows a [LoadingIndicator]. On error, shows an error message with a retry action.
+ * When the list is empty, shows [EmptyStateView].
+ *
+ * @param onPrescriptionClick Called with the prescription ID when a card is tapped.
+ * @param onAddPrescription   Called when the "Add Prescription" FAB is tapped.
+ * @param viewModel           Injected by Hilt; override in tests.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PrescriptionListScreen(
+    onPrescriptionClick: (String) -> Unit,
+    onAddPrescription: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: PrescriptionListViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            MediumTopAppBar(
+                title = { Text(text = "Prescriptions") },
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                text = { Text(text = "Add Prescription") },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null, // label already describes the action
+                    )
+                },
+                onClick = onAddPrescription,
+            )
+        },
+    ) { innerPadding ->
+        when {
+            uiState.isLoading -> {
+                LoadingIndicator(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentDescription = "Loading prescriptions",
+                )
+            }
+
+            uiState.error != null -> {
+                EmptyStateView(
+                    message = uiState.error ?: "An error occurred.",
+                    actionLabel = "Retry",
+                    onAction = { viewModel.loadPrescriptions() },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                )
+            }
+
+            uiState.prescriptions.isEmpty() -> {
+                EmptyStateView(
+                    message = "No prescriptions yet",
+                    actionLabel = "Add your first prescription",
+                    onAction = onAddPrescription,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    contentPadding = innerPadding,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                ) {
+                    items(
+                        items = uiState.prescriptions,
+                        key = { prescription -> prescription.id },
+                    ) { prescription ->
+                        PrescriptionCard(
+                            prescription = prescription,
+                            onClick = { onPrescriptionClick(prescription.id) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
