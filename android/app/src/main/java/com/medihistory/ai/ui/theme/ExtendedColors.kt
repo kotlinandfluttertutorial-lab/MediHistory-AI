@@ -24,9 +24,14 @@ data class MediHistoryExtendedColors(
     val onWarning: Color,
     val warningContainer: Color,
     val onWarningContainer: Color,
+    // Status chip colors — separate current/past/unknown medication state visually.
+    // onStatus* counterparts ensure badge text never needs a hardcoded colour.
     val statusCurrent: Color,
+    val onStatusCurrent: Color,
     val statusPast: Color,
+    val onStatusPast: Color,
     val statusUnknown: Color,
+    val onStatusUnknown: Color,
     val ocrReview: Color,
     val ocrFailed: Color,
     val confidenceHigh: Color,
@@ -39,8 +44,11 @@ val LightExtendedColors = MediHistoryExtendedColors(
     warningContainer   = MhWarningContainer,
     onWarningContainer = MhOnWarningContainer,
     statusCurrent      = MhPrimary,
+    onStatusCurrent    = Color(0xFFFFFFFF), // white on primary teal
     statusPast         = MhSecondary,
+    onStatusPast       = Color(0xFFFFFFFF), // white on secondary
     statusUnknown      = MhOutline,
+    onStatusUnknown    = Color(0xFFFFFFFF), // white on outline grey
     ocrReview          = MhWarning,
     ocrFailed          = MhError,
     confidenceHigh     = MhTertiaryContainer,
@@ -53,8 +61,11 @@ val DarkExtendedColors = MediHistoryExtendedColors(
     warningContainer   = MhDarkWarningContainer,
     onWarningContainer = MhDarkOnWarningContainer,
     statusCurrent      = MhDarkPrimary,
+    onStatusCurrent    = Color(0xFF00363D), // onPrimary dark
     statusPast         = MhDarkSecondary,
+    onStatusPast       = Color(0xFF1B3439), // onSecondary dark
     statusUnknown      = MhDarkOutline,
+    onStatusUnknown    = Color(0xFF171D1E), // onSurface dark
     ocrReview          = MhDarkWarning,
     ocrFailed          = MhDarkError,
     confidenceHigh     = MhDarkTertiaryContainer,

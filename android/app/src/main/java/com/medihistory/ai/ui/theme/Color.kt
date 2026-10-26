@@ -78,6 +78,9 @@ val MhDarkTertiaryContainer    = Color(0xFF394778)
 val MhDarkOnTertiaryContainer  = Color(0xFFDAE2FF)
 val MhDarkErrorContainer       = Color(0xFF93000A)
 val MhDarkOnErrorContainer     = Color(0xFFFFDAD6)
+// MhDarkOutlineVariant intentionally equals MhDarkSurfaceVariant (0xFF3F484A).
+// In dark theme the M3 spec maps both outline-variant and surface-variant to the same
+// tone — this is correct per the design token table in docs/design/figma/figma-design-tokens.md §1.4.
 val MhDarkOutlineVariant       = Color(0xFF3F484A)
 val MhDarkInverseSurface       = Color(0xFFDEE3E5)
 val MhDarkInverseOnSurface     = Color(0xFF2B3133)
