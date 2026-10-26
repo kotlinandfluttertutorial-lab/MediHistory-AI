@@ -43,6 +43,14 @@ if [ "$IS_WINDOWS" -eq 1 ] && command -v powershell.exe &>/dev/null; then
     # Windows Git Bash / MSYS / Cygwin — run PowerShell script
     # Convert the path to Windows format for PowerShell
     PS1_PATH="$(cygpath -w "$REPO_ROOT/check-before-push.ps1" 2>/dev/null || echo "$REPO_ROOT/check-before-push.ps1")"
+    # Symmetric existence check (mirrors the Unix branch below)
+    if [ ! -f "$REPO_ROOT/check-before-push.ps1" ]; then
+        echo "ERROR: check-before-push.ps1 not found at $REPO_ROOT/check-before-push.ps1" >&2
+        echo "Pre-push quality gate failed. Fix the issues above before pushing." >&2
+        echo "To skip this hook (not recommended): git push --no-verify" >&2
+        echo "To install this hook: git config core.hooksPath .githooks" >&2
+        exit 1
+    fi
     exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PS1_PATH"
     # exec replaces the process; exit code propagates automatically
 else

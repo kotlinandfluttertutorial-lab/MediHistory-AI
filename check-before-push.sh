@@ -333,11 +333,15 @@ else
         else
             print_info "Running pytest tests/ -m not db ..."
             export DATABASE_URL="sqlite:///:memory:"
-            export JWT_SECRET="test-jwt-secret-for-ci-only-not-a-real-secret"
+            export JWT_SECRET_KEY="test-jwt-secret-for-ci-only-not-a-real-secret"
             export TESTING="true"
+            # NOTE: CI runs pytest --cov=app --cov-fail-under=90; the local gate omits
+            # --cov-fail-under to keep the run fast (no coverage report generated).
+            # This is a documented divergence: a developer can push with coverage below 90%
+            # and the CI coverage gate will catch it. See docs/deployment/cicd.md Known CI Gaps.
             (cd "$BACKEND_DIR" && "$PYTHON" -m pytest tests/ -m "not db")
             PYTEST_EXIT=$?
-            unset DATABASE_URL JWT_SECRET TESTING
+            unset DATABASE_URL JWT_SECRET_KEY TESTING
             if [ $PYTEST_EXIT -eq 0 ]; then
                 check_result "backend-pytest" "PASS"
             else
@@ -360,11 +364,11 @@ else
         check_result "db-tests" "SKIP" "backend not yet scaffolded -- no tests to run"
     else
         print_info "Running pytest tests/ -m db (OPTIONAL -- WARN on failure)"
-        export JWT_SECRET="test-jwt-secret-for-ci-only-not-a-real-secret"
+        export JWT_SECRET_KEY="test-jwt-secret-for-ci-only-not-a-real-secret"
         export TESTING="true"
         (cd "$BACKEND_DIR" && "$PYTHON" -m pytest tests/ -m "db")
         DB_TEST_EXIT=$?
-        unset JWT_SECRET TESTING
+        unset JWT_SECRET_KEY TESTING
         if [ $DB_TEST_EXIT -eq 0 ]; then
             check_result "db-tests" "PASS"
         else

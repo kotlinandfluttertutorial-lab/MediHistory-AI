@@ -178,7 +178,7 @@ CI exactly.
 
 Environment variables set automatically for pytest:
 - `DATABASE_URL=sqlite:///:memory:`
-- `JWT_SECRET=test-jwt-secret-for-ci-only-not-a-real-secret`
+- `JWT_SECRET_KEY=test-jwt-secret-for-ci-only-not-a-real-secret`
 - `TESTING=true`
 
 These variables are unset after the tests complete. Their values are never
@@ -322,6 +322,8 @@ appropriate repair command separately.
 5. **pip-audit and safety not in CI** — These are optional local checks only.
    Vulnerability findings produce WARN, not FAIL.
 
+6. **Local pytest omits `--cov-fail-under=90`** — The local gate runs `pytest tests/ -m "not db"` without a coverage threshold flag, to keep local runs fast. CI runs `pytest --cov=app --cov-fail-under=90`. A developer can push with backend coverage below 90% and the CI coverage gate will catch it on the first push. To check coverage locally before pushing, run: `python -m pytest --cov=app --cov-fail-under=90 tests/ -m "not db"` from the `backend/` directory.
+
 ---
 
 ## 11. CI Mapping Table
@@ -448,7 +450,7 @@ run in CI where the database is available.
 - The scripts **never** modify source files. If a formatting check fails, a
   separate repair command must be run deliberately.
 - Credentials used in test environment variables (e.g.
-  `JWT_SECRET=test-jwt-secret-for-ci-only-not-a-real-secret`) are synthetic
+  `JWT_SECRET_KEY=test-jwt-secret-for-ci-only-not-a-real-secret`) are synthetic
   test values. They are never used in production. They are set as environment
   variables for the duration of the pytest run and immediately unset.
 - The script never calls `pip install`, `brew install`, or any package manager.

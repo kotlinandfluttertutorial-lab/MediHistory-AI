@@ -47,7 +47,7 @@ Environment variables set for `unit-test` job:
 
 Environment variables set for `test` job:
 - `DATABASE_URL=sqlite:///:memory:`
-- `JWT_SECRET=test-jwt-secret-for-ci-only-not-a-real-secret`
+- `JWT_SECRET_KEY=test-jwt-secret-for-ci-only-not-a-real-secret`
 - `TESTING=true`
 
 Coverage threshold: 90% (fails the build if not met).
@@ -159,6 +159,20 @@ YAML syntax of workflow files is not validated in CI.
 
 **Recommendation:** Add `yamllint` to `pr-checks.yml` as a lightweight check.
 
+### Gap 6 — Local pytest omits `--cov-fail-under=90`
+
+**Affected:** local gate Section 2; CI `backend-ci.yml` `test` job; `pr-checks.yml` `backend-ci` job.
+
+The local gate runs `pytest tests/ -m "not db"` without a coverage threshold, to keep
+local runs fast and avoid requiring `pytest-cov` to be installed separately. CI runs
+`pytest --cov=app --cov-report=xml --cov-fail-under=90`.
+
+**Effect:** A developer can reduce backend coverage below 90% and the local gate will
+not catch it. The CI coverage gate will catch it on the first push.
+
+**Workaround:** Run `python -m pytest --cov=app --cov-fail-under=90 tests/ -m "not db"`
+manually before pushing if you have changed backend coverage-sensitive code.
+
 ---
 
 ## 5. Cloud Run Deployment Overview
@@ -214,7 +228,7 @@ or source code.
 | Variable | Value | Notes |
 |---|---|---|
 | `DATABASE_URL` | `sqlite:///:memory:` | In-memory SQLite for unit tests |
-| `JWT_SECRET` | `test-jwt-secret-for-ci-only-not-a-real-secret` | Synthetic test value only |
+| `JWT_SECRET_KEY` | `test-jwt-secret-for-ci-only-not-a-real-secret` | Synthetic test value only |
 | `TESTING` | `true` | Enables test mode in the FastAPI app |
 
 The full list of environment variable names (without values) is in `.env.example`.

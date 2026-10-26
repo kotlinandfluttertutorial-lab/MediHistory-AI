@@ -93,9 +93,13 @@ function Invoke-External {
         [string[]]$Arguments,
         [switch]$CaptureOutput
     )
+    # Guard against the PowerShell range-operator trap: 1..0 evaluates to @(1,0)
+    # not an empty array, so $Arguments[1..($Arguments.Length-1)] with a one-element
+    # input would pass spurious arguments. Use an explicit length check instead.
+    $rest = if ($Arguments.Length -gt 1) { $Arguments[1..($Arguments.Length-1)] } else { @() }
     if ($CaptureOutput) {
         try {
-            $output = & $Arguments[0] $Arguments[1..($Arguments.Length-1)] 2>&1
+            $output = & $Arguments[0] @rest 2>&1
             $exitCode = $LASTEXITCODE
         } catch {
             $output = $_.Exception.Message
@@ -104,7 +108,7 @@ function Invoke-External {
         return [PSCustomObject]@{ Output = $output; ExitCode = $exitCode }
     } else {
         try {
-            & $Arguments[0] $Arguments[1..($Arguments.Length-1)]
+            & $Arguments[0] @rest
             return $LASTEXITCODE
         } catch {
             return 1
@@ -367,16 +371,20 @@ if (-not (Test-Path $REQUIREMENTS_FILE)) {
             Write-CheckResult "backend-pytest" "FAIL" "pytest not installed -- run: pip install -r requirements.txt"
         } else {
             Write-Info "Running pytest tests/ -m not db ..."
-            $env:DATABASE_URL = "sqlite:///:memory:"
-            $env:JWT_SECRET   = "test-jwt-secret-for-ci-only-not-a-real-secret"
-            $env:TESTING      = "true"
+            $env:DATABASE_URL  = "sqlite:///:memory:"
+            $env:JWT_SECRET_KEY = "test-jwt-secret-for-ci-only-not-a-real-secret"
+            $env:TESTING       = "true"
             Set-Location $BACKEND_DIR
+            # NOTE: CI runs pytest --cov=app --cov-fail-under=90; the local gate omits
+            # --cov-fail-under to keep the run fast (no coverage report generated).
+            # This is a documented divergence: a developer can push with coverage below 90%
+            # and the CI coverage gate will catch it. See docs/deployment/cicd.md Known CI Gaps.
             & $PYTHON "-m" "pytest" "tests/" "-m" "not db"
             $exitCode = $LASTEXITCODE
             Set-Location $REPO_ROOT
-            Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
-            Remove-Item Env:\JWT_SECRET   -ErrorAction SilentlyContinue
-            Remove-Item Env:\TESTING      -ErrorAction SilentlyContinue
+            Remove-Item Env:\DATABASE_URL   -ErrorAction SilentlyContinue
+            Remove-Item Env:\JWT_SECRET_KEY -ErrorAction SilentlyContinue
+            Remove-Item Env:\TESTING        -ErrorAction SilentlyContinue
             if ($exitCode -eq 0) { Write-CheckResult "backend-pytest" "PASS" }
             else { Write-CheckResult "backend-pytest" "FAIL" "pytest exited $exitCode -- fix failing tests" }
         }
@@ -397,14 +405,14 @@ if (-not $dbUrl) {
         Write-CheckResult "db-tests" "SKIP" "backend not yet scaffolded -- no tests to run"
     } else {
         Write-Info "Running pytest tests/ -m db (OPTIONAL -- WARN on failure)"
-        $env:JWT_SECRET = "test-jwt-secret-for-ci-only-not-a-real-secret"
-        $env:TESTING    = "true"
+        $env:JWT_SECRET_KEY = "test-jwt-secret-for-ci-only-not-a-real-secret"
+        $env:TESTING        = "true"
         Set-Location $BACKEND_DIR
         & $PYTHON "-m" "pytest" "tests/" "-m" "db"
         $exitCode = $LASTEXITCODE
         Set-Location $REPO_ROOT
-        Remove-Item Env:\JWT_SECRET -ErrorAction SilentlyContinue
-        Remove-Item Env:\TESTING    -ErrorAction SilentlyContinue
+        Remove-Item Env:\JWT_SECRET_KEY -ErrorAction SilentlyContinue
+        Remove-Item Env:\TESTING        -ErrorAction SilentlyContinue
         if ($exitCode -eq 0) { Write-CheckResult "db-tests" "PASS" }
         else { Write-CheckResult "db-tests" "WARN" "db tests failed -- optional locally. Check DATABASE_URL connectivity." }
     }
