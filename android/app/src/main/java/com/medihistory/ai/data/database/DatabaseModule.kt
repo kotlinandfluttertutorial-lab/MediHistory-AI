@@ -33,6 +33,26 @@ private val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+/** Migration from v2 (doctors) to v3 (adds patients table — MA-25). */
+private val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `patients` (
+                `id` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `dateOfBirth` INTEGER,
+                `bloodGroup` TEXT,
+                `allergies` TEXT NOT NULL DEFAULT '',
+                `createdAt` INTEGER NOT NULL,
+                `updatedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent()
+        )
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -40,14 +60,14 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideMediHistoryDatabase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): MediHistoryDatabase =
         Room.databaseBuilder(
             context,
             MediHistoryDatabase::class.java,
-            MediHistoryDatabase.DATABASE_NAME
+            MediHistoryDatabase.DATABASE_NAME,
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
-        // fallbackToDestructiveMigration() intentionally omitted — migrations are always explicit
+    // fallbackToDestructiveMigration() intentionally omitted — migrations are always explicit
 }
