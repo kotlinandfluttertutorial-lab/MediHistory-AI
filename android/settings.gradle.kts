@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MediHistoryAI"
+rootProject.name = "MediHistory-AI"
 include(":app")
