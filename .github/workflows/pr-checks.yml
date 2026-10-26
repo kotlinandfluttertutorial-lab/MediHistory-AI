@@ -138,10 +138,14 @@ jobs:
     if: always()
     steps:
       - name: Verify all checks passed
+        env:
+          ANDROID_RESULT: ${{ needs.android-ci.result }}
+          BACKEND_RESULT: ${{ needs.backend-ci.result }}
+          SECRETS_RESULT: ${{ needs.verify-no-secrets-committed.result }}
         run: |
-          if [ "${{needs.android-ci.result}}" != "success" ] || \
-             [ "${{needs.backend-ci.result}}" != "success" ] || \
-             [ "${{needs.verify-no-secrets-committed.result}}" != "success" ]; then
+          if [ "$ANDROID_RESULT" != "success" ] || \
+             [ "$BACKEND_RESULT" != "success" ] || \
+             [ "$SECRETS_RESULT" != "success" ]; then
             echo "One or more required checks failed. Merge blocked."
             exit 1
           fi
