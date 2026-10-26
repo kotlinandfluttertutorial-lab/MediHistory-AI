@@ -11,6 +11,8 @@ import java.time.LocalDate
  * - [id] is a UUID assigned at creation; it is the scope key for all related records.
  * - No field here must be logged or transmitted without explicit patient consent.
  * - [allergies] is stored as a comma-escaped string via [com.medihistory.ai.data.database.Converters].
+ *
+ * Added in database version 3 (MA-25).
  */
 @Entity(tableName = "patients")
 data class Patient(

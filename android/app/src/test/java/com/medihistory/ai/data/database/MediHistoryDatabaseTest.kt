@@ -44,6 +44,6 @@ class MediHistoryDatabaseTest {
             .allowMainThreadQueries()
             .build()
         val version = db!!.openHelper.readableDatabase.version
-        assertEquals("Schema version must be 3 (patients table added)", 3, version)
+        assertEquals("Schema version must be 3 (Patient entity added in MA-25)", 3, version)
     }
 }
