@@ -2,7 +2,7 @@ name: PR Gate — All Checks
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   verify-no-secrets-committed:
@@ -44,6 +44,19 @@ jobs:
           fi
           echo "No .keystore files committed — OK"
 
+      - name: Check for hardcoded secrets in source files
+        run: |
+          if grep -r --exclude-dir=".git" \
+            -E 'api_key|secret|password|ghp_|github_pat' \
+            --include="*.kt" --include="*.java" --include="*.xml" \
+            --include="*.py" --include="*.properties" --include="*.yml" \
+            --include="*.yaml" --include="*.json" \
+            .; then
+            echo "ERROR: Possible hardcoded secret found. Remove before merging."
+            exit 1
+          fi
+          echo "Secrets grep passed — no matches found"
+
   android-ci:
     name: Android Lint and Unit Tests
     runs-on: ubuntu-latest
@@ -80,7 +93,9 @@ jobs:
         run: ./gradlew testDebugUnitTest
         working-directory: android
         env:
-          BACKEND_BASE_URL: ${{vars.BACKEND_BASE_URL || 'http://localhost:8000'}}
+          BACKEND_BASE_URL: ""
+          ENABLE_CLOUD_BACKUP: "false"
+          ENABLE_INTERACTION_CHECK: "false"
 
   backend-ci:
     name: Backend Lint, Type Check, and Tests

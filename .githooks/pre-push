@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# =============================================================================
+# MediHistory AI — Pre-Push Hook (OS dispatcher)
+# =============================================================================
+#
+# This hook detects the operating system and delegates to the appropriate
+# quality gate script:
+#   Windows (Git Bash / MSYS / Cygwin): check-before-push.ps1 via PowerShell
+#   Unix / macOS / Linux / WSL:         check-before-push.sh via bash
+#
+# Installation (one-time, run from repo root):
+#   git config core.hooksPath .githooks
+#
+# To skip this hook (not recommended):
+#   git push --no-verify
+#
+# =============================================================================
+
+# Locate the repo root from this hook's own path.
+# Git sets the working directory to the repo root when invoking hooks,
+# but BASH_SOURCE gives us the hook's real location for reliability.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# ─────────────────────────────────────────────────────────────
+# OS detection
+# ─────────────────────────────────────────────────────────────
+
+# Detect Windows: MSYS / MinGW (Git Bash), Cygwin, or Windows_NT env var
+IS_WINDOWS=0
+if [[ "${OSTYPE:-}" == "msys"* ]] || \
+   [[ "${OSTYPE:-}" == "cygwin"* ]] || \
+   [[ "${OSTYPE:-}" == "mingw"* ]] || \
+   [[ "${OS:-}" == "Windows_NT" ]]; then
+    IS_WINDOWS=1
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Dispatch
+# ─────────────────────────────────────────────────────────────
+
+if [ "$IS_WINDOWS" -eq 1 ] && command -v powershell.exe &>/dev/null; then
+    # Windows Git Bash / MSYS / Cygwin — run PowerShell script
+    # Convert the path to Windows format for PowerShell
+    PS1_PATH="$(cygpath -w "$REPO_ROOT/check-before-push.ps1" 2>/dev/null || echo "$REPO_ROOT/check-before-push.ps1")"
+    # Symmetric existence check (mirrors the Unix branch below)
+    if [ ! -f "$REPO_ROOT/check-before-push.ps1" ]; then
+        echo "ERROR: check-before-push.ps1 not found at $REPO_ROOT/check-before-push.ps1" >&2
+        echo "Pre-push quality gate failed. Fix the issues above before pushing." >&2
+        echo "To skip this hook (not recommended): git push --no-verify" >&2
+        echo "To install this hook: git config core.hooksPath .githooks" >&2
+        exit 1
+    fi
+    exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PS1_PATH"
+    # exec replaces the process; exit code propagates automatically
+else
+    # Unix / macOS / Linux / WSL — run bash script
+    SH_PATH="$REPO_ROOT/check-before-push.sh"
+    if [ ! -f "$SH_PATH" ]; then
+        echo "ERROR: check-before-push.sh not found at $SH_PATH" >&2
+        exit 1
+    fi
+    exec bash "$SH_PATH"
+    # exec replaces the process; exit code propagates automatically
+fi
+
+# Fallback — should not be reached because exec replaces the process
+echo "Pre-push quality gate failed. Fix the issues above before pushing." >&2
+echo "To skip this hook (not recommended): git push --no-verify" >&2
+echo "To install this hook: git config core.hooksPath .githooks" >&2
+exit 1
