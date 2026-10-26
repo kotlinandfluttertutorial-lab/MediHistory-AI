@@ -17,7 +17,7 @@ junit              = "4.13.2"
 junit-ext          = "1.1.5"
 espresso           = "3.5.1"
 robolectric        = "4.12.2"
-androidx-test      = "1.5.0"
+androidx-test-core = "1.6.1"
 
 [libraries]
 # AndroidX Core
@@ -52,6 +52,7 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt",              name 
 androidx-room-runtime           = { group = "androidx.room",               name = "room-runtime",                    version.ref = "room" }
 androidx-room-ktx               = { group = "androidx.room",               name = "room-ktx",                        version.ref = "room" }
 androidx-room-compiler          = { group = "androidx.room",               name = "room-compiler",                   version.ref = "room" }
+androidx-room-testing           = { group = "androidx.room",               name = "room-testing",                    version.ref = "room" }
 
 # Coroutines
 kotlinx-coroutines-android      = { group = "org.jetbrains.kotlinx",       name = "kotlinx-coroutines-android",      version.ref = "coroutines" }
@@ -67,8 +68,8 @@ androidx-work-runtime-ktx       = { group = "androidx.work",               name 
 
 # Testing — unit
 junit                           = { group = "junit",                       name = "junit",                           version.ref = "junit" }
-androidx-test-core              = { group = "androidx.test",                name = "core",                            version.ref = "androidx-test" }
-robolectric                     = { group = "org.robolectric",              name = "robolectric",                      version.ref = "robolectric" }
+robolectric                     = { group = "org.robolectric",             name = "robolectric",                     version.ref = "robolectric" }
+androidx-test-core              = { group = "androidx.test",               name = "core",                            version.ref = "androidx-test-core" }
 
 # Testing — instrumented
 androidx-junit                  = { group = "androidx.test.ext",           name = "junit",                           version.ref = "junit-ext" }

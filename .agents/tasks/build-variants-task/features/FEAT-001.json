@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Android build variants: add local/cloud product flavors to build.gradle.kts, create AppConfig runtime object, network security config for cleartext on 10.0.2.2, flavor string resources, local.properties.example, and unit tests for AppConfig.",
+  "status": "pending",
+  "steps": [
+    "1. Modify android/app/build.gradle.kts: (a) Remove the existing single backendBaseUrl/BACKEND_BASE_URL block. (b) Add per-flavor URL reads: localApiBaseUrl reads 'local.api.base.url' from local.properties, falls back to project property 'LOCAL_API_BASE_URL', then to 'http://10.0.2.2:8000/api/v1/'. cloudApiBaseUrl reads 'cloud.api.base.url' from local.properties, falls back to project property 'CLOUD_API_BASE_URL', then to 'https://api.medihistory.example.com/api/v1/'. (c) Add signing config block: read KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD from System.getenv(); if KEYSTORE_PATH is non-null and the file exists create a release signingConfig named 'release', else print a Gradle warning and fall through to debug signing. (d) Add productFlavors block with dimension 'environment': flavor 'local' gets applicationIdSuffix='.local', versionNameSuffix='-local', buildConfigField API_BASE_URL=localApiBaseUrl, BUILD_VARIANT='local', IS_LOGGING_ENABLED=true. Flavor 'cloud' gets no suffix (preserves production ID), buildConfigField API_BASE_URL=cloudApiBaseUrl, BUILD_VARIANT='cloud', IS_LOGGING_ENABLED=false for release / true for debug (use buildType-aware logic: set IS_LOGGING_ENABLED=true in cloudDebug via buildTypes override or leave false in flavor and override in debug buildType). Simplest correct approach: set IS_LOGGING_ENABLED=false in the cloud flavor, then in the debug buildType add buildConfigField('Boolean','IS_LOGGING_ENABLED','true') — the more-specific buildType field wins for cloudDebug and localDebug. (e) In buildTypes.release: assign signingConfig if available. (f) Keep all existing settings (namespace, compileSdk, minSdk, targetSdk, versionCode, versionName, testInstrumentationRunner, Room schema export, compileOptions, kotlinOptions, buildFeatures, composeOptions, packaging, testOptions, ksp block, all dependencies) exactly as they are — only add to them.",
+    "2. Create android/app/src/main/res/xml/network_security_config.xml: allow cleartext traffic only for the domain '10.0.2.2' (Android Emulator host alias). All other domains use default (HTTPS only). This file lives in main/ not in a flavor source set because both debug and release local builds need it, and cloud production traffic is always HTTPS.",
+    "3. Modify android/app/src/main/AndroidManifest.xml: add android:networkSecurityConfig='@xml/network_security_config' attribute to the <application> element. No other changes.",
+    "4. Create android/app/src/local/res/values/strings.xml with <string name='app_name'>MediHistory AI Dev</string>. Create android/app/src/cloud/res/values/strings.xml with <string name='app_name'>MediHistory AI</string>. Remove app_name from android/app/src/main/res/values/strings.xml (replace content with just the resources root element, keeping any other strings that may exist). Note: currently strings.xml only has app_name so main/ version becomes an empty <resources/> stub, which is fine.",
+    "5. Create android/app/src/main/java/com/medihistory/ai/config/AppConfig.kt. This is an object (singleton) that reads from BuildConfig. Fields: apiBaseUrl: String = BuildConfig.API_BASE_URL, buildVariant: String = BuildConfig.BUILD_VARIANT, isLoggingEnabled: Boolean = BuildConfig.IS_LOGGING_ENABLED, isLocal: Boolean = BuildConfig.BUILD_VARIANT == 'local', isCloud: Boolean = BuildConfig.BUILD_VARIANT == 'cloud', connectTimeoutMs: Long = if (isLocal) 10_000L else 30_000L, readTimeoutMs: Long = if (isLocal) 30_000L else 60_000L, retryOnConnectionFailure: Boolean = false. Add KDoc. Package: com.medihistory.ai.config.",
+    "6. Create android/local.properties.example documenting all local.properties keys: sdk.dir, local.api.base.url (default http://10.0.2.2:8000/api/v1/), cloud.api.base.url (placeholder), signing keys (KEYSTORE_PATH etc. can also be env vars). Add a comment that this file is safe to commit; local.properties is git-ignored.",
+    "7. Create android/app/src/test/java/com/medihistory/ai/config/AppConfigTest.kt. Tests use Robolectric. Because BuildConfig values are compile-time constants, test AppConfig's derived properties using direct assertions against a local test double. Pattern: create a helper data class TestConfig(apiBaseUrl, buildVariant, isLoggingEnabled) that mirrors AppConfig's logic, then assert: isLocal is true when buildVariant='local', isCloud is true when buildVariant='cloud', connectTimeoutMs is 10000L for local and 30000L for cloud, readTimeoutMs is 30000L for local and 60000L for cloud, retryOnConnectionFailure is false. Follow naming convention: given_localVariant_when_checkingIsLocal_then_returnsTrue etc. Use synthetic values only. Do NOT import BuildConfig in the test (it would be the wrong variant). Test the logic, not the constant values.",
+    "8. Verify: from android/ run ./gradlew testLocalDebugUnitTest testCloudDebugUnitTest. Both variants must compile and all tests pass including AppConfigTest. Also run ./gradlew assembleLocalDebug assembleCloudDebug to confirm both APKs build successfully."
+  ],
+  "acceptance_criteria": [
+    "./gradlew assembleLocalDebug produces an APK with applicationId com.medihistory.ai.local",
+    "./gradlew assembleCloudDebug produces an APK with applicationId com.medihistory.ai",
+    "./gradlew assembleCloudRelease produces an APK with applicationId com.medihistory.ai (if signing env vars absent, build still succeeds using debug signing with a printed warning)",
+    "BuildConfig.API_BASE_URL equals 'http://10.0.2.2:8000/api/v1/' for localDebug when local.properties sets local.api.base.url",
+    "BuildConfig.IS_LOGGING_ENABLED is true for localDebug and cloudDebug, false for localRelease and cloudRelease",
+    "AppConfig.isLocal is true when BUILD_VARIANT='local', AppConfig.isCloud is true when BUILD_VARIANT='cloud'",
+    "AppConfig.connectTimeoutMs is 10000L for local, 30000L for cloud",
+    "network_security_config.xml restricts cleartext to 10.0.2.2 only",
+    "Local builds show app label 'MediHistory AI Dev'; cloud builds show 'MediHistory AI'",
+    "All AppConfigTest tests pass under ./gradlew testLocalDebugUnitTest",
+    "No secrets in any committed Kotlin, XML, or Gradle file"
+  ],
+  "verification": [
+    "cd android && ./gradlew testLocalDebugUnitTest testCloudDebugUnitTest",
+    "cd android && ./gradlew assembleLocalDebug assembleCloudDebug"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

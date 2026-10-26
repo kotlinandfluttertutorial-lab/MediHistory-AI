@@ -1,0 +1,9 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    "ADR-006: OCR output validation absent from Consequences — The Negative/Trade-offs sub-section must state that all OCR adapter output is untrusted and must be validated before persistence, per the tech and medical safety steering. Add a trade-off or constraint note to the Negative / Trade-offs sub-section.",
+    "ADR-006: On-device OCR alternative missing from Alternatives table — ML Kit (on-device OCR) is the primary architectural alternative to a cloud-service-based provider-independent interface and should appear in the table with its rejection rationale (accuracy on handwritten prescriptions, lack of structured field extraction).",
+    "ADR-002: fallbackToDestructiveMigration() scope unclear — The ADR states it is disabled in production but does not address debug or staging builds. Add a line clarifying it is disabled in all build variants, or document the deliberate exception and its safeguards."
+  ],
+  "reviewDoc": "j:\\Android\\AndroidStudioProjects\\Kiro\\MediHistory-AI\\docs\\architecture\\adr\\.review.md"
+}

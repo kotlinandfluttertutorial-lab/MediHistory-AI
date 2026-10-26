@@ -1,0 +1,7 @@
+{
+  "task_id": "task-build-variants",
+  "task_description": "Implement complete build-variant system for MediHistory AI: Android local/cloud product flavors with BuildConfig fields and AppConfig, FastAPI backend foundation with Pydantic Settings, Docker/Compose files, updated GitHub Actions CI, and deployment documentation.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
