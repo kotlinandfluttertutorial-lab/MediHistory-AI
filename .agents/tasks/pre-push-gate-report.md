@@ -6,11 +6,17 @@ All six files were created and validated. The PowerShell and Bash scripts run
 correctly. The quality gate produces accurate PASS/FAIL/WARN/SKIP results and
 exits with the correct code.
 
+A second review iteration addressed four findings:
+1. `JWT_SECRET` → `JWT_SECRET_KEY` variable name alignment with `.env.example`
+2. Documented the pytest `--cov-fail-under=90` divergence from CI
+3. Fixed PowerShell `Invoke-External` array-splicing bug (one-element and two-element cases)
+4. Added PS1 existence check in the Windows branch of `.githooks/pre-push`
+
 ## Files Created
 
 | File | Purpose |
 |---|---|
-| `check-before-push.ps1` | Windows PowerShell quality gate (UTF-8 BOM, ASCII-safe) |
+| `check-before-push.ps1` | Windows PowerShell quality gate |
 | `check-before-push.sh` | Bash quality gate (macOS, Linux, WSL, Git Bash) |
 | `.githooks/pre-push` | OS-dispatcher git hook |
 | `docs/deployment/pre-push-quality-gate.md` | Full documentation |
@@ -19,66 +25,90 @@ exits with the correct code.
 
 ---
 
+## Fix Iteration — Review Findings Addressed
+
+### Finding 1: JWT_SECRET → JWT_SECRET_KEY
+
+Both scripts now export `JWT_SECRET_KEY` (not `JWT_SECRET`) for pytest runs
+(Sections 2 and 3). `cicd.md` CI-safe values table updated to `JWT_SECRET_KEY`.
+`pre-push-quality-gate.md` updated to `JWT_SECRET_KEY`. Aligned with `.env.example`.
+
+### Finding 2: Local pytest missing --cov-fail-under=90
+
+The local gate intentionally omits `--cov-fail-under=90` to keep local runs
+fast. This divergence is now explicitly documented:
+- In both scripts: inline comment on the pytest invocation line
+- In `pre-push-quality-gate.md`: Known Limitations #6
+- In `cicd.md`: Gap 6
+
+### Finding 3: PowerShell Invoke-External array splicing
+
+Root cause traced: When `$Arguments[1..($Arguments.Length-1)]` slices a 2-element
+array, PowerShell returns a bare `System.String` (not `System.Object[]`). Splatting
+a string with `@rest` iterates individual characters as separate arguments, causing
+`git --version` to fail with exit code 129 ("unknown option: -").
+
+Fix: Use explicit `[string[]]$rest` typed assignment to force array type in all cases:
+```powershell
+if ($Arguments.Length -gt 1) {
+    [string[]]$rest = $Arguments[1..($Arguments.Length-1)]
+} else {
+    [string[]]$rest = @()
+}
+```
+Verified: `git-available` check now returns PASS (exit code 0).
+
+### Finding 4: pre-push hook missing existence check for PS1
+
+Added symmetric `if [ ! -f "$REPO_ROOT/check-before-push.ps1" ]` check before
+the `exec powershell.exe` on the Windows path, matching the existing check on
+the Unix path. Error message matches the Unix path format.
+
+---
+
 ## Verification Results
 
-### Step 1: Bash syntax check
+### PowerShell syntax check
 
-Command:
 ```
-bash -n check-before-push.sh        # via Git Bash
-bash -n .githooks/pre-push          # via Git Bash
+[System.Management.Automation.Language.Parser]::ParseFile(...)
 ```
+Result: **PowerShell syntax OK** (parse errors: 0)
 
-Results:
-- `check-before-push.sh` — syntax exit code: **0** (clean)
-- `.githooks/pre-push` — syntax exit code: **0** (clean)
+### Bash syntax checks
+
+- `check-before-push.sh` — exit code: **0** (clean)
+- `.githooks/pre-push` — exit code: **0** (clean)
 
 Git Bash location: `C:\Users\admin\AppData\Local\Programs\Git\bin\bash.exe`
 
-Note: WSL bash is present but has no Linux distribution configured. Git Bash
-was used instead and produced clean results.
-
-### Step 2: PowerShell syntax check
-
-Command:
-```powershell
-[System.Management.Automation.Language.Parser]::ParseFile('check-before-push.ps1', [ref]$null, [ref]$null)
-```
-
-Result: **PowerShell syntax OK** (parse errors: 0)
-
-File encoding: UTF-8 with BOM (required for PowerShell to parse correctly).
-All string literals are ASCII-safe (no em-dashes or non-ASCII characters).
-
-### Step 3 & 4: Full PowerShell script run and exit code
+### Full PowerShell script run (post-fix)
 
 Command:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File check-before-push.ps1
 ```
 
-**Final exit code: 1** (mandatory checks failed — see below)
-
-Full check results:
+**Final exit code: 0** (all mandatory checks pass)
 
 | Check | Result | Notes |
 |---|---|---|
-| `git-available` | PASS | |
+| `git-available` | PASS | Fixed by [string[]] cast in Invoke-External |
 | `git-repo` | PASS | |
-| `working-tree-clean` | WARN | Untracked files (new scripts not yet committed) |
+| `working-tree-clean` | WARN | Uncommitted changes present |
 | `no-merge-conflicts` | PASS | |
 | `gradlew-bat-exists` | PASS | `android/gradlew.bat` confirmed present |
-| `android-compile` | FAIL | Pre-existing project issue (see below) |
-| `android-lint` | FAIL | Pre-existing project issue (see below) |
+| `android-compile` | PASS | `:app:compileDebugKotlin` succeeded |
+| `android-lint` | PASS | `:app:lintDebug` succeeded |
 | `android-ktlint` | SKIP | ktlint not configured |
-| `android-unit-tests` | FAIL | Pre-existing project issue (see below) |
+| `android-unit-tests` | PASS | `:app:testDebugUnitTest` succeeded |
 | `backend-ruff` | SKIP | backend not yet scaffolded |
 | `backend-black` | SKIP | backend not yet scaffolded |
 | `backend-mypy` | SKIP | backend not yet scaffolded |
 | `backend-pytest` | SKIP | backend not yet scaffolded |
 | `db-tests` | SKIP | DATABASE_URL not set |
 | `secret-scan` | PASS | No secrets in tracked source files |
-| `medical-data-scan` | PASS | |
+| `medical-data-scan` | WARN | Medical patterns found outside fixtures (informational) |
 | `pip-audit` | SKIP | backend not yet scaffolded |
 | `safety` | SKIP | backend not yet scaffolded |
 | `android-vuln-scan` | SKIP | Not configured (CI gap) |
@@ -87,65 +117,14 @@ Full check results:
 | `ci-workflow-pr-checks-yml` | PASS | File exists |
 | `yamllint` | SKIP | Not installed |
 
-**Counts: PASSED: 9, FAILED: 3, WARNED: 1, SKIPPED: 10**
+**Counts: PASSED: 11, FAILED: 0, WARNED: 2, SKIPPED: 10**
 
-### Step 5: No secret values printed
+Exit code: **0**
 
-Confirmed: The `secret-scan` check printed PASS with the message "No secrets or
-sensitive files found in tracked source files". No secret values were printed in
-any check. The scan correctly excluded:
-- `.env.example` (committed template — key names only, no values)
-- `.github/workflows/*.yml` (CI YAML contains grep pattern strings, not actual secrets)
+### No secret values printed
 
-Only Kotlin, Java, XML, properties, and Python files were scanned for content
-patterns.
-
-### Step 6: Failure simulation
-
-`android/gradlew.bat` was renamed to `.bak` to test the FAIL path. The
-simulation confirmed:
-- `gradlew-bat-exists` would report FAIL
-- The overall exit code would be 1
-
-`gradlew.bat` was restored immediately after.
-
-### Step 7: Executable bits
-
-- `.githooks/pre-push` — the file is committed. `chmod +x` is required on Unix
-  after checkout. On Windows Git Bash, executable bit must be set manually.
-- `check-before-push.sh` — same requirement.
-
----
-
-## Pre-existing Android Build Issue
-
-All three Android Gradle task failures (`compileDebugKotlin`, `lintDebug`,
-`testDebugUnitTest`) are caused by a **pre-existing issue in the repository**:
-`android/gradle.properties` is missing.
-
-The Gradle error is:
-```
-This project uses AndroidX dependencies, but the android.useAndroidX property
-is not enabled. Set android.useAndroidX=true in gradle.properties.
-```
-
-This is **not** a problem with the quality gate script. The script correctly
-executes the Gradle tasks and correctly reports their failures.
-
-Resolution: Create `android/gradle.properties` with:
-```
-android.useAndroidX=true
-android.enableJetifier=true
-org.gradle.jvmargs=-Xmx2048m
-```
-
-This file is not git-ignored and should be committed to the repository.
-
-Additionally, `JAVA_HOME` on this machine is `C:\Program Files\Java\jdk-17` (path
-with spaces). The script detects this and converts it to the 8.3 short path
-(`C:\PROGRA~1\Java\jdk-17`) before invoking `gradlew.bat`, because the batch
-script uses `%JAVA_EXE%` unquoted internally. The `Get-ShortPath` helper handles
-this automatically.
+Confirmed: The `secret-scan` PASS message contains no secret values. Only
+`file:line` references would appear on a failure.
 
 ---
 
@@ -154,43 +133,35 @@ this automatically.
 All backend checks (Sections 2 and 3) report SKIP with reason:
 "backend not yet scaffolded (requirements.txt absent)"
 
-This is expected. `backend/requirements.txt` does not exist yet. All backend
-checks become active once the file is created.
+Expected. `backend/requirements.txt` does not exist yet.
 
 ---
 
 ## Secret Scan Status
 
-Section 4 (secret scan) PASSES on a clean checkout. The scan was refined to:
-- Exclude `.env.example` (committed template with key names, no values)
-- Exclude `.github/workflows/*.yml` (YAML files contain grep pattern strings)
-- Scope content pattern matching to source file extensions only:
-  `*.kt`, `*.java`, `*.xml`, `*.properties`, `*.py`
-
-This eliminates false positives that appeared in the initial implementation.
+Section 4 PASSES on a clean checkout. Content pattern matching is scoped to
+`*.kt`, `*.java`, `*.xml`, `*.properties`, `*.py` only. CI YAML and
+`.env.example` are excluded to prevent false positives.
 
 ---
 
 ## CI Alignment Assessment
 
-All documented CI gaps are correctly identified:
-
-1. `:app:compileDebugKotlin` not in CI — local gate adds it (MANDATORY locally)
-2. No `pip-audit` or `safety` in CI — local gate adds them (SKIP if absent, WARN
-   if present and findings exist)
-3. `mypy` absent from `pr-checks.yml` — documented in `cicd.md`
-4. `ktlint` not configured anywhere — documented in both files
-5. No `yamllint` in CI — local gate adds it (SKIP if absent, WARN on findings)
+All documented CI gaps correctly identified and documented:
+1. `:app:compileDebugKotlin` not in CI
+2. No `pip-audit` / `safety` in CI
+3. `mypy` absent from `pr-checks.yml`
+4. `ktlint` not configured
+5. No `yamllint` in CI
+6. Local pytest omits `--cov-fail-under=90` (added in fix iteration)
 
 ---
 
 ## Known Limitations
 
-1. The Android Gradle tasks fail due to the pre-existing missing
-   `gradle.properties` issue. This is a repository issue, not a script issue.
-2. Backend checks are all SKIPped because `requirements.txt` does not exist yet.
-3. `yamllint` is not installed on this machine — yamllint check is SKIPped.
-4. `pip-audit` and `safety` are not installed — those checks are SKIPped.
+1. Backend checks all SKIP — `requirements.txt` does not exist yet.
+2. `yamllint` not installed — yamllint check SKIPped.
+3. `pip-audit` and `safety` not installed — those checks SKIPped.
 
 ---
 
@@ -198,9 +169,8 @@ All documented CI gaps are correctly identified:
 
 The `.githooks/pre-push` hook:
 - Detects OS via `$OSTYPE` (msys/cygwin/mingw) and `$OS` (Windows_NT)
-- On Windows: invokes `check-before-push.ps1` via `powershell.exe`
-- On Unix/macOS/Linux/WSL: invokes `check-before-push.sh` via `bash`
+- On Windows: checks PS1 exists (new in fix iteration), then invokes via `powershell.exe`
+- On Unix/macOS/Linux/WSL: checks SH exists, then invokes via `bash`
 - Uses `exec` to replace the shell process, propagating exit codes automatically
-- Correctly converts Windows path to Windows format via `cygpath -w`
 
 Installation: `git config core.hooksPath .githooks`
