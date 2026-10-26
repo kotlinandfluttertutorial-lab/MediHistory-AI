@@ -186,7 +186,7 @@ for pattern in "${!JUNK_DIRS[@]}"; do
 done
 
 # Sensitive files (not .env.example -- that is the committed template)
-SENSITIVE_PATTERNS=(".env" "google-services.json" "local.properties" "*.keystore" "*.jks")
+SENSITIVE_PATTERNS=(".env" "google-services.json" "local.properties" "*.keystore" "*.jks" "service-account*.json")
 for pat in "${SENSITIVE_PATTERNS[@]}"; do
     TRACKED="$(git ls-files -- "$pat" 2>/dev/null)"
     if [ -n "$TRACKED" ]; then
@@ -362,6 +362,8 @@ else
     print_info "DATABASE_URL is set (value not shown)"
     if [ ! -f "$REQUIREMENTS_FILE" ]; then
         check_result "db-tests" "SKIP" "backend not yet scaffolded -- no tests to run"
+    elif [ -z "$PYTHON" ]; then
+        check_result "db-tests" "SKIP" "no Python interpreter found -- db tests skipped"
     else
         print_info "Running pytest tests/ -m db (OPTIONAL -- WARN on failure)"
         export JWT_SECRET_KEY="test-jwt-secret-for-ci-only-not-a-real-secret"
@@ -421,6 +423,8 @@ CONTENT_PATTERNS=(
     "ENCRYPTION_KEY="
     "KEY_PASSWORD="
     "hardcoded_secret"
+    "password=\""
+    "password='"
 )
 
 for pattern in "${CONTENT_PATTERNS[@]}"; do
