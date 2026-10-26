@@ -1,6 +1,7 @@
 package com.medihistory.ai.data.database
 
 import androidx.room.TypeConverter
+import com.medihistory.ai.data.model.DoctorSpecialty
 import java.time.LocalDate
 
 class Converters {
@@ -25,6 +26,14 @@ class Converters {
         if (value.isNullOrEmpty()) return null
         return value.splitEscaped(',')
     }
+
+    // --- DoctorSpecialty <-> String ---
+
+    @TypeConverter
+    fun fromDoctorSpecialty(specialty: DoctorSpecialty): String = specialty.name
+
+    @TypeConverter
+    fun toDoctorSpecialty(value: String): DoctorSpecialty = DoctorSpecialty.valueOf(value)
 
     // --- private helpers ---
 

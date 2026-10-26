@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 
 /**
  * Root NavHost for MediHistory AI.
@@ -33,7 +34,10 @@ fun MediHistoryNavHost(
             PlaceholderScreen(name = "Dashboard")
         }
         composable(Routes.PRESCRIPTIONS) {
-            PlaceholderScreen(name = "Prescriptions")
+            PrescriptionListScreen(
+                onPrescriptionClick = { id -> navController.navigate(Routes.prescriptionDetail(id)) },
+                onAddPrescription = {},
+            )
         }
         composable(Routes.MEDICINE_EXPLORER) {
             PlaceholderScreen(name = "Medicine Explorer")
