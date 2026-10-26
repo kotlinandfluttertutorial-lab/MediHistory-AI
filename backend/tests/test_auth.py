@@ -18,8 +18,8 @@ from fastapi.testclient import TestClient
 # Set a synthetic JWT secret before importing anything that reads it at module level.
 os.environ.setdefault("JWT_SECRET_KEY", "synthetic-test-secret-key-for-ci-only")
 
-from app.main import app  # noqa: E402 — must import after env var is set
-from app.core.security import get_current_patient  # noqa: E402
+from app.core.security import get_current_patient
+from app.main import app
 
 # ---------------------------------------------------------------------------
 # Synthetic test data — never use real credentials
@@ -44,6 +44,7 @@ def client() -> TestClient:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 def test_login_valid_credentials_returns_200(client: TestClient) -> None:
     response = client.post(
@@ -76,9 +77,9 @@ def test_login_response_has_access_token(client: TestClient) -> None:
 
 def test_protected_endpoint_without_token_returns_401(client: TestClient) -> None:
     response = client.get("/test-protected")
-    assert response.status_code == 401, (
-        f"Unauthenticated request must return 401; got {response.status_code}"
-    )
+    assert (
+        response.status_code == 401
+    ), f"Unauthenticated request must return 401; got {response.status_code}"
 
 
 def test_token_value_not_in_logs(

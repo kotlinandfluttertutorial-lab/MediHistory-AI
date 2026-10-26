@@ -7,6 +7,8 @@ POST /auth/login  — accepts LoginRequest, returns TokenResponse on success,
 Security: the token value is NEVER written to any log.
 """
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.schemas.auth import LoginRequest, TokenResponse
@@ -30,7 +32,7 @@ def _get_auth_service() -> AuthService:
 )
 async def login(
     request: LoginRequest,
-    auth_service: AuthService = Depends(_get_auth_service),
+    auth_service: Annotated[AuthService, Depends(_get_auth_service)],
 ) -> TokenResponse:
     """
     Authenticate a patient and return a JWT.

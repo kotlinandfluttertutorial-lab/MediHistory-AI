@@ -11,7 +11,7 @@ Security invariants:
 """
 
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 import jwt
 
@@ -39,7 +39,7 @@ class AuthService:
         if email != _SYNTHETIC_EMAIL or password != _SYNTHETIC_PASSWORD:
             return None
 
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         payload = {
             "sub": _SYNTHETIC_PATIENT_ID,
             "exp": now + timedelta(hours=_TOKEN_TTL_HOURS),

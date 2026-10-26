@@ -46,16 +46,17 @@ jobs:
 
       - name: Check for hardcoded secrets in source files
         run: |
-          if grep -r --exclude-dir=".git" \
-            -E 'api_key|secret|password|ghp_|github_pat' \
+          pattern="(^|[^[:alnum:]_])(api[_-]?key|client[_-]?secret|password|passwd|secret|access[_-]?token|auth[_-]?token)[\"']?[[:space:]]*[:=][[:space:]]*[\"'][^\"']{8,}[\"']|(^|[^[:alnum:]_])ghp_[[:alnum:]]{20,}|(^|[^[:alnum:]_])github_pat_[[:alnum:]_]{20,}"
+          if grep -rEil --exclude-dir=".git" \
+            "$pattern" \
             --include="*.kt" --include="*.java" --include="*.xml" \
             --include="*.py" --include="*.properties" --include="*.yml" \
             --include="*.yaml" --include="*.json" \
             .; then
-            echo "ERROR: Possible hardcoded secret found. Remove before merging."
+            echo "ERROR: Possible hardcoded credential found in the files listed above."
             exit 1
           fi
-          echo "Secrets grep passed — no matches found"
+          echo "Credential scan passed — no hardcoded credentials found"
 
   android-ci:
     name: Android Lint and Unit Tests

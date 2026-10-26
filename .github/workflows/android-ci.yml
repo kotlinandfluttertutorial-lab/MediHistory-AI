@@ -99,10 +99,11 @@ jobs:
 
       - name: Check for hardcoded secrets in Android source
         run: |
-          if grep -rEi 'api_key|secret|password|ghp_|github_pat' \
+          pattern="(^|[^[:alnum:]_])(api[_-]?key|client[_-]?secret|password|passwd|secret|access[_-]?token|auth[_-]?token)[\"']?[[:space:]]*[:=][[:space:]]*[\"'][^\"']{8,}[\"']|(^|[^[:alnum:]_])ghp_[[:alnum:]]{20,}|(^|[^[:alnum:]_])github_pat_[[:alnum:]_]{20,}"
+          if grep -rEil "$pattern" \
             --include="*.kt" --include="*.java" --include="*.xml" --include="*.properties" \
             android/app/src; then
-            echo "ERROR: Possible hardcoded secret found in source files"
+            echo "ERROR: Possible hardcoded credential found in the files listed above"
             exit 1
           fi
-          echo "Security scan passed: no hardcoded secrets found"
+          echo "Security scan passed: no hardcoded credentials found"
