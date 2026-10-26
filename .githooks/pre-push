@@ -35,6 +35,17 @@ if [[ "${OSTYPE:-}" == "msys"* ]] || \
     IS_WINDOWS=1
 fi
 
+# WSL2 exports $OS=Windows_NT (matching the condition above) but it is a Linux
+# environment where powershell.exe is the Windows binary from /mnt/c/Windows/System32
+# and cygpath is unavailable, so passing a Linux path to PowerShell.exe fails.
+# Detect WSL via the kernel version string and override IS_WINDOWS=0 before the
+# PowerShell dispatch so WSL always runs the bash script.
+_KERNEL="$(uname -r 2>/dev/null || true)"
+if [[ "$_KERNEL" == *microsoft* ]] || [[ "$_KERNEL" == *Microsoft* ]]; then
+    IS_WINDOWS=0
+fi
+unset _KERNEL
+
 # ─────────────────────────────────────────────────────────────
 # Dispatch
 # ─────────────────────────────────────────────────────────────

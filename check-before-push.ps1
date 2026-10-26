@@ -409,6 +409,8 @@ if (-not $dbUrl) {
     Write-Info "DATABASE_URL is set (value not shown)"
     if (-not (Test-Path $REQUIREMENTS_FILE)) {
         Write-CheckResult "db-tests" "SKIP" "backend not yet scaffolded -- no tests to run"
+    } elseif (-not $PYTHON) {
+        Write-CheckResult "db-tests" "SKIP" "no Python interpreter found -- db tests skipped"
     } else {
         Write-Info "Running pytest tests/ -m db (OPTIONAL -- WARN on failure)"
         $env:JWT_SECRET_KEY = "test-jwt-secret-for-ci-only-not-a-real-secret"
