@@ -11,6 +11,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.camera.CameraScreen
+import com.medihistory.ai.ui.picker.ImportScreen
+import com.medihistory.ai.ui.prescription.PrescriptionDetailScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 
 /**
@@ -52,8 +55,11 @@ fun MediHistoryNavHost(
             route = Routes.PRESCRIPTION_DETAIL,
             arguments = listOf(navArgument("prescriptionId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("prescriptionId").orEmpty()
-            PlaceholderScreen(name = "Prescription Detail ($id)")
+            PrescriptionDetailScreen(
+                prescriptionId = backStackEntry.arguments?.getString("prescriptionId") ?: "",
+                patientId = "",
+                onBack = { navController.navigateUp() },
+            )
         }
         composable(
             route = Routes.MEDICINE_DETAIL,
@@ -61,6 +67,18 @@ fun MediHistoryNavHost(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("medicineId").orEmpty()
             PlaceholderScreen(name = "Medicine Detail ($id)")
+        }
+        composable(Routes.CAMERA) {
+            CameraScreen(
+                onImageConfirmed = { _, _ -> navController.navigateUp() },
+                onDismiss = { navController.navigateUp() },
+            )
+        }
+        composable(Routes.IMPORT) {
+            ImportScreen(
+                onFileImported = { _, _, _ -> navController.navigateUp() },
+                onDismiss = { navController.navigateUp() },
+            )
         }
     }
 }

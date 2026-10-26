@@ -155,6 +155,9 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
+    // Accompanist — runtime permissions in Compose
+    implementation(libs.accompanist.permissions)
+
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
