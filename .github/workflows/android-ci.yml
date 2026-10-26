@@ -7,8 +7,8 @@ on:
     branches: [ develop ]
 
 jobs:
-  android-lint-and-test:
-    name: Lint and Unit Tests
+  lint:
+    name: Android Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +24,6 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
-        working-directory: ${{github.workspace}}
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -40,18 +39,48 @@ jobs:
         run: ./gradlew lintDebug
         working-directory: android
 
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
-        working-directory: android
-        env:
-          BACKEND_BASE_URL: ${{vars.BACKEND_BASE_URL || 'http://localhost:8000'}}
-
       - name: Upload lint results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lint-results
           path: android/app/build/reports/lint-results-debug.html
+
+  unit-test:
+    name: Android Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{runner.os}}-gradle-${{hashFiles('**/*.gradle*', '**/libs.versions.toml')}}
+          restore-keys: |
+            ${{runner.os}}-gradle-
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+        working-directory: android
+        env:
+          BACKEND_BASE_URL: ""
+          ENABLE_CLOUD_BACKUP: "false"
+          ENABLE_INTERACTION_CHECK: "false"
 
       - name: Upload test results
         if: always()
@@ -60,12 +89,20 @@ jobs:
           name: unit-test-results
           path: android/app/build/reports/tests/testDebugUnitTest/
 
-      - name: Security check — no hardcoded secrets
+  security-scan:
+    name: Android Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets in Android source
         run: |
-          if grep -r --include="*.kt" --include="*.java" --include="*.xml" \
-            -E '(api_key|apiKey|API_KEY|secret|password|token)\s*=\s*"[^"]{8,}"' \
-            android/app/src/main/; then
+          if grep -rEi 'api_key|secret|password|ghp_|github_pat' \
+            --include="*.kt" --include="*.java" --include="*.xml" --include="*.properties" \
+            android/app/src; then
             echo "ERROR: Possible hardcoded secret found in source files"
             exit 1
           fi
-          echo "Security check passed: no obvious hardcoded secrets found"
+          echo "Security scan passed: no hardcoded secrets found"
