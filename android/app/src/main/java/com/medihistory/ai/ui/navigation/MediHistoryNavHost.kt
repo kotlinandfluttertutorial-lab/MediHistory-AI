@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 
 /**
@@ -61,6 +62,15 @@ fun MediHistoryNavHost(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("medicineId").orEmpty()
             PlaceholderScreen(name = "Medicine Detail ($id)")
+        }
+        composable(Routes.CAMERA) {
+            PlaceholderScreen(name = "Camera")
+        }
+        composable(Routes.IMPORT) {
+            ImportScreen(
+                onFileImported = { _, _, _ -> navController.navigateUp() },
+                onDismiss = { navController.navigateUp() },
+            )
         }
     }
 }
