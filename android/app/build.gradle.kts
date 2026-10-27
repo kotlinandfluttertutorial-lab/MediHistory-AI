@@ -36,6 +36,8 @@ android {
     namespace = "com.medihistory.ai"
     compileSdk = 34
 
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
+
     defaultConfig {
         applicationId = "com.medihistory.ai"
         minSdk = 26
