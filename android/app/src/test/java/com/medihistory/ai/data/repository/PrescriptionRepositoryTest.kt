@@ -5,8 +5,10 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.medihistory.ai.data.database.MediHistoryDatabase
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.model.Prescription
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -39,6 +41,18 @@ class PrescriptionRepositoryTest {
         db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+        runBlocking {
+            listOf("test-patient-001", "test-patient-002", "test-patient-999").forEach { id ->
+                db.patientDao().insert(
+                    Patient(
+                        id = id,
+                        name = "Synthetic Test Patient",
+                        createdAt = 1_700_000_000_000L,
+                        updatedAt = 1_700_000_000_000L,
+                    ),
+                )
+            }
+        }
         repository = RoomPrescriptionRepository(db.prescriptionDao())
     }
 

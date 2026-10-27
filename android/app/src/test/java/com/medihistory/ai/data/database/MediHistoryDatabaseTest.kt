@@ -38,15 +38,15 @@ class MediHistoryDatabaseTest {
     }
 
     @Test
-    fun `should report schema version 5`() {
+    fun `should report schema version 6`() {
         val context: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         val version = db!!.openHelper.readableDatabase.version
         assertEquals(
-            "Schema version must be 5 (extracted_fields + medicines added in MA-35)",
-            5,
+            "Schema version must be 6 (duplicate alerts added)",
+            6,
             version,
         )
     }
@@ -67,5 +67,14 @@ class MediHistoryDatabaseTest {
             .allowMainThreadQueries()
             .build()
         assertNotNull("prescriptionDao must not be null", db!!.prescriptionDao())
+    }
+
+    @Test
+    fun `should expose duplicateAlertDao`() {
+        val context: Context = ApplicationProvider.getApplicationContext()
+        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        assertNotNull("duplicateAlertDao must not be null", db!!.duplicateAlertDao())
     }
 }

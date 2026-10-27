@@ -35,4 +35,20 @@ class DatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun `given version 5 schema, when migrated, then duplicate alerts table is created`() {
+        helper.createDatabase(TEST_DB, 5).close()
+
+        helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6).use { db ->
+            assert(db.version == 6) {
+                "Expected database version 6 but was ${db.version}"
+            }
+            db.query("SELECT * FROM duplicate_alerts").use { cursor ->
+                assert(cursor.columnNames.contains("patientId")) {
+                    "Expected duplicate_alerts to include patientId"
+                }
+            }
+        }
+    }
 }
