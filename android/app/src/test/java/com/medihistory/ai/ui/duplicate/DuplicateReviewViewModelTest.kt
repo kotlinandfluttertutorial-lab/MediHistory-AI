@@ -256,6 +256,9 @@ private class FakeDuplicateAlertDao : DuplicateAlertDao {
     override fun observeByPatient(patientId: String): Flow<List<DuplicateAlert>> =
         _alerts.map { list -> list.filter { it.patientId == patientId } }
 
+    override fun observeUnreviewedCount(patientId: String): Flow<Int> =
+        observeByPatient(patientId).map { alerts -> alerts.count { !it.isReviewed } }
+
     override suspend fun insert(alert: DuplicateAlert) {
         _alerts.update { current ->
             if (current.any { it.id == alert.id }) current
