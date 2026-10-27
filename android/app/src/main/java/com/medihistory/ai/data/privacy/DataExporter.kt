@@ -148,6 +148,6 @@ object DataExporter {
         val outputFile = File(context.cacheDir, "mha_export_${patientId}_${timestamp}.json")
         outputFile.writeText(exportJson.toString(2))
 
-        outputFile
+        return outputFile
     }
 }
