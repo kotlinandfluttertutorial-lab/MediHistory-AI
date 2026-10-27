@@ -15,6 +15,8 @@ import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 import com.medihistory.ai.ui.camera.CameraScreen
+import com.medihistory.ai.ui.privacy.PrivacyScreen
+import com.medihistory.ai.ui.safety.SafetyCenterScreen
 
 /**
  * Root NavHost for MediHistory AI.
@@ -77,6 +79,28 @@ fun MediHistoryNavHost(
             ImportScreen(
                 onFileImported = { _, _, _ -> navController.navigateUp() },
                 onDismiss = { navController.navigateUp() },
+            )
+        }
+        composable(
+            route = Routes.SAFETY_CENTER,
+            arguments = listOf(navArgument("patientId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId").orEmpty()
+            SafetyCenterScreen(
+                patientId = patientId,
+                onViewDuplicates = { navController.navigate(Routes.DUPLICATE_ALERTS) },
+                onBack = { navController.navigateUp() },
+            )
+        }
+        composable(Routes.PRIVACY) {
+            PrivacyScreen(
+                patientId = "current-patient",
+                onDataDeleted = {
+                    navController.navigate(Routes.DASHBOARD) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onBack = { navController.navigateUp() },
             )
         }
     }

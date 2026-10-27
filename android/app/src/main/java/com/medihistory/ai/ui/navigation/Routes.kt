@@ -10,7 +10,10 @@ object Routes {
     const val CAMERA = "camera"
     const val PRESCRIPTION_DETAIL = "prescription/{prescriptionId}"
     const val MEDICINE_DETAIL = "medicine/{medicineId}"
+    const val SAFETY_CENTER = "safety_center/{patientId}"
+    const val PRIVACY = "privacy"
 
     fun prescriptionDetail(id: String) = "prescription/$id"
     fun medicineDetail(id: String) = "medicine/$id"
+    fun safetyCenter(patientId: String) = "safety_center/$patientId"
 }
