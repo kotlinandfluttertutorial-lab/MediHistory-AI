@@ -91,7 +91,13 @@ class MedicineListViewModelTest {
     @Test
     fun should_filter_results_when_onSearchQueryChange_called() = runTest {
         fakeRepository.add(syntheticMedicine(id = "med-001", medicineName = "Synthamol 500mg"))
-        fakeRepository.add(syntheticMedicine(id = "med-002", medicineName = "Testocillin 250mg"))
+        fakeRepository.add(
+            syntheticMedicine(
+                id = "med-002",
+                medicineName = "Testocillin 250mg",
+                activeIngredient = "Testocillinide",
+            ),
+        )
 
         viewModel.loadMedicines("test-patient-001")
         advanceUntilIdle()

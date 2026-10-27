@@ -120,7 +120,11 @@ class MedicineRepositoryTest {
         repository.insertAll(
             listOf(
                 syntheticMedicine(id = "med-001", medicineName = "Synthamol 500mg"),
-                syntheticMedicine(id = "med-002", medicineName = "Testocillin 250mg"),
+                syntheticMedicine(
+                    id = "med-002",
+                    medicineName = "Testocillin 250mg",
+                    activeIngredient = "Testocillinide",
+                ),
             )
         )
 
