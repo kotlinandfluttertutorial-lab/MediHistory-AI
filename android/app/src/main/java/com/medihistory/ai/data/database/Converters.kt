@@ -2,6 +2,7 @@ package com.medihistory.ai.data.database
 
 import androidx.room.TypeConverter
 import com.medihistory.ai.data.model.DoctorSpecialty
+import com.medihistory.ai.data.model.MatchType
 import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.ocr.ReviewState
@@ -61,6 +62,14 @@ class Converters {
 
     @TypeConverter
     fun toReviewState(value: String): ReviewState = ReviewState.valueOf(value)
+
+    // --- MatchType <-> String ---
+
+    @TypeConverter
+    fun fromMatchType(matchType: MatchType): String = matchType.name
+
+    @TypeConverter
+    fun toMatchType(value: String): MatchType = MatchType.valueOf(value)
 
     // --- private helpers ---
 

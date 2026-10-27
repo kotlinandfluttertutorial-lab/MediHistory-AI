@@ -147,6 +147,30 @@ private val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+/** Migration from v5 (medicines and extracted fields) to v6 (adds duplicate alerts — MA-37). */
+internal val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `duplicate_alerts` (
+                `id` TEXT NOT NULL,
+                `patientId` TEXT NOT NULL,
+                `medicineAId` TEXT NOT NULL,
+                `medicineBId` TEXT NOT NULL,
+                `matchingIngredient` TEXT NOT NULL,
+                `matchType` TEXT NOT NULL,
+                `confidence` REAL NOT NULL,
+                `isReviewed` INTEGER NOT NULL,
+                `reviewedAt` INTEGER,
+                `combinationNote` TEXT,
+                `createdAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -161,7 +185,13 @@ object DatabaseModule {
             MediHistoryDatabase::class.java,
             MediHistoryDatabase.DATABASE_NAME,
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+            )
             .build()
     // fallbackToDestructiveMigration() intentionally omitted — migrations are always explicit
 }
