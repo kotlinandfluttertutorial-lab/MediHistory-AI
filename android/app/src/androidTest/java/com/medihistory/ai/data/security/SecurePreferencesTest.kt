@@ -48,7 +48,7 @@ class SecurePreferencesTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should store and retrieve a string value`() {
+    fun shouldStoreAndRetrieveStringValue() {
         securePreferences.putString("test_key", "synthetic_value")
 
         val result = securePreferences.getString("test_key")
@@ -57,7 +57,7 @@ class SecurePreferencesTest {
     }
 
     @Test
-    fun `should store and retrieve access token via KEY_ACCESS_TOKEN`() {
+    fun shouldStoreAndRetrieveAccessToken() {
         val syntheticToken = "synthetic.jwt.token.for.ci.testing"
         securePreferences.putString(SecurePreferences.KEY_ACCESS_TOKEN, syntheticToken)
 
@@ -71,7 +71,7 @@ class SecurePreferencesTest {
     }
 
     @Test
-    fun `should store and retrieve patient ID via KEY_PATIENT_ID`() {
+    fun shouldStoreAndRetrievePatientId() {
         securePreferences.putString(SecurePreferences.KEY_PATIENT_ID, "synthetic-patient-001")
 
         val result = securePreferences.getString(SecurePreferences.KEY_PATIENT_ID)
@@ -80,7 +80,7 @@ class SecurePreferencesTest {
     }
 
     @Test
-    fun `should store and retrieve cloud backup flag via KEY_CLOUD_BACKUP_ENABLED`() {
+    fun shouldStoreAndRetrieveCloudBackupFlag() {
         securePreferences.putString(SecurePreferences.KEY_CLOUD_BACKUP_ENABLED, "true")
 
         val result = securePreferences.getString(SecurePreferences.KEY_CLOUD_BACKUP_ENABLED)
@@ -93,7 +93,7 @@ class SecurePreferencesTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should return null for non-existent key`() {
+    fun shouldReturnNullForNonexistentKey() {
         val result = securePreferences.getString("key_that_was_never_set")
 
         assertNull(
@@ -107,7 +107,7 @@ class SecurePreferencesTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should remove specific key without affecting other keys`() {
+    fun shouldRemoveSpecificKeyWithoutAffectingOthers() {
         securePreferences.putString("key_to_keep", "keep_value")
         securePreferences.putString("key_to_remove", "remove_value")
 
@@ -125,7 +125,7 @@ class SecurePreferencesTest {
     }
 
     @Test
-    fun `should remove access token on logout`() {
+    fun shouldRemoveAccessTokenOnLogout() {
         securePreferences.putString(SecurePreferences.KEY_ACCESS_TOKEN, "synthetic.token.abc")
 
         securePreferences.remove(SecurePreferences.KEY_ACCESS_TOKEN)
@@ -141,7 +141,7 @@ class SecurePreferencesTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should remove all values after clear`() {
+    fun shouldRemoveAllValuesAfterClear() {
         securePreferences.putString(SecurePreferences.KEY_ACCESS_TOKEN, "synthetic.token.xyz")
         securePreferences.putString(SecurePreferences.KEY_PATIENT_ID, "synthetic-patient-002")
         securePreferences.putString(SecurePreferences.KEY_CLOUD_BACKUP_ENABLED, "false")
@@ -167,7 +167,7 @@ class SecurePreferencesTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `KEY_ACCESS_TOKEN constant must not be blank`() {
+    fun accessTokenKeyConstantMustNotBeBlank() {
         assertTrue(
             "KEY_ACCESS_TOKEN must be a non-blank string to prevent silent data loss",
             SecurePreferences.KEY_ACCESS_TOKEN.isNotBlank(),
@@ -175,7 +175,7 @@ class SecurePreferencesTest {
     }
 
     @Test
-    fun `KEY_PATIENT_ID constant must not be blank`() {
+    fun patientIdKeyConstantMustNotBeBlank() {
         assertTrue(
             "KEY_PATIENT_ID must be a non-blank string",
             SecurePreferences.KEY_PATIENT_ID.isNotBlank(),
@@ -183,7 +183,7 @@ class SecurePreferencesTest {
     }
 
     @Test
-    fun `KEY_CLOUD_BACKUP_ENABLED constant must not be blank`() {
+    fun cloudBackupKeyConstantMustNotBeBlank() {
         assertTrue(
             "KEY_CLOUD_BACKUP_ENABLED must be a non-blank string",
             SecurePreferences.KEY_CLOUD_BACKUP_ENABLED.isNotBlank(),
