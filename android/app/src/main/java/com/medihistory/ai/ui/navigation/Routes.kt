@@ -6,12 +6,19 @@ object Routes {
     const val MEDICINE_EXPLORER = "medicine_explorer"
     const val DUPLICATE_ALERTS = "duplicate_alerts"
     const val MEDICAL_HISTORY = "medical_history"
+    const val REMINDERS = "reminders"
     const val IMPORT = "import"
     const val CAMERA = "camera"
     const val PRESCRIPTION_DETAIL = "prescription/{prescriptionId}"
     const val MEDICINE_DETAIL = "medicine/{medicineId}"
     const val DUPLICATE_DETAIL = "duplicate/{alertId}"
     const val OCR_REVIEW = "ocr_review/{prescriptionId}"
+
+    /** New Doctor Mode — F07: record selection, consent, and PDF export. */
+    const val NEW_DOCTOR_MODE = "new_doctor_mode"
+
+    /** PDF preview shown after PDF generation (before share sheet is opened). */
+    const val PDF_PREVIEW = "pdf_preview"
 
     fun prescriptionDetail(id: String) = "prescription/$id"
     fun medicineDetail(id: String) = "medicine/$id"
