@@ -7,8 +7,8 @@ import com.medihistory.ai.data.database.MediHistoryDatabase
 import com.medihistory.ai.data.security.SecurePreferencesStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -139,7 +139,9 @@ class PrivacyViewModelTest {
         viewModel.onDeleteStep1Clicked()
         viewModel.onDeleteStep2Triggered()
         viewModel.onDeleteStep2Confirmed(syntheticPatientId)
-        advanceUntilIdle()
+        viewModel.uiState.first {
+            !it.isDeleting && (it.deletionResult != null || it.error != null)
+        }
 
         assertNotNull(
             "deletionResult must be set after confirmed deletion",
@@ -152,7 +154,6 @@ class PrivacyViewModelTest {
         viewModel.onDeleteStep1Clicked()
         viewModel.onDeleteStep2Triggered()
         viewModel.onDeleteStep2Confirmed(syntheticPatientId)
-        advanceUntilIdle()
 
         assertFalse(
             "showDeleteStep1 must be false after deletion",
@@ -169,7 +170,9 @@ class PrivacyViewModelTest {
         runTest {
             // The ViewModel does not enforce dialog ordering — only the UI does
             viewModel.onDeleteStep2Confirmed(syntheticPatientId)
-            advanceUntilIdle()
+            viewModel.uiState.first {
+                !it.isDeleting && (it.deletionResult != null || it.error != null)
+            }
 
             assertNotNull(
                 "deletionResult must be set after confirmed deletion",
@@ -227,7 +230,7 @@ class PrivacyViewModelTest {
                 viewModel.uiState.value.isExporting,
             )
 
-            advanceUntilIdle()
+            viewModel.uiState.first { !it.isExporting }
 
             assertFalse(
                 "isExporting must be false after export completes",
@@ -239,7 +242,7 @@ class PrivacyViewModelTest {
     fun `given initial state when onExportClicked then exportFile is set after completion`() =
         runTest {
             viewModel.onExportClicked(syntheticPatientId)
-            advanceUntilIdle()
+            viewModel.uiState.first { !it.isExporting }
 
             assertNotNull(
                 "exportFile must be set after export completes",
@@ -250,7 +253,7 @@ class PrivacyViewModelTest {
     @Test
     fun `given exportFile set when onExportFileConsumed then exportFile is null`() = runTest {
         viewModel.onExportClicked(syntheticPatientId)
-        advanceUntilIdle()
+        viewModel.uiState.first { !it.isExporting }
 
         viewModel.onExportFileConsumed()
 
