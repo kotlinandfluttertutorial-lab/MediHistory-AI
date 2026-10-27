@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.duplicate.DuplicateReviewScreen
 import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
@@ -50,7 +51,11 @@ fun MediHistoryNavHost(
             )
         }
         composable(Routes.DUPLICATE_ALERTS) {
-            PlaceholderScreen(name = "Duplicate Alerts")
+            DuplicateReviewScreen(
+                patientId = "current-patient",
+                onViewPrescription = { id -> navController.navigate(Routes.prescriptionDetail(id)) },
+                onBack = { navController.navigateUp() },
+            )
         }
         composable(Routes.MEDICAL_HISTORY) {
             PlaceholderScreen(name = "Medical History")
