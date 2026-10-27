@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 class ExampleInstrumentedTest {
 
     @Test
-    fun `application package name is correct`() {
+    fun applicationPackageNameIsCorrect() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("com.medihistory.ai", appContext.packageName)
     }
