@@ -16,7 +16,6 @@ import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 import com.medihistory.ai.ui.camera.CameraScreen
-import com.medihistory.ai.ui.privacy.PrivacyScreen
 import com.medihistory.ai.ui.safety.SafetyCenterScreen
 
 /**
@@ -98,15 +97,7 @@ fun MediHistoryNavHost(
             )
         }
         composable(Routes.PRIVACY) {
-            PrivacyScreen(
-                patientId = "current-patient",
-                onDataDeleted = {
-                    navController.navigate(Routes.DASHBOARD) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onBack = { navController.navigateUp() },
-            )
+            PlaceholderScreen(name = "Privacy")
         }
     }
 }

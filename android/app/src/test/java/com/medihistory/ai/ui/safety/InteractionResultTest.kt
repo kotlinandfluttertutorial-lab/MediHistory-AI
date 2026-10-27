@@ -211,7 +211,7 @@ class InteractionResultTest {
         val status: InteractionCheckStatus = InteractionCheckStatus.Results(listOf(result))
 
         assertTrue(status is InteractionCheckStatus.Results)
-        assertEquals(1, status.interactions.size)
+        assertEquals(1, (status as InteractionCheckStatus.Results).interactions.size)
     }
 
     @Test
