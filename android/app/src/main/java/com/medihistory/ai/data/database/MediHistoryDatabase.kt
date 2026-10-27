@@ -4,18 +4,20 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.medihistory.ai.data.dao.DoctorDao
+import com.medihistory.ai.data.dao.DuplicateAlertDao
 import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.MedicineDao
 import com.medihistory.ai.data.dao.PatientDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.Doctor
+import com.medihistory.ai.data.model.DuplicateAlert
 import com.medihistory.ai.data.model.ExtractedFieldEntity
 import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.model.Prescription
 
 /**
- * MediHistory Room database — version 5.
+ * MediHistory Room database — version 6.
  *
  * Version history:
  *  1 → initial placeholder schema
@@ -23,6 +25,7 @@ import com.medihistory.ai.data.model.Prescription
  *  3 → added patients table (MA-25, PatientDao)
  *  4 → added prescriptions table (MA-30/31/32, PrescriptionDao)
  *  5 → added extracted_fields and medicines tables (MA-35, MA-33)
+ *  6 → added duplicate_alerts table (MA-37, DuplicateAlertDao)
  *
  * Schema exports are written to android/app/schemas/ and committed to VCS.
  *
@@ -36,8 +39,9 @@ import com.medihistory.ai.data.model.Prescription
         Prescription::class,
         ExtractedFieldEntity::class,
         Medicine::class,
+        DuplicateAlert::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -52,6 +56,8 @@ abstract class MediHistoryDatabase : RoomDatabase() {
     abstract fun extractedFieldDao(): ExtractedFieldDao
 
     abstract fun medicineDao(): MedicineDao
+
+    abstract fun duplicateAlertDao(): DuplicateAlertDao
 
     companion object {
         const val DATABASE_NAME = "medihistory.db"
