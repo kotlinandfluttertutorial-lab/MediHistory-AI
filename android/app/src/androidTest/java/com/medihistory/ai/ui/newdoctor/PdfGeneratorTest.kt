@@ -1,32 +1,23 @@
 package com.medihistory.ai.ui.newdoctor
 
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
- * Robolectric unit tests for [PdfGenerator].
+ * Instrumented tests for [PdfGenerator].
  *
- * These tests verify that [PdfGenerator.generate] produces a valid PDF file
- * in app-private cache storage. They do NOT test the visual rendering of the PDF —
- * they verify the file contract: existence, location, non-emptiness, and that the
- * required disclaimer text is structurally accounted for in the content model.
+ * PdfGenerator relies on Android's native PdfDocument implementation, which is not
+ * available in Robolectric. These tests run against the platform implementation.
  *
  * Synthetic fixtures only — no real patient data.
- * Naming convention: `test_[outcome]_[condition]`
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@RunWith(AndroidJUnit4::class)
 class PdfGeneratorTest {
 
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-
-    // -------------------------------------------------------------------------
-    // Synthetic fixtures
-    // -------------------------------------------------------------------------
 
     private val syntheticSelections = listOf(
         RecordSelection(
@@ -47,10 +38,6 @@ class PdfGeneratorTest {
 
     private val syntheticPatientName = "Test Patient Alpha"
 
-    // -------------------------------------------------------------------------
-    // File existence and location
-    // -------------------------------------------------------------------------
-
     @Test
     fun test_generated_pdf_file_exists_in_cacheDir() {
         val file = PdfGenerator.generate(
@@ -65,10 +52,6 @@ class PdfGeneratorTest {
             file.absolutePath.startsWith(context.cacheDir.absolutePath),
         )
     }
-
-    // -------------------------------------------------------------------------
-    // Filename format
-    // -------------------------------------------------------------------------
 
     @Test
     fun test_pdf_filename_contains_timestamp() {
@@ -85,7 +68,6 @@ class PdfGeneratorTest {
             file.name.startsWith("mha_summary_"),
         )
 
-        // Extract the timestamp from the filename: mha_summary_{timestamp}.pdf
         val timestampStr = file.name
             .removePrefix("mha_summary_")
             .removeSuffix(".pdf")
@@ -101,10 +83,6 @@ class PdfGeneratorTest {
         )
     }
 
-    // -------------------------------------------------------------------------
-    // File size
-    // -------------------------------------------------------------------------
-
     @Test
     fun test_pdf_file_is_non_empty() {
         val file = PdfGenerator.generate(
@@ -116,34 +94,23 @@ class PdfGeneratorTest {
         assertTrue("Generated PDF file must not be empty", file.length() > 0)
     }
 
-    // -------------------------------------------------------------------------
-    // Disclaimer — verified against the PdfGenerator constant
-    // -------------------------------------------------------------------------
-
     @Test
     fun test_disclaimer_text_is_present_in_content_model() {
-        // We verify that the disclaimer constant used by PdfGenerator matches the required text.
-        // Visual rendering verification would require a PDF parser, which is beyond unit test scope.
-        // This test asserts the contractual disclaimer text used in the generator.
-
         val requiredDisclaimer = "Patient-compiled record. Not a clinical report."
         val fullDisclaimer =
             "Patient-compiled record. Not a clinical report. Please verify all information with your doctor."
 
-        // Both disclaimer forms must be substrings of the full required disclaimer
         assertTrue(
             "Short disclaimer must be a prefix of the full disclaimer",
             fullDisclaimer.contains(requiredDisclaimer),
         )
 
-        // Verify the generator runs without error using the selections that include the disclaimer
         val file = PdfGenerator.generate(
             context = context,
             selections = syntheticSelections,
             patientName = syntheticPatientName,
         )
 
-        // The generated file must be a valid PDF (starts with PDF magic bytes %PDF)
         val headerBytes = file.inputStream().use { it.readNBytes(4) }
         val header = String(headerBytes)
         assertTrue(
@@ -151,10 +118,6 @@ class PdfGeneratorTest {
             header == "%PDF",
         )
     }
-
-    // -------------------------------------------------------------------------
-    // Empty selections
-    // -------------------------------------------------------------------------
 
     @Test
     fun test_pdf_generated_with_no_selected_records() {
@@ -164,7 +127,7 @@ class PdfGeneratorTest {
                 doctorName = "Dr. Synthetic",
                 prescriptionDate = "01 Jan 2024",
                 medicineCount = 0,
-                isSelected = false, // none selected
+                isSelected = false,
             ),
         )
 
