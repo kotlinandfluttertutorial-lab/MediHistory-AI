@@ -190,8 +190,6 @@ private class RecordingPrescriptionDao(
 
     override suspend fun delete(prescription: com.medihistory.ai.data.model.Prescription) = Unit
 
-    override suspend fun getPatientId(id: String): String? = null
-
     override suspend fun updateOcrStatus(
         id: String,
         patientId: String,

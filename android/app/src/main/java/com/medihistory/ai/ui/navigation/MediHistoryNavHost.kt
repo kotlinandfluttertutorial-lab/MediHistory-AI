@@ -11,10 +11,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.medihistory.ai.ui.history.MedicalHistoryScreen
 import com.medihistory.ai.ui.duplicate.DuplicateReviewScreen
 import com.medihistory.ai.ui.medicine.MedicineListScreen
-import com.medihistory.ai.ui.ocr.OcrReviewScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 import com.medihistory.ai.ui.camera.CameraScreen
@@ -58,11 +56,7 @@ fun MediHistoryNavHost(
             )
         }
         composable(Routes.MEDICAL_HISTORY) {
-            MedicalHistoryScreen(
-                patientId = "current-patient",
-                onViewPrescription = { id -> navController.navigate(Routes.prescriptionDetail(id)) },
-                onBack = { navController.navigateUp() },
-            )
+            PlaceholderScreen(name = "Medical History")
         }
         composable(
             route = Routes.PRESCRIPTION_DETAIL,
@@ -94,10 +88,8 @@ fun MediHistoryNavHost(
             route = Routes.OCR_REVIEW,
             arguments = listOf(navArgument("prescriptionId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            OcrReviewScreen(
-                prescriptionId = backStackEntry.arguments?.getString("prescriptionId").orEmpty(),
-                onBack = { navController.navigateUp() },
-            )
+            val id = backStackEntry.arguments?.getString("prescriptionId").orEmpty()
+            PlaceholderScreen(name = "OCR Review ($id)")
         }
     }
 }
