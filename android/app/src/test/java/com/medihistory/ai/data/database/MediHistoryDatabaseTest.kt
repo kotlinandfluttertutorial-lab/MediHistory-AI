@@ -45,7 +45,7 @@ class MediHistoryDatabaseTest {
             .build()
         val version = db!!.openHelper.readableDatabase.version
         assertEquals(
-            "Schema version must be 5 (extracted_fields + medicines added in MA-35)",
+            "Schema version must be 5 (extracted fields and medicines added)",
             5,
             version,
         )
