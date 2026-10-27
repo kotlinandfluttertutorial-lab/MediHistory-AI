@@ -17,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
 
 /**
  * Integration tests for [RoomPrescriptionRepository] using an in-memory Room database.
@@ -55,7 +56,7 @@ class PrescriptionRepositoryTest {
         patientId: String = "test-patient-001",
         doctorId: String? = "doc-synthetic-001",
         ocrStatus: OcrStatus = OcrStatus.PENDING,
-        prescriptionDate: Long? = 1_700_000_000_000L,
+        prescriptionDate: LocalDate? = LocalDate.of(2023, 11, 14),
     ) = Prescription(
         id = id,
         patientId = patientId,

@@ -42,8 +42,9 @@ interface PrescriptionRepository {
     suspend fun delete(prescription: Prescription)
 
     /**
-     * Updates only the OCR status for the prescription with [id].
+     * Updates only the OCR status for the prescription with [id] that belongs to [patientId].
      * Does not touch other fields or document content.
+     * Security invariant: scoped to [patientId] — does not update records of other patients.
      */
-    suspend fun updateOcrStatus(id: String, status: OcrStatus)
+    suspend fun updateOcrStatus(id: String, patientId: String, status: OcrStatus, updatedAt: Long = System.currentTimeMillis())
 }

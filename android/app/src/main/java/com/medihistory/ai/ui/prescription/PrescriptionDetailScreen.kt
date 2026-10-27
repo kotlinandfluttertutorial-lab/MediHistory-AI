@@ -36,8 +36,6 @@ import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.components.StatusBadge
 import com.medihistory.ai.ui.components.OcrStatus as UiOcrStatus
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 /**
@@ -163,9 +161,15 @@ fun PrescriptionDetailScreen(
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    val dateText = prescription.prescriptionDate?.let { epochMs ->
-                        SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                            .format(Date(epochMs))
+                    val dateText = prescription.prescriptionDate?.let { localDate ->
+                        "%02d %s %d".format(
+                            localDate.dayOfMonth,
+                            localDate.month.getDisplayName(
+                                java.time.format.TextStyle.SHORT,
+                                Locale.getDefault()
+                            ),
+                            localDate.year,
+                        )
                     } ?: "Not specified"
                     Text(
                         text = dateText,

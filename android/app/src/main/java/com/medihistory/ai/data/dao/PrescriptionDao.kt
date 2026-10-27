@@ -61,8 +61,10 @@ interface PrescriptionDao {
     suspend fun delete(prescription: Prescription)
 
     /**
-     * Updates only the [status] and [updatedAt] columns for the prescription with [id].
+     * Updates only the [status] and [updatedAt] columns for the prescription with [id]
+     * that belongs to [patientId].
      *
+     * Security invariant: scoped to [patientId] — will not update records of other patients.
      * Used by background OCR workers to advance OCR state without loading the full entity.
      * Does not expose document contents or patient data.
      */
@@ -70,11 +72,12 @@ interface PrescriptionDao {
         """
         UPDATE prescriptions
         SET ocrStatus = :status, updatedAt = :updatedAt
-        WHERE id = :id
+        WHERE id = :id AND patientId = :patientId
         """
     )
     suspend fun updateOcrStatus(
         id: String,
+        patientId: String,
         status: OcrStatus,
         updatedAt: Long = System.currentTimeMillis(),
     )
