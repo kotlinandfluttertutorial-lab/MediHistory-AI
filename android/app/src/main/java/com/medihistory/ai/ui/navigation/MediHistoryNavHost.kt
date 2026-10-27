@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
+import com.medihistory.ai.ui.camera.CameraScreen
 
 /**
  * Root NavHost for MediHistory AI.
@@ -61,6 +62,12 @@ fun MediHistoryNavHost(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("medicineId").orEmpty()
             PlaceholderScreen(name = "Medicine Detail ($id)")
+        }
+        composable(Routes.CAMERA) {
+            CameraScreen(
+                onImageConfirmed = { _, _ -> navController.navigateUp() },
+                onDismiss = { navController.navigateUp() },
+            )
         }
     }
 }

@@ -32,6 +32,6 @@ class RoomPrescriptionRepository @Inject constructor(
     override suspend fun delete(prescription: Prescription) =
         prescriptionDao.delete(prescription)
 
-    override suspend fun updateOcrStatus(id: String, status: OcrStatus) =
-        prescriptionDao.updateOcrStatus(id, status)
+    override suspend fun updateOcrStatus(id: String, patientId: String, status: OcrStatus, updatedAt: Long) =
+        prescriptionDao.updateOcrStatus(id, patientId, status, updatedAt)
 }

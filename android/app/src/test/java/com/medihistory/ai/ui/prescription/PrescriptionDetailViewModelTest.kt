@@ -21,6 +21,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 
 /**
  * Unit tests for [PrescriptionDetailViewModel].
@@ -60,7 +61,7 @@ class PrescriptionDetailViewModelTest {
         id = id,
         patientId = patientId,
         doctorId = "doc-synthetic-001",
-        prescriptionDate = 1_700_000_000_000L,
+        prescriptionDate = LocalDate.of(2023, 11, 14),
         notes = "Synthetic test prescription",
         documentPath = null,
         documentMimeType = null,

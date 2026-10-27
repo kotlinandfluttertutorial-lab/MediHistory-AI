@@ -8,6 +8,7 @@ object Routes {
     const val MEDICAL_HISTORY = "medical_history"
     const val PRESCRIPTION_DETAIL = "prescription/{prescriptionId}"
     const val MEDICINE_DETAIL = "medicine/{medicineId}"
+    const val CAMERA = "camera"
 
     fun prescriptionDetail(id: String) = "prescription/$id"
     fun medicineDetail(id: String) = "medicine/$id"
