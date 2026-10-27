@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 
@@ -41,7 +42,9 @@ fun MediHistoryNavHost(
             )
         }
         composable(Routes.MEDICINE_EXPLORER) {
-            PlaceholderScreen(name = "Medicine Explorer")
+            MedicineListScreen(
+                onMedicineClick = { id -> navController.navigate(Routes.medicineDetail(id)) },
+            )
         }
         composable(Routes.DUPLICATE_ALERTS) {
             PlaceholderScreen(name = "Duplicate Alerts")
