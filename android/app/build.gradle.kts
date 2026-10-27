@@ -164,9 +164,6 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
-    // Accompanist
-    implementation(libs.accompanist.permissions)
-
     // Unit tests
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

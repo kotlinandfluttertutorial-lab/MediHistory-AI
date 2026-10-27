@@ -1,7 +1,6 @@
 package com.medihistory.ai.data.di
 
 import com.medihistory.ai.data.dao.ExtractedFieldDao
-import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.database.MediHistoryDatabase
 import dagger.Module
 import dagger.Provides
@@ -13,11 +12,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object OcrDaoModule {
-
-    @Provides
-    @Singleton
-    fun providePrescriptionDao(database: MediHistoryDatabase): PrescriptionDao =
-        database.prescriptionDao()
 
     @Provides
     @Singleton
