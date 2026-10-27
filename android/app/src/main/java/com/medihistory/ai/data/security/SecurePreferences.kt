@@ -51,6 +51,7 @@ class SecurePreferences @Inject constructor(
 
     companion object {
         private const val PREFS_FILE_NAME = "medihistory_secure_prefs"
+
         const val KEY_ACCESS_TOKEN = "access_token"
         const val KEY_PATIENT_ID = "patient_id"
         const val KEY_CLOUD_BACKUP_ENABLED = "cloud_backup_enabled"

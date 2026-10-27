@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    jacoco
 }
 
 // ---------------------------------------------------------------------------
@@ -35,6 +36,8 @@ val enableInteractionCheck: Boolean =
 android {
     namespace = "com.medihistory.ai"
     compileSdk = 34
+
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 
     defaultConfig {
         applicationId = "com.medihistory.ai"
@@ -98,6 +101,12 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.extensions.configure(JacocoTaskExtension::class) {
+                isIncludeNoLocationClasses = true
+                excludes = listOf("jdk.internal.*")
+            }
+        }
     }
 }
 
@@ -174,6 +183,7 @@ dependencies {
     // Instrumented tests
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.room.testing)

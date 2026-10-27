@@ -58,6 +58,16 @@ jobs:
           fi
           echo "Credential scan passed — no hardcoded credentials found"
 
+      - name: Scan for hardcoded secrets
+        run: |
+          if grep -rE '(ghp_|github_pat_|AIza|AKIA|sk-|password\s*=\s*["'"'"'][^"'"'"']|api_key\s*=\s*)' \
+            --include='*.kt' --include='*.py' --include='*.java' --include='*.gradle.kts' \
+            --exclude-dir='.git' --exclude-dir='build' . 2>/dev/null | grep -v test | grep -v Stub | grep -v 'synthetic'; then
+            echo 'ERROR: Possible hardcoded secret found'
+            exit 1
+          fi
+          echo 'Secrets scan passed'
+
   android-ci:
     name: Android Lint and Unit Tests
     runs-on: ubuntu-latest
