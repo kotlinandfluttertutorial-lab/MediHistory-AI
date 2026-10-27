@@ -19,9 +19,12 @@ object Routes {
 
     /** PDF preview shown after PDF generation (before share sheet is opened). */
     const val PDF_PREVIEW = "pdf_preview"
+    const val SAFETY_CENTER = "safety_center/{patientId}"
+    const val PRIVACY = "privacy"
 
     fun prescriptionDetail(id: String) = "prescription/$id"
     fun medicineDetail(id: String) = "medicine/$id"
     fun duplicateDetail(alertId: String) = "duplicate/$alertId"
     fun ocrReview(id: String) = "ocr_review/$id"
+    fun safetyCenter(patientId: String) = "safety_center/$patientId"
 }

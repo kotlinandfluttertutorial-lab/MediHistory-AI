@@ -16,6 +16,7 @@ import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 import com.medihistory.ai.ui.camera.CameraScreen
+import com.medihistory.ai.ui.safety.SafetyCenterScreen
 
 /**
  * Root NavHost for MediHistory AI.
@@ -85,11 +86,18 @@ fun MediHistoryNavHost(
             )
         }
         composable(
-            route = Routes.OCR_REVIEW,
-            arguments = listOf(navArgument("prescriptionId") { type = NavType.StringType }),
+            route = Routes.SAFETY_CENTER,
+            arguments = listOf(navArgument("patientId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("prescriptionId").orEmpty()
-            PlaceholderScreen(name = "OCR Review ($id)")
+            val patientId = backStackEntry.arguments?.getString("patientId").orEmpty()
+            SafetyCenterScreen(
+                patientId = patientId,
+                onViewDuplicates = { navController.navigate(Routes.DUPLICATE_ALERTS) },
+                onBack = { navController.navigateUp() },
+            )
+        }
+        composable(Routes.PRIVACY) {
+            PlaceholderScreen(name = "Privacy")
         }
     }
 }
