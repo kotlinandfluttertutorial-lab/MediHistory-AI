@@ -70,7 +70,8 @@ fun MediHistoryNavHost(
         composable(Routes.CAMERA) {
             CameraScreen(
                 onImageConfirmed = { _, _ -> navController.navigateUp() },
-            PlaceholderScreen(name = "Camera")
+                onDismiss = { navController.navigateUp() },
+            )
         }
         composable(Routes.IMPORT) {
             ImportScreen(
