@@ -12,8 +12,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.medihistory.ai.ui.medicine.MedicineListScreen
+import com.medihistory.ai.ui.newdoctor.NewDoctorModeScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
+import com.medihistory.ai.ui.reminders.ReminderScreen
 import com.medihistory.ai.ui.camera.CameraScreen
 
 /**
@@ -53,6 +55,10 @@ fun MediHistoryNavHost(
         composable(Routes.MEDICAL_HISTORY) {
             PlaceholderScreen(name = "Medical History")
         }
+        composable(Routes.REMINDERS) {
+            // patientId is retrieved from the authenticated session; "" is the unauthenticated fallback.
+            ReminderScreen(patientId = "")
+        }
         composable(
             route = Routes.PRESCRIPTION_DETAIL,
             arguments = listOf(navArgument("prescriptionId") { type = NavType.StringType }),
@@ -77,6 +83,14 @@ fun MediHistoryNavHost(
             ImportScreen(
                 onFileImported = { _, _, _ -> navController.navigateUp() },
                 onDismiss = { navController.navigateUp() },
+            )
+        }
+        // F07 — New Doctor Mode
+        composable(Routes.NEW_DOCTOR_MODE) {
+            // patientId placeholder; real navigation will pass it via argument in a follow-up ticket
+            NewDoctorModeScreen(
+                patientId = "current_patient",
+                onBack = { navController.navigateUp() },
             )
         }
     }
