@@ -35,4 +35,13 @@ class DatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun `given version 5 schema, when created, then current schema is available`() {
+        helper.createDatabase(TEST_DB, 5).use { db ->
+            assert(db.version == 5) {
+                "Expected database version 5 but was ${db.version}"
+            }
+        }
+    }
 }
