@@ -11,7 +11,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.history.MedicalHistoryScreen
+import com.medihistory.ai.ui.duplicate.DuplicateReviewScreen
 import com.medihistory.ai.ui.medicine.MedicineListScreen
+import com.medihistory.ai.ui.ocr.OcrReviewScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 import com.medihistory.ai.ui.camera.CameraScreen
@@ -48,10 +51,18 @@ fun MediHistoryNavHost(
             )
         }
         composable(Routes.DUPLICATE_ALERTS) {
-            PlaceholderScreen(name = "Duplicate Alerts")
+            DuplicateReviewScreen(
+                patientId = "current-patient",
+                onViewPrescription = { id -> navController.navigate(Routes.prescriptionDetail(id)) },
+                onBack = { navController.navigateUp() },
+            )
         }
         composable(Routes.MEDICAL_HISTORY) {
-            PlaceholderScreen(name = "Medical History")
+            MedicalHistoryScreen(
+                patientId = "current-patient",
+                onViewPrescription = { id -> navController.navigate(Routes.prescriptionDetail(id)) },
+                onBack = { navController.navigateUp() },
+            )
         }
         composable(
             route = Routes.PRESCRIPTION_DETAIL,
@@ -77,6 +88,15 @@ fun MediHistoryNavHost(
             ImportScreen(
                 onFileImported = { _, _, _ -> navController.navigateUp() },
                 onDismiss = { navController.navigateUp() },
+            )
+        }
+        composable(
+            route = Routes.OCR_REVIEW,
+            arguments = listOf(navArgument("prescriptionId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            OcrReviewScreen(
+                prescriptionId = backStackEntry.arguments?.getString("prescriptionId").orEmpty(),
+                onBack = { navController.navigateUp() },
             )
         }
     }
