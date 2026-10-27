@@ -171,6 +171,53 @@ internal val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+/** Migration from v6 (duplicate alerts) to v7 (adds reminders and dose_records — MA-41). */
+internal val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // reminders table
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `reminders` (
+                `id` TEXT NOT NULL,
+                `patientId` TEXT NOT NULL,
+                `medicineId` TEXT NOT NULL,
+                `medicineName` TEXT NOT NULL,
+                `prescribedInstructions` TEXT,
+                `reminderTime` INTEGER NOT NULL,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `createdAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_reminders_patientId` ON `reminders` (`patientId`)",
+        )
+
+        // dose_records table
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `dose_records` (
+                `id` TEXT NOT NULL,
+                `reminderId` TEXT NOT NULL,
+                `patientId` TEXT NOT NULL,
+                `scheduledTime` INTEGER NOT NULL,
+                `recordedTime` INTEGER,
+                `record` TEXT NOT NULL,
+                `patientNote` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_dose_records_reminderId` ON `dose_records` (`reminderId`)",
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_dose_records_patientId` ON `dose_records` (`patientId`)",
+        )
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -191,6 +238,7 @@ object DatabaseModule {
                 MIGRATION_3_4,
                 MIGRATION_4_5,
                 MIGRATION_5_6,
+                MIGRATION_6_7,
             )
             .build()
     // fallbackToDestructiveMigration() intentionally omitted — migrations are always explicit

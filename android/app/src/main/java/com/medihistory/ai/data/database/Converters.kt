@@ -2,11 +2,13 @@ package com.medihistory.ai.data.database
 
 import androidx.room.TypeConverter
 import com.medihistory.ai.data.model.DoctorSpecialty
+import com.medihistory.ai.data.model.DoseRecord
 import com.medihistory.ai.data.model.MatchType
 import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.ocr.ReviewState
 import java.time.LocalDate
+import java.time.LocalTime
 
 class Converters {
 
@@ -70,6 +72,22 @@ class Converters {
 
     @TypeConverter
     fun toMatchType(value: String): MatchType = MatchType.valueOf(value)
+
+    // --- LocalTime <-> Int (seconds of day) ---
+
+    @TypeConverter
+    fun fromLocalTime(t: LocalTime): Int = t.toSecondOfDay()
+
+    @TypeConverter
+    fun toLocalTime(s: Int): LocalTime = LocalTime.ofSecondOfDay(s.toLong())
+
+    // --- DoseRecord <-> String ---
+
+    @TypeConverter
+    fun fromDoseRecord(record: DoseRecord): String = record.name
+
+    @TypeConverter
+    fun toDoseRecord(value: String): DoseRecord = DoseRecord.valueOf(value)
 
     // --- private helpers ---
 

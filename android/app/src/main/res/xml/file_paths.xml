@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FileProvider paths for MediHistory AI.
+
+    cache-path: allows FileProvider to share files from app-private cache storage (getCacheDir).
+    This is used exclusively for PDF summaries generated for New Doctor Mode (F07).
+
+    Privacy: the FileProvider only exposes files from cache — no access to getFilesDir or
+    shared external storage. PDFs are temporary and live in cache only.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path
+        name="mha_pdf_cache"
+        path="." />
+</paths>
