@@ -23,7 +23,9 @@ interface PrescriptionDao {
     /**
      * Emits the live list of prescriptions belonging to [patientId], ordered by
      * prescription date descending, then by creation time descending.
+     * The Flow updates automatically when the underlying data changes.
      */
+
     @Query(
         """
         SELECT * FROM prescriptions
@@ -54,7 +56,7 @@ interface PrescriptionDao {
      * Deletes a prescription record.
      *
      * The document file itself is not deleted by this call — callers must handle
-     * file cleanup separately.
+     * file cleanup separately (MA-31/32).
      */
     @Delete
     suspend fun delete(prescription: Prescription)

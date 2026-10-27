@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
+import com.medihistory.ai.ui.camera.CameraScreen
 
 /**
  * Root NavHost for MediHistory AI.
@@ -67,7 +68,10 @@ fun MediHistoryNavHost(
             PlaceholderScreen(name = "Medicine Detail ($id)")
         }
         composable(Routes.CAMERA) {
-            PlaceholderScreen(name = "Camera")
+            CameraScreen(
+                onImageConfirmed = { _, _ -> navController.navigateUp() },
+                onDismiss = { navController.navigateUp() },
+            )
         }
         composable(Routes.IMPORT) {
             ImportScreen(
