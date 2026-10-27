@@ -38,12 +38,34 @@ class MediHistoryDatabaseTest {
     }
 
     @Test
-    fun `should report schema version 4`() {
+    fun `should report schema version 5`() {
         val context: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         val version = db!!.openHelper.readableDatabase.version
-        assertEquals("Schema version must be 4 (Prescription entity added in MA-30)", 4, version)
+        assertEquals(
+            "Schema version must be 5 (extracted_fields + medicines added in MA-35)",
+            5,
+            version,
+        )
+    }
+
+    @Test
+    fun `should expose extractedFieldDao`() {
+        val context: Context = ApplicationProvider.getApplicationContext()
+        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        assertNotNull("extractedFieldDao must not be null", db!!.extractedFieldDao())
+    }
+
+    @Test
+    fun `should expose prescriptionDao`() {
+        val context: Context = ApplicationProvider.getApplicationContext()
+        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        assertNotNull("prescriptionDao must not be null", db!!.prescriptionDao())
     }
 }

@@ -2,7 +2,9 @@ package com.medihistory.ai.data.database
 
 import androidx.room.TypeConverter
 import com.medihistory.ai.data.model.DoctorSpecialty
+import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.ocr.ReviewState
 import java.time.LocalDate
 
 class Converters {
@@ -36,6 +38,14 @@ class Converters {
     @TypeConverter
     fun toDoctorSpecialty(value: String): DoctorSpecialty = DoctorSpecialty.valueOf(value)
 
+    // --- MedicineStatus <-> String ---
+
+    @TypeConverter
+    fun fromMedicineStatus(status: MedicineStatus): String = status.name
+
+    @TypeConverter
+    fun toMedicineStatus(value: String): MedicineStatus = MedicineStatus.valueOf(value)
+
     // --- OcrStatus <-> String ---
 
     @TypeConverter
@@ -43,6 +53,14 @@ class Converters {
 
     @TypeConverter
     fun toOcrStatus(value: String): OcrStatus = OcrStatus.valueOf(value)
+
+    // --- ReviewState <-> String ---
+
+    @TypeConverter
+    fun fromReviewState(state: ReviewState): String = state.name
+
+    @TypeConverter
+    fun toReviewState(value: String): ReviewState = ReviewState.valueOf(value)
 
     // --- private helpers ---
 

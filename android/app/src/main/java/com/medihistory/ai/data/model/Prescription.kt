@@ -1,6 +1,8 @@
 package com.medihistory.ai.data.model
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDate
 
@@ -10,13 +12,24 @@ import java.time.LocalDate
  * Security invariants:
  * - [patientId] is always set and used as a scope on every DAO query.
  * - [documentPath] points to app-private storage only (getFilesDir / getExternalFilesDir).
- * - [documentHashSha256] is nullable here — it is set after the file is copied to
+ * - [documentHashSha256] is nullable — it is set after the file is copied to
  *   app-private storage (MA-31/32). Never fabricate or infer this value.
  * - No field here must be logged or transmitted without explicit patient consent.
  *
  * Registered in [MediHistoryDatabase] with the version 4 schema migration (MIGRATION_3_4).
  */
-@Entity(tableName = "prescriptions")
+@Entity(
+    tableName = "prescriptions",
+    indices = [Index("patientId"), Index("doctorId")],
+    foreignKeys = [
+        ForeignKey(
+            entity = Patient::class,
+            parentColumns = ["id"],
+            childColumns = ["patientId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+)
 data class Prescription(
     @PrimaryKey
     val id: String,

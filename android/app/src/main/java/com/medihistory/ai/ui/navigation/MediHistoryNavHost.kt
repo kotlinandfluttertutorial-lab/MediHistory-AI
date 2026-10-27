@@ -11,8 +11,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.medicine.MedicineListScreen
+import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
-import com.medihistory.ai.ui.camera.CameraScreen
 
 /**
  * Root NavHost for MediHistory AI.
@@ -41,7 +42,9 @@ fun MediHistoryNavHost(
             )
         }
         composable(Routes.MEDICINE_EXPLORER) {
-            PlaceholderScreen(name = "Medicine Explorer")
+            MedicineListScreen(
+                onMedicineClick = { id -> navController.navigate(Routes.medicineDetail(id)) },
+            )
         }
         composable(Routes.DUPLICATE_ALERTS) {
             PlaceholderScreen(name = "Duplicate Alerts")
@@ -64,8 +67,11 @@ fun MediHistoryNavHost(
             PlaceholderScreen(name = "Medicine Detail ($id)")
         }
         composable(Routes.CAMERA) {
-            CameraScreen(
-                onImageConfirmed = { _, _ -> navController.navigateUp() },
+            PlaceholderScreen(name = "Camera")
+        }
+        composable(Routes.IMPORT) {
+            ImportScreen(
+                onFileImported = { _, _, _ -> navController.navigateUp() },
                 onDismiss = { navController.navigateUp() },
             )
         }
