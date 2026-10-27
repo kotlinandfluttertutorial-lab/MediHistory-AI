@@ -9,7 +9,6 @@ PRODUCTION NOTE: Replace this in-process dict with a Redis-backed limiter
 store does not share state across multiple worker processes.
 """
 
-import json
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 

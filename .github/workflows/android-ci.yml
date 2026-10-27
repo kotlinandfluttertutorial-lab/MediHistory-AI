@@ -82,12 +82,27 @@ jobs:
           ENABLE_CLOUD_BACKUP: "false"
           ENABLE_INTERACTION_CHECK: "false"
 
+      - name: Run Android instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          script: cd android && ./gradlew connectedDebugAndroidTest
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
           path: android/app/build/reports/tests/testDebugUnitTest/
+
+      - name: Upload instrumented test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-test-results
+          path: android/app/build/reports/androidTests/connected/
 
   security-scan:
     name: Android Security Scan
