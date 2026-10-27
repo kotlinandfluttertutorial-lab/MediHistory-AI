@@ -34,23 +34,23 @@ class SecurePreferences @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
     )
 
-    override fun putString(key: String, value: String) {
+    fun putString(key: String, value: String) {
         prefs.edit().putString(key, value).apply()
     }
 
-    override fun getString(key: String): String? = prefs.getString(key, null)
+    fun getString(key: String): String? = prefs.getString(key, null)
 
-    override fun remove(key: String) {
+    fun remove(key: String) {
         prefs.edit().remove(key).apply()
     }
 
-    /** Clears all values from encrypted preferences. Used during account deletion. */
-    override fun clear() {
+    fun clear() {
         prefs.edit().clear().apply()
     }
 
     companion object {
         private const val PREFS_FILE_NAME = "medihistory_secure_prefs"
+
         const val KEY_ACCESS_TOKEN = "access_token"
         const val KEY_PATIENT_ID = "patient_id"
         const val KEY_CLOUD_BACKUP_ENABLED = "cloud_backup_enabled"

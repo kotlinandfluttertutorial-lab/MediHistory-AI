@@ -62,6 +62,15 @@ interface PrescriptionDao {
     suspend fun delete(prescription: Prescription)
 
     /**
+     * Returns the [patientId] for the prescription with [id], or null if not found.
+     *
+     * Used by the OCR review flow to scope [updateOcrStatus] without loading the full entity.
+     * Returns only the FK column — no prescription content or document data is exposed.
+     */
+    @Query("SELECT patientId FROM prescriptions WHERE id = :id LIMIT 1")
+    suspend fun getPatientId(id: String): String?
+
+    /**
      * Updates only the [status] and [updatedAt] columns for the prescription with [id]
      * that belongs to [patientId].
      *

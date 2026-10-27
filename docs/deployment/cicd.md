@@ -28,13 +28,17 @@ Cloud Run service YAML (to be added before production release).
 | Job | Steps |
 |---|---|
 | `lint` | Checkout → JDK 17 → Gradle cache → `./gradlew lintDebug` → upload lint report |
-| `unit-test` | Checkout → JDK 17 → Gradle cache → `./gradlew testDebugUnitTest` → upload test results |
+| `unit-test` | Checkout → JDK 17 → Gradle cache → `./gradlew testDebugUnitTest` → enable KVM → API 34 emulator → `./gradlew connectedDebugAndroidTest` → upload both test reports |
 | `security-scan` | Checkout → grep source files for hardcoded secrets |
 
 Environment variables set for `unit-test` job:
 - `BACKEND_BASE_URL=""`
 - `ENABLE_CLOUD_BACKUP="false"`
 - `ENABLE_INTERACTION_CHECK="false"`
+
+The instrumented tests use Android Keystore and therefore run on an API 34
+emulator rather than Robolectric. The workflow enables KVM and disables emulator
+window, audio, boot animation, and device animations to reduce startup time.
 
 ### `backend-ci.yml`
 
@@ -75,6 +79,7 @@ on `main`.
 | `:app:compileDebugKotlin` | Section 1 — MANDATORY | **absent (CI gap)** | — | **absent (CI gap)** |
 | `:app:lintDebug` | Section 1 — MANDATORY | `lint` job | — | `android-ci` job |
 | `:app:testDebugUnitTest` | Section 1 — MANDATORY | `unit-test` job | — | `android-ci` job |
+| `:app:connectedDebugAndroidTest` | Not run locally | `unit-test` job (API 34 emulator) | — | — |
 | `ktlintCheck` | Section 1 — SKIP (not configured) | not configured | — | not configured |
 | `ruff check .` | Section 2 — MANDATORY | — | `lint` job | `backend-ci` job |
 | `black --check .` | Section 2 — MANDATORY | — | `lint` job | `backend-ci` job |

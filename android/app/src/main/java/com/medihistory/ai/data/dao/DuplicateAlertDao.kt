@@ -82,4 +82,20 @@ interface DuplicateAlertDao {
         """,
     )
     suspend fun getById(id: String, patientId: String): DuplicateAlert?
+
+    /**
+     * Emits the live count of unreviewed duplicate alerts for [patientId].
+     *
+     * Used by SafetyCenterViewModel to show how many potential duplicate alerts
+     * still require patient attention.
+     *
+     * Security: scoped to [patientId] — never counts records from other patients.
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM duplicate_alerts
+        WHERE patientId = :patientId AND isReviewed = 0
+        """,
+    )
+    fun observeUnreviewedCount(patientId: String): Flow<Int>
 }

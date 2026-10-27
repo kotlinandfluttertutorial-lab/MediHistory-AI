@@ -11,10 +11,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.medihistory.ai.ui.duplicate.DuplicateReviewScreen
 import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.picker.ImportScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
 import com.medihistory.ai.ui.camera.CameraScreen
+import com.medihistory.ai.ui.safety.SafetyCenterScreen
 
 /**
  * Root NavHost for MediHistory AI.
@@ -48,7 +50,11 @@ fun MediHistoryNavHost(
             )
         }
         composable(Routes.DUPLICATE_ALERTS) {
-            PlaceholderScreen(name = "Duplicate Alerts")
+            DuplicateReviewScreen(
+                patientId = "current-patient",
+                onViewPrescription = { id -> navController.navigate(Routes.prescriptionDetail(id)) },
+                onBack = { navController.navigateUp() },
+            )
         }
         composable(Routes.MEDICAL_HISTORY) {
             PlaceholderScreen(name = "Medical History")
@@ -78,6 +84,20 @@ fun MediHistoryNavHost(
                 onFileImported = { _, _, _ -> navController.navigateUp() },
                 onDismiss = { navController.navigateUp() },
             )
+        }
+        composable(
+            route = Routes.SAFETY_CENTER,
+            arguments = listOf(navArgument("patientId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId").orEmpty()
+            SafetyCenterScreen(
+                patientId = patientId,
+                onViewDuplicates = { navController.navigate(Routes.DUPLICATE_ALERTS) },
+                onBack = { navController.navigateUp() },
+            )
+        }
+        composable(Routes.PRIVACY) {
+            PlaceholderScreen(name = "Privacy")
         }
     }
 }
