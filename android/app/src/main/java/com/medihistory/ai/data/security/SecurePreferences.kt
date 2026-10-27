@@ -21,7 +21,7 @@ import javax.inject.Inject
  */
 class SecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context,
-) {
+) : SecurePreferencesStore {
     private val masterKey: MasterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
@@ -34,17 +34,18 @@ class SecurePreferences @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
     )
 
-    fun putString(key: String, value: String) {
+    override fun putString(key: String, value: String) {
         prefs.edit().putString(key, value).apply()
     }
 
-    fun getString(key: String): String? = prefs.getString(key, null)
+    override fun getString(key: String): String? = prefs.getString(key, null)
 
-    fun remove(key: String) {
+    override fun remove(key: String) {
         prefs.edit().remove(key).apply()
     }
 
-    fun clear() {
+    /** Clears all values from encrypted preferences. Used during account deletion. */
+    override fun clear() {
         prefs.edit().clear().apply()
     }
 

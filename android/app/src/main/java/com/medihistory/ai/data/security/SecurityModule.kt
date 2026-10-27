@@ -13,6 +13,9 @@ import javax.inject.Singleton
  *
  * [SecurePreferences] is a singleton so that a single EncryptedSharedPreferences
  * instance is shared across the app, avoiding duplicate MasterKey initialisation.
+ *
+ * Both [SecurePreferences] and [SecurePreferencesStore] are provided as the same
+ * singleton instance so that Hilt can inject either type.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -23,4 +26,10 @@ object SecurityModule {
     fun provideSecurePreferences(
         @ApplicationContext context: Context,
     ): SecurePreferences = SecurePreferences(context)
+
+    @Provides
+    @Singleton
+    fun provideSecurePreferencesStore(
+        securePreferences: SecurePreferences,
+    ): SecurePreferencesStore = securePreferences
 }
