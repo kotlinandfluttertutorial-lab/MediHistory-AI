@@ -200,6 +200,7 @@ private class RecordingPrescriptionDao(
     ) {
         log.add(status)
     }
+
 }
 
 /** No-op implementation for [ExtractedFieldDao]. */
