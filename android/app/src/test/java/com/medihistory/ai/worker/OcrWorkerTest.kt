@@ -198,6 +198,8 @@ private class RecordingPrescriptionDao(
     ) {
         log.add(status)
     }
+
+    override suspend fun getPatientId(id: String): String? = null
 }
 
 /** No-op implementation for [ExtractedFieldDao]. */
