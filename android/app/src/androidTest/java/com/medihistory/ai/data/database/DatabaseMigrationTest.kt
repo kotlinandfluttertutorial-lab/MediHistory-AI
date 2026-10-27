@@ -28,7 +28,7 @@ class DatabaseMigrationTest {
     )
 
     @Test
-    fun `given version 1 schema, when database is opened, then it opens without error`() {
+    fun opensVersionOneSchema() {
         helper.createDatabase(TEST_DB, 1).use { db ->
             assert(db.version == 1) {
                 "Expected database version 1 but was ${db.version}"
@@ -37,7 +37,7 @@ class DatabaseMigrationTest {
     }
 
     @Test
-    fun `given version 5 schema, when migrated, then duplicate alerts table is created`() {
+    fun migrationFromVersionFiveCreatesDuplicateAlertsTable() {
         helper.createDatabase(TEST_DB, 5).close()
 
         helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6).use { db ->
