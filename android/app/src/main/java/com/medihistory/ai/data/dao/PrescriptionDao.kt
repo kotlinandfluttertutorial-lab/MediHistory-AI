@@ -24,13 +24,14 @@ interface PrescriptionDao {
      * Emits the live list of prescriptions belonging to [patientId], ordered by
      * prescription date descending, then by creation time descending.
      * The Flow updates automatically when the underlying data changes.
-     */
+
     @Query(
         """
         SELECT * FROM prescriptions
         WHERE patientId = :patientId
         ORDER BY prescriptionDate DESC, createdAt DESC
         """
+        """,
     )
     fun observeByPatient(patientId: String): Flow<List<Prescription>>
 

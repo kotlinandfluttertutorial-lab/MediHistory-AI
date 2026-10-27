@@ -134,6 +134,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    // Hilt WorkManager integration
+    implementation(libs.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     // Room
     implementation(libs.androidx.room.runtime)
@@ -155,6 +158,9 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
+    // Accompanist — runtime permissions in Compose
+    implementation(libs.accompanist.permissions)
+
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
@@ -166,6 +172,7 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.work.testing)
 
     // Instrumented tests
     androidTestImplementation(libs.androidx.junit)
