@@ -2,6 +2,8 @@ package com.medihistory.ai.ui.medicine
 
 import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.MedicineStatus
+import com.medihistory.ai.data.dao.DuplicateAlertDao
+import com.medihistory.ai.data.model.DuplicateAlert
 import com.medihistory.ai.data.repository.MedicineRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -38,13 +40,15 @@ class MedicineDetailViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeDetailMedicineRepository
+    private lateinit var fakeDuplicateAlertDao: FakeDetailDuplicateAlertDao
     private lateinit var viewModel: MedicineDetailViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakeDetailMedicineRepository()
-        viewModel = MedicineDetailViewModel(fakeRepository)
+        fakeDuplicateAlertDao = FakeDetailDuplicateAlertDao()
+        viewModel = MedicineDetailViewModel(fakeRepository, fakeDuplicateAlertDao)
     }
 
     @After
@@ -97,7 +101,8 @@ class MedicineDetailViewModelTest {
         // loading state after the coroutine starts but before getById returns.
         val blockingRepo = BlockingFakeDetailMedicineRepository()
         blockingRepo.add(medicine)
-        val blockingViewModel = MedicineDetailViewModel(blockingRepo)
+        val blockingViewModel =
+            MedicineDetailViewModel(blockingRepo, FakeDetailDuplicateAlertDao())
 
         // Start load — the coroutine is launched but getById is suspended
         val job = launch { blockingViewModel.load(medicineId = medicine.id, patientId = medicine.patientId) }
@@ -183,6 +188,40 @@ class MedicineDetailViewModelTest {
         assertNull("medicine must be null for cross-patient access", state.medicine)
         assertNotNull("error must be set for cross-patient access", state.error)
     }
+}
+
+private class FakeDetailDuplicateAlertDao : DuplicateAlertDao {
+
+    private val alerts = MutableStateFlow<List<DuplicateAlert>>(emptyList())
+
+    override fun observeByPatient(patientId: String): Flow<List<DuplicateAlert>> =
+        alerts.map { list -> list.filter { it.patientId == patientId } }
+
+    override fun observeUnreviewedCount(patientId: String): Flow<Int> =
+        observeByPatient(patientId).map { list -> list.count { !it.isReviewed } }
+
+    override suspend fun insert(alert: DuplicateAlert) {
+        alerts.update { current -> current + alert }
+    }
+
+    override suspend fun markReviewed(id: String, patientId: String, timestamp: Long) {
+        alerts.update { current ->
+            current.map { alert ->
+                if (alert.id == id && alert.patientId == patientId) {
+                    alert.copy(isReviewed = true, reviewedAt = timestamp)
+                } else {
+                    alert
+                }
+            }
+        }
+    }
+
+    override suspend fun deleteByPatient(patientId: String) {
+        alerts.update { current -> current.filterNot { it.patientId == patientId } }
+    }
+
+    override suspend fun getById(id: String, patientId: String): DuplicateAlert? =
+        alerts.value.find { it.id == id && it.patientId == patientId }
 }
 
 // ---------------------------------------------------------------------------

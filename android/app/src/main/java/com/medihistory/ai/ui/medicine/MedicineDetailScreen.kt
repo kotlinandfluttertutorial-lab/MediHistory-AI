@@ -14,7 +14,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Medication
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -78,6 +80,7 @@ fun MedicineDetailScreen(
     patientId: String,
     onBack: () -> Unit,
     onViewPrescription: (String) -> Unit,
+    onViewDuplicates: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: MedicineDetailViewModel = hiltViewModel(),
 ) {
@@ -144,13 +147,59 @@ fun MedicineDetailScreen(
             }
 
             uiState.medicine != null -> {
-                MedicineDetailContent(
-                    medicine = requireNotNull(uiState.medicine),
-                    onViewPrescription = onViewPrescription,
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
-                )
+                ) {
+                    // Duplicate alert banner — safety critical, shown first
+                    if (uiState.hasDuplicateAlert) {
+                        androidx.compose.material3.Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            colors = androidx.compose.material3.CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp, MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Warning,
+                                    contentDescription = "Duplicate alert",
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Potential duplicate ingredient",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                    )
+                                    Text(
+                                        text = "${uiState.duplicateAlertCount} alert(s) — review with your doctor",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                    )
+                                }
+                                TextButton(onClick = onViewDuplicates) {
+                                    Text("Review →", color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        }
+                    }
+                    MedicineDetailContent(
+                        medicine = requireNotNull(uiState.medicine),
+                        onViewPrescription = onViewPrescription,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
         }
     }
