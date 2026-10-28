@@ -32,11 +32,21 @@ class PrescriptionListViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             try {
-                // Simulated async load — replace with repository call when entity exists.
                 delay(300L)
+                val samples = SyntheticPrescriptions.samples
+                val groups = samples
+                    .groupBy { it.doctorName }
+                    .map { (doctor, rxList) ->
+                        DoctorGroup(
+                            doctorName = doctor,
+                            specialty = rxList.firstOrNull()?.doctorSpecialty ?: "",
+                            prescriptions = rxList,
+                        )
+                    }
                 _uiState.update {
                     it.copy(
-                        prescriptions = SyntheticPrescriptions.samples,
+                        prescriptions = samples,
+                        doctorGroups = groups,
                         isLoading = false,
                         error = null,
                     )
@@ -49,6 +59,18 @@ class PrescriptionListViewModel @Inject constructor() : ViewModel() {
                     )
                 }
             }
+        }
+    }
+
+    /** Toggles the expand/collapse state of the doctor group with [doctorName]. */
+    fun onToggleGroup(doctorName: String) {
+        _uiState.update { state ->
+            state.copy(
+                doctorGroups = state.doctorGroups.map { group ->
+                    if (group.doctorName == doctorName) group.copy(isExpanded = !group.isExpanded)
+                    else group
+                }
+            )
         }
     }
 }
