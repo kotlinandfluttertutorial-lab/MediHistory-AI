@@ -13,7 +13,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +47,7 @@ import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.components.StatusBadge
 import com.medihistory.ai.ui.components.OcrStatus as UiOcrStatus
+import com.medihistory.ai.ui.theme.extendedColors
 import java.util.Locale
 
 /**
@@ -115,7 +127,89 @@ fun PrescriptionDetailScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp),
                 ) {
-                    // Document preview placeholder
+                    // SECTION 1: Doctor / Hospital header card (Figma: top of detail screen)
+                    ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = prescription.doctorId?.let { "Doctor ID: $it" } ?: "Doctor not specified",
+                                        style = MaterialTheme.typography.titleMedium,
+                                    )
+                                }
+                                SuggestionChip(
+                                    onClick = {},
+                                    label = { Text("✓ Prescription", style = MaterialTheme.typography.labelSmall) },
+                                    colors = SuggestionChipDefaults.suggestionChipColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    ),
+                                )
+                            }
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Column {
+                                    Text("Prescribed Date", style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(
+                                        text = prescription.prescriptionDate?.toString() ?: "Unknown",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                                Column {
+                                    Text("Status", style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    StatusBadge(status = prescription.ocrStatus.toUiOcrStatus())
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // SECTION 2: OCR review prompt — shown when fields need review
+                    if (prescription.ocrStatus == OcrStatus.NEEDS_REVIEW) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.extendedColors.warningContainer,
+                            ),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Warning,
+                                    contentDescription = "Review needed",
+                                    tint = MaterialTheme.extendedColors.warning,
+                                    modifier = Modifier.size(24.dp),
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Fields need your review",
+                                        style = MaterialTheme.typography.titleSmall)
+                                    Text("Tap to review and confirm extracted data",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Button(onClick = { /* OCR review nav — wired in NavHost */ }) {
+                                    Text("Review →")
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    // SECTION 3: Document preview placeholder
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
@@ -138,6 +232,25 @@ fun PrescriptionDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Security note — "Original document preserved"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Outlined.Lock, contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+                        Text(
+                            text = "Original document preserved — not modified by MediHistory AI",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
