@@ -1,6 +1,8 @@
 package com.medihistory.ai.ui.dashboard
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +23,9 @@ import androidx.compose.material.icons.outlined.MedicalServices
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -38,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -108,10 +114,18 @@ fun DashboardScreen(
                         onClick = onViewDuplicates,
                         modifier = Modifier.semantics { contentDescription = alertDesc },
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = null,
-                        )
+                        BadgedBox(
+                            badge = {
+                                if (uiState.pendingAlertCount > 0) {
+                                    Badge { Text(uiState.pendingAlertCount.toString()) }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Notifications,
+                                contentDescription = null,
+                            )
+                        }
                     }
                     IconButton(
                         onClick = { /* Profile — future ticket */ },
@@ -169,6 +183,57 @@ fun DashboardScreen(
                         .fillMaxSize()
                         .padding(horizontal = 16.dp),
                 ) {
+                    // ── Greeting section ───────────────────────────────────────────
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                if (uiState.currentDate.isNotEmpty()) {
+                                    Text(
+                                        text = uiState.currentDate,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Text(
+                                    text = "Good morning,\n${uiState.patientName}",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = uiState.syncStatus,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(text = "\uD83D\uDC4B", style = MaterialTheme.typography.headlineSmall)
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = uiState.patientName.firstOrNull()?.uppercase() ?: "P",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // ── Stats row ───────────────────────────────────────────────────
                     item {
                         Spacer(modifier = Modifier.height(4.dp))
@@ -193,6 +258,7 @@ fun DashboardScreen(
                                 pendingAlertCount = uiState.pendingAlertCount,
                                 onReviewOcr = onViewPrescriptions,
                                 onViewDuplicates = onViewDuplicates,
+                                onViewHistory = onViewHistory,
                             )
                         }
                     }
@@ -411,6 +477,7 @@ private fun AttentionSection(
     pendingAlertCount: Int,
     onReviewOcr: () -> Unit,
     onViewDuplicates: () -> Unit,
+    onViewHistory: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(
@@ -441,6 +508,14 @@ private fun AttentionSection(
                     onClick = onViewDuplicates,
                 )
             }
+
+            // Medical history update row — always shown in attention section
+            AttentionRow(
+                text = "Medical history update",
+                subText = "Review your records to keep it current",
+                actionLabel = "Update",
+                onClick = onViewHistory,
+            )
         }
     }
 }
@@ -450,6 +525,7 @@ private fun AttentionRow(
     text: String,
     actionLabel: String,
     onClick: () -> Unit,
+    subText: String? = null,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -468,10 +544,16 @@ private fun AttentionRow(
                     .padding(end = 4.dp),
                 tint = MaterialTheme.extendedColors.warning,
             )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodySmall,
-            )
+            Column {
+                Text(text = text, style = MaterialTheme.typography.bodySmall)
+                if (subText != null) {
+                    Text(
+                        text = subText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
         TextButton(onClick = onClick) {
             Text(text = "$actionLabel →")
