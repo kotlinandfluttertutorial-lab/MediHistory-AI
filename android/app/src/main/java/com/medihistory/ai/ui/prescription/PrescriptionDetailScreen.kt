@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Button
@@ -46,6 +47,7 @@ import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.components.StatusBadge
 import com.medihistory.ai.ui.components.OcrStatus as UiOcrStatus
+import com.medihistory.ai.ui.theme.extendedColors
 import java.util.Locale
 
 /**
