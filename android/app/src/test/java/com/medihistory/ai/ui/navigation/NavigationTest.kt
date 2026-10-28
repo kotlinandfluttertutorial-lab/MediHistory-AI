@@ -80,13 +80,13 @@ class NavigationTest {
     }
 
     @Test
-    fun `should have DuplicateAlerts as fourth bottom nav destination`() {
-        assertEquals(Routes.DUPLICATE_ALERTS, NavDestination.bottomNavDestinations[3].route)
+    fun `should have History as fourth bottom nav destination`() {
+        assertEquals(Routes.MEDICAL_HISTORY, NavDestination.bottomNavDestinations[3].route)
     }
 
     @Test
-    fun `should have MedicalHistory as fifth bottom nav destination`() {
-        assertEquals(Routes.MEDICAL_HISTORY, NavDestination.bottomNavDestinations[4].route)
+    fun `should have More as fifth bottom nav destination`() {
+        assertEquals(Routes.MORE, NavDestination.bottomNavDestinations[4].route)
     }
 
     @Test
@@ -105,13 +105,13 @@ class NavigationTest {
     }
 
     @Test
-    fun `should match DuplicateAlerts object route to DUPLICATE_ALERTS constant`() {
-        assertEquals(Routes.DUPLICATE_ALERTS, NavDestination.DuplicateAlerts.route)
+    fun `should match History object route to MEDICAL_HISTORY constant`() {
+        assertEquals(Routes.MEDICAL_HISTORY, NavDestination.History.route)
     }
 
     @Test
-    fun `should match MedicalHistory object route to MEDICAL_HISTORY constant`() {
-        assertEquals(Routes.MEDICAL_HISTORY, NavDestination.MedicalHistory.route)
+    fun `should match More object route to MORE constant`() {
+        assertEquals(Routes.MORE, NavDestination.More.route)
     }
 
     @Test

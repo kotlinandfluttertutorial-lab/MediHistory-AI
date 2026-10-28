@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medihistory.ai.ui.components.LoadingIndicator
+import com.medihistory.ai.ui.theme.extendedColors
 
 /**
  * Safety Center screen — Feature F05 / MA-42.
@@ -420,12 +421,35 @@ private fun NotConfiguredCard(
  * Medical safety: always shows [InteractionResult.reviewWarning]. Severity label
  * is displayed as-is — the caller ([SafetyCenterViewModel]) ensures it never
  * contains "safe" or "no interaction".
+ *
+ * Severity colour mapping (both colour AND text used — never colour alone):
+ * - "consult doctor" → amber warning container
+ * - "review with pharmacist" → secondary container (teal)
+ * - all others → surfaceVariant (neutral)
  */
 @Composable
 private fun InteractionResultCard(
     result: InteractionResult,
     modifier: Modifier = Modifier,
 ) {
+    val severityLower = result.severity.lowercase()
+    val severityContainerColor = when {
+        severityLower.contains("consult doctor") ->
+            MaterialTheme.extendedColors.warningContainer
+        severityLower.contains("review with pharmacist") ->
+            MaterialTheme.colorScheme.secondaryContainer
+        else ->
+            MaterialTheme.colorScheme.surfaceVariant
+    }
+    val severityContentColor = when {
+        severityLower.contains("consult doctor") ->
+            MaterialTheme.extendedColors.onWarningContainer
+        severityLower.contains("review with pharmacist") ->
+            MaterialTheme.colorScheme.onSecondaryContainer
+        else ->
+            MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -445,7 +469,7 @@ private fun InteractionResultCard(
             Text(
                 text = result.severity,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+                color = severityContentColor,
             )
 
             Spacer(modifier = Modifier.height(4.dp))

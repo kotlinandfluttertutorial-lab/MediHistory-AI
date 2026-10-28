@@ -143,6 +143,9 @@ fun PrivacyScreen(
                     // ── Cloud backup status ────────────────────────────────────────────
                     CloudBackupCard()
 
+                    // ── Consent and sharing ────────────────────────────────────────────
+                    ConsentCard(onManageConsent = { /* TODO: navigate to consent management */ })
+
                     // ── Deletion section ───────────────────────────────────────────────
                     DeleteCard(
                         onDeleteClicked = { viewModel.onDeleteStep1Clicked() },
@@ -244,6 +247,36 @@ private fun CloudBackupCard() {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun ConsentCard(onManageConsent: () -> Unit) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "Consent and sharing",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = "No active sharing consents.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(
+                onClick = onManageConsent,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Manage consent" },
+            ) {
+                Text(text = "Manage consent")
+            }
         }
     }
 }

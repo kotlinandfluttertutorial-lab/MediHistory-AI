@@ -46,6 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medihistory.ai.ui.components.EmptyStateView
 import com.medihistory.ai.ui.components.LoadingIndicator
+import com.medihistory.ai.ui.components.PrimaryButton
 
 /**
  * New Doctor Mode screen — feature F07.
