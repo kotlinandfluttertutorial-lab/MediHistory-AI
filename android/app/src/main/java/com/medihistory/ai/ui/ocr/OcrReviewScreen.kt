@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,12 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.medihistory.ai.data.ocr.ReviewState
+import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.theme.extendedColors
 import kotlinx.coroutines.launch
 
@@ -123,10 +122,8 @@ fun OcrReviewScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.semantics {
-                            contentDescription = "Loading extracted fields"
-                        },
+                    LoadingIndicator(
+                        contentDescription = "Loading extracted fields",
                     )
                 }
             }
