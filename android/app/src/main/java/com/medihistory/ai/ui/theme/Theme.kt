@@ -13,59 +13,81 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalContext
 
 // ---------------------------------------------------------------------------
-// Light colour scheme
+// Light colour scheme — full Material 3 slot set
 // ---------------------------------------------------------------------------
-private val LightColorScheme = lightColorScheme(
-    primary             = MhPrimary,
-    onPrimary           = MhOnPrimary,
-    primaryContainer    = MhPrimaryContainer,
-    onPrimaryContainer  = MhOnPrimaryContainer,
-    secondary           = MhSecondary,
-    secondaryContainer  = MhSecondaryContainer,
-    error               = MhError,
-    errorContainer      = MhErrorContainer,
-    surface             = MhSurface,
-    onSurface           = MhOnSurface,
-    surfaceVariant      = MhSurfaceVariant,
-    outline             = MhOutline,
+internal val LightColorScheme = lightColorScheme(
+    primary                = MhPrimary,
+    onPrimary              = MhOnPrimary,
+    primaryContainer       = MhPrimaryContainer,
+    onPrimaryContainer     = MhOnPrimaryContainer,
+    secondary              = MhSecondary,
+    onSecondary            = MhOnSecondary,
+    secondaryContainer     = MhSecondaryContainer,
+    onSecondaryContainer   = MhOnSecondaryContainer,
+    tertiary               = MhTertiary,
+    onTertiary             = MhOnTertiary,
+    tertiaryContainer      = MhTertiaryContainer,
+    onTertiaryContainer    = MhOnTertiaryContainer,
+    error                  = MhError,
+    onError                = MhOnError,
+    errorContainer         = MhErrorContainer,
+    onErrorContainer       = MhOnErrorContainer,
+    background             = MhBackground,
+    onBackground           = MhOnBackground,
+    surface                = MhSurface,
+    onSurface              = MhOnSurface,
+    surfaceVariant         = MhSurfaceVariant,
+    onSurfaceVariant       = MhOnSurfaceVariant,
+    outline                = MhOutline,
+    outlineVariant         = MhOutlineVariant,
+    inverseSurface         = MhInverseSurface,
+    inverseOnSurface       = MhInverseOnSurface,
+    inversePrimary         = MhInversePrimary,
+    scrim                  = MhScrim,
 )
 
 // ---------------------------------------------------------------------------
-// Dark colour scheme — mirrors light scheme; full dark palette to be added
-// in the design system ticket (MHA-010).
+// Dark colour scheme — proper dark palette using MhDark* constants
 // ---------------------------------------------------------------------------
-private val DarkColorScheme = darkColorScheme(
-    primary             = MhPrimaryContainer,
-    onPrimary           = MhOnPrimaryContainer,
-    primaryContainer    = MhPrimary,
-    onPrimaryContainer  = MhPrimaryContainer,
-    secondary           = MhSecondaryContainer,
-    secondaryContainer  = MhSecondary,
-    error               = MhErrorContainer,
-    errorContainer      = MhError,
-)
-
-// ---------------------------------------------------------------------------
-// Warning token extension — custom colours not in Material 3 ColorScheme.
-// ---------------------------------------------------------------------------
-private val LightWarningScheme = MediHistoryColorScheme(
-    warning          = MhWarning,
-    warningContainer = MhWarningContainer,
-)
-
-private val DarkWarningScheme = MediHistoryColorScheme(
-    warning          = MhWarningContainer,
-    warningContainer = MhWarning,
+internal val DarkColorScheme = darkColorScheme(
+    primary                = MhDarkPrimary,
+    onPrimary              = MhDarkOnPrimary,
+    primaryContainer       = MhDarkPrimaryContainer,
+    onPrimaryContainer     = MhDarkOnPrimaryContainer,
+    secondary              = MhDarkSecondary,
+    onSecondary            = MhDarkOnSecondary,
+    secondaryContainer     = MhDarkSecondaryContainer,
+    onSecondaryContainer   = MhDarkOnSecondaryContainer,
+    tertiary               = MhDarkTertiary,
+    onTertiary             = MhDarkOnTertiary,
+    tertiaryContainer      = MhDarkTertiaryContainer,
+    onTertiaryContainer    = MhDarkOnTertiaryContainer,
+    error                  = MhDarkError,
+    onError                = MhDarkOnError,
+    errorContainer         = MhDarkErrorContainer,
+    onErrorContainer       = MhDarkOnErrorContainer,
+    background             = MhDarkBackground,
+    onBackground           = MhDarkOnBackground,
+    surface                = MhDarkSurface,
+    onSurface              = MhDarkOnSurface,
+    surfaceVariant         = MhDarkSurfaceVariant,
+    onSurfaceVariant       = MhDarkOnSurfaceVariant,
+    outline                = MhDarkOutline,
+    outlineVariant         = MhDarkOutlineVariant,
+    inverseSurface         = MhDarkInverseSurface,
+    inverseOnSurface       = MhDarkInverseOnSurface,
+    inversePrimary         = MhDarkInversePrimary,
+    scrim                  = MhDarkScrim,
 )
 
 /**
- * Convenience accessor for the custom MediHistory colour extension.
- * Usage: MaterialTheme.mediHistoryColors.warning
+ * Convenience accessor for the custom MediHistory extended colour tokens.
+ * Usage: MaterialTheme.extendedColors.warning
  */
-val MaterialTheme.mediHistoryColors: MediHistoryColorScheme
+val MaterialTheme.extendedColors: MediHistoryExtendedColors
     @Composable
     @ReadOnlyComposable
-    get() = LocalMediHistoryColorScheme.current
+    get() = LocalMediHistoryColors.current
 
 // ---------------------------------------------------------------------------
 // Top-level theme composable
@@ -74,8 +96,8 @@ val MaterialTheme.mediHistoryColors: MediHistoryColorScheme
 /**
  * MediHistory AI application theme.
  *
- * Wraps all screens. Provides Material 3 theming plus the custom warning
- * colour extension via [LocalMediHistoryColorScheme].
+ * Wraps all screens. Provides Material 3 theming plus custom extended colour
+ * tokens via [LocalMediHistoryColors].
  *
  * @param darkTheme     Follow system dark-mode setting by default.
  * @param dynamicColor  Use Android 12+ dynamic colour if available (default on).
@@ -97,9 +119,9 @@ fun MediHistoryTheme(
         else      -> LightColorScheme
     }
 
-    val warningScheme = if (darkTheme) DarkWarningScheme else LightWarningScheme
+    val extendedColorScheme = if (darkTheme) DarkExtendedColors else LightExtendedColors
 
-    CompositionLocalProvider(LocalMediHistoryColorScheme provides warningScheme) {
+    CompositionLocalProvider(LocalMediHistoryColors provides extendedColorScheme) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography  = MediHistoryTypography,

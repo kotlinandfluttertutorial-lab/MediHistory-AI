@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MediHistory AI</string>
+
+    <!-- Bottom navigation labels -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_prescriptions">Prescriptions</string>
+    <string name="nav_medicines">Medicines</string>
+    <string name="nav_alerts">Alerts</string>
+    <string name="nav_history">History</string>
+    <string name="nav_more">More</string>
 </resources>

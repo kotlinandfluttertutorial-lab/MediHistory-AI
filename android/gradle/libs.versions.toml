@@ -1,21 +1,25 @@
 [versions]
-agp                = "8.4.2"
-kotlin             = "2.4.21"
-compose-bom        = "2024.06.00"
+agp                = "9.4.1"
+kotlin             = "1.9.24"
+compose-bom        = "2026.09.00"
 compose-compiler   = "1.5.14"
 core-ktx           = "1.13.1"
 lifecycle          = "2.8.2"
 activity-compose   = "1.9.0"
 material3          = "1.2.1"
-hilt               = "2.51.1"
+hilt               = "2.60.1"
 room               = "2.6.1"
 navigation         = "2.7.7"
-coroutines         = "1.8.1"
+coroutines         = "1.11.0"
 camerax            = "1.3.3"
-work               = "2.9.0"
+accompanist        = "0.36.0"
+work               = "2.12.0"
+security-crypto    = "1.1.0-alpha06"
 junit              = "4.13.2"
 junit-ext          = "1.1.5"
 espresso           = "3.5.1"
+robolectric        = "4.12.2"
+androidx-test-core = "1.6.1"
 
 [libraries]
 # AndroidX Core
@@ -29,14 +33,15 @@ androidx-lifecycle-viewmodel    = { group = "androidx.lifecycle",          name 
 androidx-activity-compose       = { group = "androidx.activity",          name = "activity-compose",                version.ref = "activity-compose" }
 
 # Compose BOM + components
-androidx-compose-bom                = { group = "androidx.compose",           name = "compose-bom",                     version.ref = "compose-bom" }
-androidx-compose-ui                 = { group = "androidx.compose.ui",        name = "ui" }
-androidx-compose-ui-graphics        = { group = "androidx.compose.ui",        name = "ui-graphics" }
-androidx-compose-ui-tooling         = { group = "androidx.compose.ui",        name = "ui-tooling" }
-androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui",        name = "ui-tooling-preview" }
-androidx-compose-ui-test-manifest   = { group = "androidx.compose.ui",        name = "ui-test-manifest" }
-androidx-compose-ui-test-junit4     = { group = "androidx.compose.ui",        name = "ui-test-junit4" }
-androidx-compose-material3          = { group = "androidx.compose.material3", name = "material3",                       version.ref = "material3" }
+androidx-compose-bom                         = { group = "androidx.compose",           name = "compose-bom",                     version.ref = "compose-bom" }
+androidx-compose-ui                          = { group = "androidx.compose.ui",        name = "ui" }
+androidx-compose-ui-graphics                 = { group = "androidx.compose.ui",        name = "ui-graphics" }
+androidx-compose-ui-tooling                  = { group = "androidx.compose.ui",        name = "ui-tooling" }
+androidx-compose-ui-tooling-preview          = { group = "androidx.compose.ui",        name = "ui-tooling-preview" }
+androidx-compose-ui-test-manifest            = { group = "androidx.compose.ui",        name = "ui-test-manifest" }
+androidx-compose-ui-test-junit4              = { group = "androidx.compose.ui",        name = "ui-test-junit4" }
+androidx-compose-material3                   = { group = "androidx.compose.material3", name = "material3",                       version.ref = "material3" }
+androidx-compose-material-icons-extended     = { group = "androidx.compose.material",  name = "material-icons-extended" }
 
 # Navigation
 androidx-navigation-compose     = { group = "androidx.navigation",         name = "navigation-compose",              version.ref = "navigation" }
@@ -45,14 +50,24 @@ androidx-navigation-compose     = { group = "androidx.navigation",         name 
 hilt-android                    = { group = "com.google.dagger",           name = "hilt-android",                    version.ref = "hilt" }
 hilt-android-compiler           = { group = "com.google.dagger",           name = "hilt-android-compiler",           version.ref = "hilt" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt",              name = "hilt-navigation-compose",         version = "1.2.0" }
+hilt-work                       = { group = "androidx.hilt",               name = "hilt-work",                       version = "1.2.0" }
+androidx-hilt-compiler          = { group = "androidx.hilt",               name = "hilt-compiler",                   version = "1.2.0" }
 
 # Room
 androidx-room-runtime           = { group = "androidx.room",               name = "room-runtime",                    version.ref = "room" }
 androidx-room-ktx               = { group = "androidx.room",               name = "room-ktx",                        version.ref = "room" }
 androidx-room-compiler          = { group = "androidx.room",               name = "room-compiler",                   version.ref = "room" }
+androidx-room-testing           = { group = "androidx.room",               name = "room-testing",                    version.ref = "room" }
 
 # Coroutines
 kotlinx-coroutines-android      = { group = "org.jetbrains.kotlinx",       name = "kotlinx-coroutines-android",      version.ref = "coroutines" }
+kotlinx-coroutines-test         = { group = "org.jetbrains.kotlinx",       name = "kotlinx-coroutines-test",         version.ref = "coroutines" }
+
+# Security
+androidx-security-crypto        = { group = "androidx.security",            name = "security-crypto",                 version.ref = "security-crypto" }
+
+# Lifecycle — Compose
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle",        name = "lifecycle-runtime-compose",       version.ref = "lifecycle" }
 
 # CameraX
 androidx-camera-core            = { group = "androidx.camera",             name = "camera-core",                     version.ref = "camerax" }
@@ -60,11 +75,17 @@ androidx-camera-camera2         = { group = "androidx.camera",             name 
 androidx-camera-lifecycle       = { group = "androidx.camera",             name = "camera-lifecycle",                version.ref = "camerax" }
 androidx-camera-view            = { group = "androidx.camera",             name = "camera-view",                     version.ref = "camerax" }
 
+# Accompanist
+accompanist-permissions         = { group = "com.google.accompanist",      name = "accompanist-permissions",         version.ref = "accompanist" }
+
 # WorkManager
 androidx-work-runtime-ktx       = { group = "androidx.work",               name = "work-runtime-ktx",                version.ref = "work" }
+androidx-work-testing           = { group = "androidx.work",               name = "work-testing",                    version.ref = "work" }
 
 # Testing — unit
 junit                           = { group = "junit",                       name = "junit",                           version.ref = "junit" }
+robolectric                     = { group = "org.robolectric",             name = "robolectric",                     version.ref = "robolectric" }
+androidx-test-core              = { group = "androidx.test",               name = "core",                            version.ref = "androidx-test-core" }
 
 # Testing — instrumented
 androidx-junit                  = { group = "androidx.test.ext",           name = "junit",                           version.ref = "junit-ext" }

@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    jacoco
 }
 
 // ---------------------------------------------------------------------------
@@ -23,19 +24,25 @@ val backendBaseUrl: String =
         ?: ""
 
 val enableCloudBackup: Boolean =
-    (localProperties.getProperty("enable.cloud.backup") ?: System.getenv("ENABLE_CLOUD_BACKUP") ?: "false").toBoolean()
+    (localProperties.getProperty("enable.cloud.backup")
+        ?: System.getenv("ENABLE_CLOUD_BACKUP")
+        ?: "false").toBoolean()
 
 val enableInteractionCheck: Boolean =
-    (localProperties.getProperty("enable.interaction.check") ?: System.getenv("ENABLE_INTERACTION_CHECK") ?: "false").toBoolean()
+    (localProperties.getProperty("enable.interaction.check")
+        ?: System.getenv("ENABLE_INTERACTION_CHECK")
+        ?: "false").toBoolean()
 
 android {
     namespace = "com.medihistory.ai"
-    compileSdk = 35
+    compileSdk = 34
+
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 
     defaultConfig {
         applicationId = "com.medihistory.ai"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
 
@@ -44,10 +51,18 @@ android {
             useSupportLibrary = true
         }
 
-        // BuildConfig fields — values come from local.properties or env vars, never hardcoded.
+        // BuildConfig field — value comes from local.properties or env var, never hardcoded.
         buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
         buildConfigField("boolean", "ENABLE_CLOUD_BACKUP", "$enableCloudBackup")
         buildConfigField("boolean", "ENABLE_INTERACTION_CHECK", "$enableInteractionCheck")
+
+        // Room schema export — keeps annotationProcessorOptions path for compatibility.
+        // The ksp { } block below is the active path when using KSP.
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf("room.schemaLocation" to "$projectDir/schemas")
+            }
+        }
     }
 
     buildTypes {
@@ -83,6 +98,22 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.extensions.configure(JacocoTaskExtension::class) {
+                isIncludeNoLocationClasses = true
+                excludes = listOf("jdk.internal.*")
+            }
+        }
+    }
+}
+
+// KSP arguments — Room schema export directory.
+// This is the active path since the project uses KSP (not kapt).
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -102,6 +133,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
@@ -110,6 +143,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    // Hilt WorkManager integration
+    implementation(libs.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     // Room
     implementation(libs.androidx.room.runtime)
@@ -119,23 +155,38 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // Security — EncryptedSharedPreferences
+    implementation(libs.androidx.security.crypto)
+
+    // Lifecycle — collectAsStateWithLifecycle
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     // CameraX
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
+    // Accompanist — runtime permissions in Compose
+    implementation(libs.accompanist.permissions)
+
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
     // Unit tests
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.work.testing)
 
     // Instrumented tests
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.room.testing)
 
     // Debug — Compose tooling
     debugImplementation(libs.androidx.compose.ui.tooling)

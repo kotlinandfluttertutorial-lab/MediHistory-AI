@@ -2,7 +2,7 @@ name: PR Gate — All Checks
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   verify-no-secrets-committed:
@@ -44,6 +44,30 @@ jobs:
           fi
           echo "No .keystore files committed — OK"
 
+      - name: Check for hardcoded secrets in source files
+        run: |
+          pattern="(^|[^[:alnum:]_])(api[_-]?key|client[_-]?secret|password|passwd|secret|access[_-]?token|auth[_-]?token)[\"']?[[:space:]]*[:=][[:space:]]*[\"'][^\"']{8,}[\"']|(^|[^[:alnum:]_])ghp_[[:alnum:]]{20,}|(^|[^[:alnum:]_])github_pat_[[:alnum:]_]{20,}"
+          if grep -rEil --exclude-dir=".git" \
+            "$pattern" \
+            --include="*.kt" --include="*.java" --include="*.xml" \
+            --include="*.py" --include="*.properties" --include="*.yml" \
+            --include="*.yaml" --include="*.json" \
+            .; then
+            echo "ERROR: Possible hardcoded credential found in the files listed above."
+            exit 1
+          fi
+          echo "Credential scan passed — no hardcoded credentials found"
+
+      - name: Scan for hardcoded secrets
+        run: |
+          if grep -rE '(ghp_|github_pat_|AIza|AKIA|sk-|password\s*=\s*["'"'"'][^"'"'"']|api_key\s*=\s*)' \
+            --include='*.kt' --include='*.py' --include='*.java' --include='*.gradle.kts' \
+            --exclude-dir='.git' --exclude-dir='build' . 2>/dev/null | grep -v test | grep -v Stub | grep -v 'synthetic'; then
+            echo 'ERROR: Possible hardcoded secret found'
+            exit 1
+          fi
+          echo 'Secrets scan passed'
+
   android-ci:
     name: Android Lint and Unit Tests
     runs-on: ubuntu-latest
@@ -80,7 +104,9 @@ jobs:
         run: ./gradlew testDebugUnitTest
         working-directory: android
         env:
-          BACKEND_BASE_URL: ${{vars.BACKEND_BASE_URL || 'http://localhost:8000'}}
+          BACKEND_BASE_URL: ""
+          ENABLE_CLOUD_BACKUP: "false"
+          ENABLE_INTERACTION_CHECK: "false"
 
   backend-ci:
     name: Backend Lint, Type Check, and Tests
@@ -123,10 +149,14 @@ jobs:
     if: always()
     steps:
       - name: Verify all checks passed
+        env:
+          ANDROID_RESULT: ${{ needs.android-ci.result }}
+          BACKEND_RESULT: ${{ needs.backend-ci.result }}
+          SECRETS_RESULT: ${{ needs.verify-no-secrets-committed.result }}
         run: |
-          if [ "${{needs.android-ci.result}}" != "success" ] || \
-             [ "${{needs.backend-ci.result}}" != "success" ] || \
-             [ "${{needs.verify-no-secrets-committed.result}}" != "success" ]; then
+          if [ "$ANDROID_RESULT" != "success" ] || \
+             [ "$BACKEND_RESULT" != "success" ] || \
+             [ "$SECRETS_RESULT" != "success" ]; then
             echo "One or more required checks failed. Merge blocked."
             exit 1
           fi
