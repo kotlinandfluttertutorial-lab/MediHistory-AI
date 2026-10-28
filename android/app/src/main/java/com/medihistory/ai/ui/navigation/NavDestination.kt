@@ -5,17 +5,19 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Medication
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Medication
-import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.medihistory.ai.R
 
 /**
  * Represents each top-level destination that appears in the bottom navigation bar.
+ *
+ * Tabs match the Figma design: Dashboard · Prescriptions · Medicines · History · More
  *
  * @property route            NavHost route string from [Routes].
  * @property labelRes         String resource ID for the bottom nav label.
@@ -51,23 +53,23 @@ sealed class NavDestination(
         labelRes = R.string.nav_medicines,
         selectedIcon = Icons.Filled.Medication,
         unselectedIcon = Icons.Outlined.Medication,
-        contentDescription = "Medicine explorer, tab 3 of 5",
+        contentDescription = "Medicines, tab 3 of 5",
     )
 
-    object DuplicateAlerts : NavDestination(
-        route = Routes.DUPLICATE_ALERTS,
-        labelRes = R.string.nav_alerts,
-        selectedIcon = Icons.Filled.Warning,
-        unselectedIcon = Icons.Outlined.Warning,
-        contentDescription = "Duplicate alerts, tab 4 of 5",
-    )
-
-    object MedicalHistory : NavDestination(
+    object History : NavDestination(
         route = Routes.MEDICAL_HISTORY,
         labelRes = R.string.nav_history,
         selectedIcon = Icons.Filled.History,
         unselectedIcon = Icons.Outlined.History,
-        contentDescription = "Medical history, tab 5 of 5",
+        contentDescription = "History, tab 4 of 5",
+    )
+
+    object More : NavDestination(
+        route = Routes.MORE,
+        labelRes = R.string.nav_more,
+        selectedIcon = Icons.Filled.MoreHoriz,
+        unselectedIcon = Icons.Outlined.MoreHoriz,
+        contentDescription = "More, tab 5 of 5",
     )
 
     companion object {
@@ -75,8 +77,8 @@ sealed class NavDestination(
             Dashboard,
             Prescriptions,
             MedicineExplorer,
-            DuplicateAlerts,
-            MedicalHistory,
+            History,
+            More,
         )
     }
 }

@@ -8,9 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -49,6 +52,20 @@ fun PrescriptionListScreen(
         topBar = {
             MediumTopAppBar(
                 title = { Text(text = "Prescriptions") },
+                actions = {
+                    IconButton(onClick = { /* TODO: open search */ }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = "Search prescriptions",
+                        )
+                    }
+                    IconButton(onClick = { /* TODO: open sort */ }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Sort,
+                            contentDescription = "Sort prescriptions",
+                        )
+                    }
+                },
             )
         },
         floatingActionButton = {

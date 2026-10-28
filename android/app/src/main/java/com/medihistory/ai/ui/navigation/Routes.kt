@@ -22,9 +22,16 @@ object Routes {
     const val SAFETY_CENTER = "safety_center/{patientId}"
     const val PRIVACY = "privacy"
 
+    /** "More" disclosure hub — tab 5 of the bottom nav. */
+    const val MORE = "more"
+
+    /** Doctor-grouped prescription timeline. */
+    const val DOCTOR_GROUP = "doctor_group/{doctorId}"
+
     fun prescriptionDetail(id: String) = "prescription/$id"
     fun medicineDetail(id: String) = "medicine/$id"
     fun duplicateDetail(alertId: String) = "duplicate/$alertId"
     fun ocrReview(id: String) = "ocr_review/$id"
     fun safetyCenter(patientId: String) = "safety_center/$patientId"
+    fun doctorGroup(id: String) = "doctor_group/$id"
 }
