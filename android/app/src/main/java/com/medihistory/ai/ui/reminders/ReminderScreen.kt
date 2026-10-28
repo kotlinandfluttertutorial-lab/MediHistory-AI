@@ -13,7 +13,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.NotificationsOff
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import com.medihistory.ai.ui.theme.extendedColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -78,7 +82,17 @@ fun ReminderScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(title = { Text(text = "Reminders") })
+            TopAppBar(
+                title = { Text(text = "Reminders") },
+                actions = {
+                    IconButton(onClick = { /* Add reminder — future ticket */ }) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add reminder")
+                    }
+                    IconButton(onClick = { /* Options */ }) {
+                        Icon(Icons.Outlined.MoreVert, contentDescription = "More options")
+                    }
+                }
+            )
         },
         floatingActionButton = {
             // Stub FAB — full reminder setup is initiated from the medicine detail screen.
@@ -161,6 +175,23 @@ private fun ReminderContent(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier.padding(horizontal = 16.dp),
     ) {
+        // Disclaimer banner — always shown (Figma requirement)
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.extendedColors.warningContainer
+                )
+            ) {
+                Text(
+                    text = "Reminders are based on your prescription instructions. Always verify timing with your doctor or pharmacist.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+        }
+
         // ── Section 1: Today's Medicines ─────────────────────────────────────
         item {
             SectionHeader(title = "Today's Medicines")

@@ -11,11 +11,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.medihistory.ai.data.session.SessionManager
 import com.medihistory.ai.ui.navigation.MediHistoryBottomBar
 import com.medihistory.ai.ui.navigation.MediHistoryNavHost
 import com.medihistory.ai.ui.navigation.NavDestination
 import com.medihistory.ai.ui.theme.MediHistoryTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * The single activity for MediHistory AI.
@@ -25,6 +27,9 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject
+    lateinit var sessionManager: SessionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,8 +38,8 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val backStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = backStackEntry?.destination?.route
+                val patientId = sessionManager.getPatientId()
 
-                // Resolve the active NavDestination for the bottom bar selection state.
                 val currentDestination = NavDestination.bottomNavDestinations
                     .firstOrNull { it.route == currentRoute }
 
@@ -45,7 +50,6 @@ class MainActivity : ComponentActivity() {
                             currentDestination = currentDestination,
                             onDestinationSelected = { destination ->
                                 navController.navigate(destination.route) {
-                                    // Pop to the start destination to avoid a deep back stack.
                                     popUpTo(navController.graph.startDestinationId) {
                                         saveState = true
                                     }
@@ -58,6 +62,7 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     MediHistoryNavHost(
                         navController = navController,
+                        patientId = patientId,
                         modifier = Modifier.padding(innerPadding),
                     )
                 }
