@@ -17,6 +17,11 @@ import com.medihistory.ai.ui.prescription.PrescriptionSummary
  * @param error                Non-null when a fetch error occurred.
  */
 data class DashboardUiState(
+    // Greeting section
+    val patientName: String = "there",
+    val currentDate: String = "",
+    val syncStatus: String = "MediHistory AI care records sync is active",
+    // Stats
     val prescriptionCount: Int = 0,
     val doctorCount: Int = 0,
     val medicineCount: Int = 0,

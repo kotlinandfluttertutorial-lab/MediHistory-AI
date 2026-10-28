@@ -19,6 +19,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 /**
  * ViewModel for [DashboardScreen].
  *
@@ -35,16 +39,13 @@ class DashboardViewModel @Inject constructor(
     private val duplicateAlertDao: DuplicateAlertDao,
 ) : ViewModel() {
 
+    private val dateFormatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.ENGLISH)
+
     private val _uiState = MutableStateFlow(DashboardUiState(isLoading = true))
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
-    /**
-     * Starts observing all data sources for [patientId].
-     *
-     * Uses [combine] to keep all counts in sync; any update in any source
-     * triggers a full recomposition of [DashboardUiState].
-     */
     fun load(patientId: String) {
+        val today = LocalDate.now().format(dateFormatter)
         viewModelScope.launch {
             combine(
                 prescriptionRepository.observeByPatient(patientId),
@@ -55,19 +56,20 @@ class DashboardViewModel @Inject constructor(
                 val pendingOcrCount = prescriptions.count {
                     it.ocrStatus == OcrStatus.PENDING || it.ocrStatus == OcrStatus.NEEDS_REVIEW
                 }
-                // Build the 3-item recent prescriptions list from the repository data.
-                // Prescriptions arrive newest-first per PrescriptionRepository contract.
                 val recentSummaries = prescriptions.take(3).map { prescription ->
                     PrescriptionSummary(
                         id = prescription.id,
                         doctorName = prescription.doctorId ?: "Unknown doctor",
                         doctorSpecialty = "",
                         prescriptionDate = prescription.prescriptionDate?.toString() ?: "Date unknown",
-                        medicineCount = 0, // resolved separately in a future ticket
+                        medicineCount = 0,
                         ocrStatus = prescription.ocrStatus.toUiOcrStatus(),
                     )
                 }
                 DashboardUiState(
+                    patientName = "Priya", // stub — real lookup from PatientRepository in later ticket
+                    currentDate = today,
+                    syncStatus = "MediHistory AI care records sync is active",
                     prescriptionCount = prescriptions.size,
                     doctorCount = doctors.size,
                     medicineCount = medicines.size,

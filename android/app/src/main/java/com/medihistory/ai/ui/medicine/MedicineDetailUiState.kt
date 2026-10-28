@@ -13,6 +13,8 @@ import com.medihistory.ai.data.model.Medicine
  */
 data class MedicineDetailUiState(
     val medicine: Medicine? = null,
+    val hasDuplicateAlert: Boolean = false,
+    val duplicateAlertCount: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
 )
