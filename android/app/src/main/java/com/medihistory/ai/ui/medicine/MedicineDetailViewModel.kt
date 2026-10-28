@@ -2,7 +2,9 @@ package com.medihistory.ai.ui.medicine
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.medihistory.ai.data.dao.DuplicateAlertDao
 import com.medihistory.ai.data.repository.MedicineRepository
+import kotlinx.coroutines.flow.first
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MedicineDetailViewModel @Inject constructor(
     private val repository: MedicineRepository,
+    private val duplicateAlertDao: DuplicateAlertDao,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MedicineDetailUiState())
@@ -43,7 +46,20 @@ class MedicineDetailViewModel @Inject constructor(
             try {
                 val medicine = repository.getById(id = medicineId, patientId = patientId)
                 if (medicine != null) {
-                    _uiState.update { it.copy(medicine = medicine, isLoading = false) }
+                    // Check for unreviewed duplicate alerts involving this medicine
+                    val alerts = duplicateAlertDao.observeByPatient(patientId).first()
+                    val medicineAlerts = alerts.filter { alert ->
+                        !alert.isReviewed &&
+                            (alert.medicineAId == medicineId || alert.medicineBId == medicineId)
+                    }
+                    _uiState.update {
+                        it.copy(
+                            medicine = medicine,
+                            hasDuplicateAlert = medicineAlerts.isNotEmpty(),
+                            duplicateAlertCount = medicineAlerts.size,
+                            isLoading = false,
+                        )
+                    }
                 } else {
                     _uiState.update {
                         it.copy(
