@@ -252,6 +252,8 @@ fun DoctorGroupScreen(
                         item {
                             EmptyStateView(
                                 message = "No prescriptions recorded for this doctor.",
+                                actionLabel = "Go back",
+                                onAction = onBack,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
