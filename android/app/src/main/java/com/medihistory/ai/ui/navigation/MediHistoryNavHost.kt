@@ -35,7 +35,7 @@ import com.medihistory.ai.ui.safety.SafetyCenterScreen
 @Composable
 fun MediHistoryNavHost(
     navController: NavHostController,
-    patientId: String = patientId,
+    patientId: String,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
