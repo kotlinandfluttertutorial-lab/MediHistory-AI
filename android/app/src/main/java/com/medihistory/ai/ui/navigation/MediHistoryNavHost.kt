@@ -35,6 +35,7 @@ import com.medihistory.ai.ui.safety.SafetyCenterScreen
 @Composable
 fun MediHistoryNavHost(
     navController: NavHostController,
+    patientId: String = patientId,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -45,7 +46,7 @@ fun MediHistoryNavHost(
         // ── P1-01: Dashboard (previously a placeholder) ──────────────────────
         composable(Routes.DASHBOARD) {
             DashboardScreen(
-                patientId = "current-patient",
+                patientId = patientId,
                 onAddPrescription = { navController.navigate(Routes.IMPORT) },
                 onViewDuplicates = { navController.navigate(Routes.DUPLICATE_ALERTS) },
                 onViewHistory = { navController.navigate(Routes.MEDICAL_HISTORY) },
@@ -70,7 +71,7 @@ fun MediHistoryNavHost(
             val id = backStackEntry.arguments?.getString("prescriptionId").orEmpty()
             PrescriptionDetailScreen(
                 prescriptionId = id,
-                patientId = "current-patient",
+                patientId = patientId,
                 onBack = { navController.navigateUp() },
             )
         }
@@ -90,7 +91,7 @@ fun MediHistoryNavHost(
             val id = backStackEntry.arguments?.getString("medicineId").orEmpty()
             MedicineDetailScreen(
                 medicineId = id,
-                patientId = "current-patient",
+                patientId = patientId,
                 onBack = { navController.navigateUp() },
                 onViewPrescription = { rxId -> navController.navigate(Routes.prescriptionDetail(rxId)) },
             )
@@ -99,7 +100,7 @@ fun MediHistoryNavHost(
         // ── Duplicate alerts (was already wired) ─────────────────────────────
         composable(Routes.DUPLICATE_ALERTS) {
             DuplicateReviewScreen(
-                patientId = "current-patient",
+                patientId = patientId,
                 onViewPrescription = { id -> navController.navigate(Routes.prescriptionDetail(id)) },
                 onBack = { navController.navigateUp() },
             )
@@ -108,7 +109,7 @@ fun MediHistoryNavHost(
         // ── P1-02: Medical History (was a placeholder) ───────────────────────
         composable(Routes.MEDICAL_HISTORY) {
             MedicalHistoryScreen(
-                patientId = "current-patient",
+                patientId = patientId,
                 onViewPrescription = { rxId -> navController.navigate(Routes.prescriptionDetail(rxId)) },
                 onBack = { navController.navigateUp() },
             )
@@ -129,7 +130,7 @@ fun MediHistoryNavHost(
         // ── New Doctor Mode ──────────────────────────────────────────────────
         composable(Routes.NEW_DOCTOR_MODE) {
             NewDoctorModeScreen(
-                patientId = "current-patient",
+                patientId = patientId,
                 onBack = { navController.navigateUp() },
             )
         }
@@ -166,14 +167,14 @@ fun MediHistoryNavHost(
         // ── Reminders ────────────────────────────────────────────────────────
         composable(Routes.REMINDERS) {
             ReminderScreen(
-                patientId = "current-patient",
+                patientId = patientId,
             )
         }
 
         // ── Privacy & Data ────────────────────────────────────────────────────
         composable(Routes.PRIVACY) {
             PrivacyScreen(
-                patientId = "current-patient",
+                patientId = patientId,
                 onDataDeleted = {
                     navController.navigate(Routes.DASHBOARD) {
                         popUpTo(0) { inclusive = true }
@@ -187,6 +188,7 @@ fun MediHistoryNavHost(
         composable(Routes.MORE) {
             MoreScreen(
                 onNavigate = { route -> navController.navigate(route) },
+                patientId = patientId,
             )
         }
 
@@ -198,7 +200,7 @@ fun MediHistoryNavHost(
             val doctorId = backStackEntry.arguments?.getString("doctorId").orEmpty()
             DoctorGroupScreen(
                 doctorId = doctorId,
-                patientId = "current-patient",
+                patientId = patientId,
                 onBack = { navController.navigateUp() },
                 onViewPrescription = { rxId -> navController.navigate(Routes.prescriptionDetail(rxId)) },
             )

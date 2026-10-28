@@ -42,6 +42,7 @@ import com.medihistory.ai.ui.navigation.Routes
 @Composable
 fun MoreScreen(
     onNavigate: (String) -> Unit,
+    patientId: String = "current-patient",
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -60,7 +61,7 @@ fun MoreScreen(
                     icon = Icons.Outlined.Shield,
                     title = "Safety Center",
                     subtitle = "Interaction check & duplicate alerts",
-                    onClick = { onNavigate(Routes.safetyCenter("current-patient")) },
+                    onClick = { onNavigate(Routes.safetyCenter(patientId)) },
                 )
             }
             item {

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.CheckBox
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material.icons.outlined.MedicalServices
 import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -216,6 +217,21 @@ fun NewDoctorModeScreen(
                         )
                     }
 
+                    // Stub sections (Figma shows Conditions, Allergies, Medicines before Prescriptions)
+                    item { SectionGroupCard(title = "Conditions", count = 0, items = emptyList()) }
+                    item { SectionGroupCard(title = "Allergies", count = 0, items = emptyList()) }
+                    item { SectionGroupCard(title = "Active Medicines", count = 0, items = emptyList()) }
+
+                    // PRESCRIPTIONS section header
+                    item {
+                        Text(
+                            text = "PRESCRIPTIONS (${uiState.records.size})",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 4.dp),
+                        )
+                    }
+
                     // Selectable record cards
                     items(
                         items = uiState.records,
@@ -229,6 +245,7 @@ fun NewDoctorModeScreen(
                     }
 
                     // Bottom spacer so the last card isn't hidden behind the bottom bar
+                    item { SectionGroupCard(title = "Lab Reports", count = 0, items = emptyList()) }
                     item { Spacer(modifier = Modifier.height(8.dp)) }
                 }
             }
@@ -242,9 +259,6 @@ fun NewDoctorModeScreen(
 
 /**
  * Explanation card shown at the top of the record list.
- *
- * Provides context so the patient understands what "New Doctor Mode" does
- * before they make any selections.
  */
 @Composable
 private fun ExplanationCard() {
@@ -357,6 +371,44 @@ private fun RecordSelectionCard(
                 )
                 Text(
                     text = medLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Stub section card for Conditions, Allergies, Medicines, and Lab Reports.
+ * Shows the section title and count (or "None on record" when empty).
+ * Real data will populate these in a future ticket.
+ */
+@Composable
+private fun SectionGroupCard(
+    title: String,
+    count: Int,
+    items: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    ElevatedCard(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = count.toString(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (items.isEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "None on record",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
