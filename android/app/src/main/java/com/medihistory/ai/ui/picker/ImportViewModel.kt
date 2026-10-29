@@ -4,6 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.model.Prescription
+import com.medihistory.ai.data.repository.PrescriptionRepository
+import com.medihistory.ai.data.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -38,14 +42,17 @@ sealed class ImportState {
     /**
      * Copy completed successfully.
      *
-     * @param filePath Absolute path inside app-private storage (filesDir).
-     * @param sha256 Hex-encoded SHA-256 digest of the copied file.
-     * @param mimeType Resolved MIME type of the imported file.
+     * @param filePath       Absolute path inside app-private storage (filesDir).
+     * @param sha256         Hex-encoded SHA-256 digest of the copied file.
+     * @param mimeType       Resolved MIME type of the imported file.
+     * @param prescriptionId Room record ID — populated after the Prescription row is inserted.
+     *                       Empty string while the DB write is still in flight.
      */
     data class Success(
         val filePath: String,
         val sha256: String,
         val mimeType: String,
+        val prescriptionId: String = "",
     ) : ImportState()
 
     /**
@@ -76,6 +83,8 @@ sealed class ImportState {
 @HiltViewModel
 class ImportViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val prescriptionRepository: PrescriptionRepository,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
 
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
@@ -134,10 +143,33 @@ class ImportViewModel @Inject constructor(
         _importState.value = ImportState.Processing
 
         viewModelScope.launch {
-            val result = withContext(Dispatchers.IO) {
+            val copyResult = withContext(Dispatchers.IO) {
                 copyToPrivateStorage(uri, mimeType)
             }
-            _importState.value = result
+            if (copyResult is ImportState.Success) {
+                // Persist a new Prescription record in Room immediately after the file is copied.
+                // doctorId and prescriptionDate are null until the patient fills them in
+                // (or OCR populates them). ocrStatus starts as PENDING.
+                val patientId = sessionManager.getPatientId()
+                val prescription = Prescription(
+                    id = UUID.randomUUID().toString(),
+                    patientId = patientId,
+                    documentPath = copyResult.filePath,
+                    documentMimeType = copyResult.mimeType,
+                    documentHashSha256 = copyResult.sha256,
+                    ocrStatus = OcrStatus.PENDING,
+                )
+                try {
+                    prescriptionRepository.insert(prescription)
+                    // Emit success with the new prescription's ID so the caller can
+                    // navigate to the OCR review screen.
+                    _importState.value = copyResult.copy(prescriptionId = prescription.id)
+                } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                    _importState.value = ImportState.Error("Could not save prescription. Please try again.")
+                }
+            } else {
+                _importState.value = copyResult
+            }
         }
     }
 

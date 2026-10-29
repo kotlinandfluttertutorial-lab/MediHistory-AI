@@ -201,7 +201,7 @@ fun DashboardScreen(
                                     )
                                 }
                                 Text(
-                                    text = "Good morning,\n${uiState.patientName}",
+                                    text = "Good morning,\n${uiState.patientName.ifBlank { "there" }}",
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
@@ -225,7 +225,7 @@ fun DashboardScreen(
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
-                                        text = uiState.patientName.firstOrNull()?.uppercase() ?: "P",
+                                        text = uiState.patientName.firstOrNull()?.uppercase() ?: "?",
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onPrimary,
                                     )

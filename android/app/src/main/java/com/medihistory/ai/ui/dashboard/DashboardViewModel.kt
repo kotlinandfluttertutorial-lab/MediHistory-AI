@@ -6,6 +6,7 @@ import com.medihistory.ai.data.dao.DuplicateAlertDao
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.repository.DoctorRepository
 import com.medihistory.ai.data.repository.MedicineRepository
+import com.medihistory.ai.data.repository.PatientRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import com.medihistory.ai.ui.components.OcrStatus as UiOcrStatus
 import com.medihistory.ai.ui.prescription.PrescriptionSummary
@@ -37,6 +38,7 @@ class DashboardViewModel @Inject constructor(
     private val medicineRepository: MedicineRepository,
     private val doctorRepository: DoctorRepository,
     private val duplicateAlertDao: DuplicateAlertDao,
+    private val patientRepository: PatientRepository,
 ) : ViewModel() {
 
     private val dateFormatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.ENGLISH)
@@ -47,6 +49,9 @@ class DashboardViewModel @Inject constructor(
     fun load(patientId: String) {
         val today = LocalDate.now().format(dateFormatter)
         viewModelScope.launch {
+            // Resolve patient name separately — it's a one-shot read, not a reactive stream.
+            val patientName = patientRepository.getById(patientId)?.name?.ifBlank { null }
+
             combine(
                 prescriptionRepository.observeByPatient(patientId),
                 medicineRepository.observeByPatient(patientId),
@@ -67,7 +72,7 @@ class DashboardViewModel @Inject constructor(
                     )
                 }
                 DashboardUiState(
-                    patientName = "Priya", // stub — real lookup from PatientRepository in later ticket
+                    patientName = patientName ?: "",
                     currentDate = today,
                     syncStatus = "MediHistory AI care records sync is active",
                     prescriptionCount = prescriptions.size,
@@ -80,7 +85,7 @@ class DashboardViewModel @Inject constructor(
                     error = null,
                 )
             }
-                .catch { e ->
+                .catch { _ ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,

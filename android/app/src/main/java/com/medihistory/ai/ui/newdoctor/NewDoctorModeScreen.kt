@@ -19,7 +19,6 @@ import androidx.compose.material.icons.outlined.CheckBox
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material.icons.outlined.MedicalServices
 import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -217,10 +216,11 @@ fun NewDoctorModeScreen(
                         )
                     }
 
-                    // Stub sections (Figma shows Conditions, Allergies, Medicines before Prescriptions)
-                    item { SectionGroupCard(title = "Conditions", count = 0, items = emptyList()) }
-                    item { SectionGroupCard(title = "Allergies", count = 0, items = emptyList()) }
-                    item { SectionGroupCard(title = "Active Medicines", count = 0, items = emptyList()) }
+                    // Stub sections for Conditions, Allergies, and Active Medicines are
+                    // intentionally not shown here — these features (F09/F10) are not yet
+                    // implemented. When they are, the ViewModel will supply real data and
+                    // the sections will be restored. Showing empty "count = 0" cards is
+                    // misleading to the patient.
 
                     // PRESCRIPTIONS section header
                     item {
@@ -245,7 +245,6 @@ fun NewDoctorModeScreen(
                     }
 
                     // Bottom spacer so the last card isn't hidden behind the bottom bar
-                    item { SectionGroupCard(title = "Lab Reports", count = 0, items = emptyList()) }
                     item { Spacer(modifier = Modifier.height(8.dp)) }
                 }
             }
@@ -371,44 +370,6 @@ private fun RecordSelectionCard(
                 )
                 Text(
                     text = medLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-/**
- * Stub section card for Conditions, Allergies, Medicines, and Lab Reports.
- * Shows the section title and count (or "None on record" when empty).
- * Real data will populate these in a future ticket.
- */
-@Composable
-private fun SectionGroupCard(
-    title: String,
-    count: Int,
-    items: List<String>,
-    modifier: Modifier = Modifier,
-) {
-    ElevatedCard(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(title, style = MaterialTheme.typography.titleSmall)
-                Text(
-                    text = count.toString(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (items.isEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "None on record",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

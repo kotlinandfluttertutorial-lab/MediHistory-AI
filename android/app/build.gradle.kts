@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
     jacoco
 }
 
@@ -172,6 +173,10 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+
+    // Firebase — BOM manages all Firebase library versions
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 
     // Unit tests
     testImplementation(libs.junit)
