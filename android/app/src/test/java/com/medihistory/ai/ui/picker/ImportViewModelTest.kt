@@ -3,6 +3,8 @@ package com.medihistory.ai.ui.picker
 import android.app.Application
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.WorkManager
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.model.Prescription
@@ -54,16 +56,20 @@ class ImportViewModelTest {
     private lateinit var fakePrescriptionRepository: FakePrescriptionRepository
     private lateinit var fakePatientRepository: FakePatientRepositoryForImport
     private lateinit var fakeSessionManager: FakeSessionManager
+    private lateinit var workManager: WorkManager
     private lateinit var viewModel: ImportViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
+        // Initialize WorkManager for testing — uses a no-op executor that doesn't actually run workers.
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        workManager = WorkManager.getInstance(context)
         fakePrescriptionRepository = FakePrescriptionRepository()
         fakePatientRepository = FakePatientRepositoryForImport()
         fakeSessionManager = FakeSessionManager("patient-test-import")
-        viewModel = ImportViewModel(context, fakePrescriptionRepository, fakePatientRepository, fakeSessionManager)
+        viewModel = ImportViewModel(context, fakePrescriptionRepository, fakePatientRepository, fakeSessionManager, workManager)
     }
 
     @After

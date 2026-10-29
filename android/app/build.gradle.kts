@@ -156,6 +156,9 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // Logging
+    implementation(libs.timber)
+
     // Security — EncryptedSharedPreferences
     implementation(libs.androidx.security.crypto)
 

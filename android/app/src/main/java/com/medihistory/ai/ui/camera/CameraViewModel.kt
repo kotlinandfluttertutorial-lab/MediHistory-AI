@@ -7,6 +7,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import timber.log.Timber
 import java.io.File
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -69,6 +70,7 @@ class CameraViewModel @Inject constructor(
             _captureState.value = CaptureState.Idle
             Pair(dest.absolutePath, sha256)
         } catch (e: Exception) {
+            Timber.e(e, "Failed to persist captured image")
             _captureState.value = CaptureState.Error(e.message ?: "Failed to save image")
             null
         }

@@ -39,12 +39,12 @@ import com.medihistory.ai.ui.components.LoadingIndicator
  * 2. System file picker (PDF)
  * 3. Camera (navigates to CameraScreen via [onOpenCamera])
  *
- * On a successful import, [onFileImported] is called with the new prescription ID so the
- * caller can navigate to the OCR review screen.  The caller is responsible for navigating away.
+ * On successful import the OCR worker is enqueued and [onFileImported] is called with
+ * the new prescription ID so the caller navigates directly to the OCR review screen.
  */
 @Composable
 fun ImportScreen(
-    onFileImported: (filePath: String, sha256: String, mimeType: String) -> Unit,
+    onFileImported: (prescriptionId: String) -> Unit,
     onDismiss: () -> Unit,
     onOpenCamera: (() -> Unit)? = null,
     viewModel: ImportViewModel = hiltViewModel(),
@@ -70,9 +70,8 @@ fun ImportScreen(
     LaunchedEffect(importState) {
         when (val s = importState) {
             is ImportState.Success -> {
-                // Only navigate when the DB write is also done (prescriptionId is set).
                 if (s.prescriptionId.isNotEmpty()) {
-                    onFileImported(s.filePath, s.sha256, s.mimeType)
+                    onFileImported(s.prescriptionId)
                 }
             }
             is ImportState.Error -> snackbarHostState.showSnackbar(s.message)

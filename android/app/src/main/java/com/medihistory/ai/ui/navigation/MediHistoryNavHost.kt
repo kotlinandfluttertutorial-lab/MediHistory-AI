@@ -146,12 +146,11 @@ fun MediHistoryNavHost(
         // ── Import (file/photo picker) ────────────────────────────────────────
         composable(Routes.IMPORT) {
             ImportScreen(
-                onFileImported = { _, _, _ ->
-                    // Navigate back to prescriptions; the list auto-updates via Room Flow.
-                    // TODO (MA-OCR): navigate to Routes.ocrReview(prescriptionId) once
-                    //   the OCR worker is wired. For now, go back to the list so the user
-                    //   can see their newly added prescription.
-                    navController.navigate(Routes.PRESCRIPTIONS) {
+                onFileImported = { prescriptionId ->
+                    // OCR worker is already enqueued by ImportViewModel.
+                    // Navigate directly to the review screen so the patient can
+                    // confirm/edit the extracted fields as soon as they appear.
+                    navController.navigate(Routes.ocrReview(prescriptionId)) {
                         popUpTo(Routes.IMPORT) { inclusive = true }
                     }
                 },

@@ -4,12 +4,14 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.model.Prescription
 import com.medihistory.ai.data.repository.PatientRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import com.medihistory.ai.data.session.SessionManager
+import com.medihistory.ai.worker.OcrWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +25,7 @@ import java.io.FileOutputStream
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.UUID
+import timber.log.Timber
 import javax.inject.Inject
 
 // ---------------------------------------------------------------------------
@@ -88,6 +91,7 @@ class ImportViewModel @Inject constructor(
     private val prescriptionRepository: PrescriptionRepository,
     private val patientRepository: PatientRepository,
     private val sessionManager: SessionManager,
+    private val workManager: WorkManager,
 ) : ViewModel() {
 
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
@@ -167,13 +171,25 @@ class ImportViewModel @Inject constructor(
                 )
                 try {
                     prescriptionRepository.insert(prescription)
+                    // Enqueue the OCR worker immediately so extraction starts in the background
+                    // while the patient is navigated to the review screen.
+                    workManager.enqueue(
+                        OcrWorker.buildRequest(
+                            prescriptionId = prescription.id,
+                            patientId = patientId,
+                            documentPath = copyResult.filePath,
+                            mimeType = copyResult.mimeType,
+                        )
+                    )
                     _importState.value = copyResult.copy(prescriptionId = prescription.id)
                 } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                    android.util.Log.e("ImportViewModel", "DB insert failed: ${e.javaClass.simpleName} — ${e.message}")
-                    e.cause?.let { android.util.Log.e("ImportViewModel", "Caused by: ${it.javaClass.simpleName} — ${it.message}") }
+                    Timber.tag("ImportViewModel").e(e, "DB insert failed: ${e.javaClass.simpleName} — ${e.message}")
+                    e.cause?.let { Timber.tag("ImportViewModel").e(it, "Caused by: ${it.javaClass.simpleName} — ${it.message}") }
                     _importState.value = ImportState.Error("Could not save prescription. Please try again.")
                 }
             } else {
+                val errorCause = (copyResult as? ImportState.Error)?.message ?: "Unknown copy failure"
+                Timber.tag("ImportViewModel").w("Import file copy failed, cause: $errorCause")
                 _importState.value = copyResult
             }
         }
@@ -203,7 +219,8 @@ class ImportViewModel @Inject constructor(
             }
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
             // Non-fatal — if the insert fails the prescription insert will surface its own error.
-            android.util.Log.w("ImportViewModel", "Could not ensure patient row: ${e.message}")
+            Timber.tag("ImportViewModel").w(e, "Could not ensure patient row: ${e.message}")
+            e.cause?.let { Timber.tag("ImportViewModel").w(it, "Caused by: ${it.javaClass.simpleName} — ${it.message}") }
         }
     }
 
@@ -229,7 +246,10 @@ class ImportViewModel @Inject constructor(
                         digestInput.copyTo(output)
                     }
                 }
-            } ?: return ImportState.Error("Could not open the selected file. Please try again.")
+            } ?: run {
+                Timber.tag("ImportViewModel").e("Could not open input stream for URI")
+                return ImportState.Error("Could not open the selected file. Please try again.")
+            }
 
             val sha256 = digest.digest().joinToString("") { "%02x".format(it) }
             ImportState.Success(
@@ -238,7 +258,8 @@ class ImportViewModel @Inject constructor(
                 mimeType = mimeType,
             )
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            // Do not log exception details — they may contain paths or document info.
+            Timber.tag("ImportViewModel").e(e, "Copy to private storage failed: ${e.javaClass.simpleName}")
+            e.cause?.let { Timber.tag("ImportViewModel").e(it, "Caused by: ${it.javaClass.simpleName} — ${it.message}") }
             ImportState.Error("Import failed. Please try again.")
         }
     }
