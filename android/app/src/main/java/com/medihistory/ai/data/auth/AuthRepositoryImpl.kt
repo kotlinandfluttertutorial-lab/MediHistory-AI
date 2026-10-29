@@ -56,4 +56,6 @@ class AuthRepositoryImpl @Inject constructor(
     override fun isLoggedIn(): Boolean = firebaseAuth.currentUser != null
 
     override fun currentUserEmail(): String? = firebaseAuth.currentUser?.email
+
+    override fun currentUserId(): String? = firebaseAuth.currentUser?.uid
 }

@@ -4,7 +4,9 @@ import android.app.Application
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.model.Prescription
+import com.medihistory.ai.data.repository.PatientRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import com.medihistory.ai.data.security.SecurePreferencesStore
 import com.medihistory.ai.data.session.SessionManager
@@ -50,6 +52,7 @@ class ImportViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var context: Application
     private lateinit var fakePrescriptionRepository: FakePrescriptionRepository
+    private lateinit var fakePatientRepository: FakePatientRepositoryForImport
     private lateinit var fakeSessionManager: FakeSessionManager
     private lateinit var viewModel: ImportViewModel
 
@@ -58,8 +61,9 @@ class ImportViewModelTest {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
         fakePrescriptionRepository = FakePrescriptionRepository()
+        fakePatientRepository = FakePatientRepositoryForImport()
         fakeSessionManager = FakeSessionManager("patient-test-import")
-        viewModel = ImportViewModel(context, fakePrescriptionRepository, fakeSessionManager)
+        viewModel = ImportViewModel(context, fakePrescriptionRepository, fakePatientRepository, fakeSessionManager)
     }
 
     @After
@@ -337,3 +341,18 @@ private class FakeSessionManager(patientId: String) : SessionManager(
         override fun clear() { store.clear() }
     }
 )
+
+private class FakePatientRepositoryForImport : PatientRepository {
+    private val patients = mutableMapOf<String, Patient>()
+
+    override suspend fun getById(patientId: String): Patient? = patients[patientId]
+
+    override suspend fun insert(patient: Patient) { patients[patient.id] = patient }
+
+    override suspend fun update(patient: Patient) { patients[patient.id] = patient }
+
+    override suspend fun delete(patient: Patient) { patients.remove(patient.id) }
+
+    override fun observeAll(): kotlinx.coroutines.flow.Flow<List<Patient>> =
+        kotlinx.coroutines.flow.flowOf(patients.values.toList())
+}

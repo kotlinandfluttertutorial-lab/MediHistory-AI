@@ -1,8 +1,15 @@
 package com.medihistory.ai.ui.auth
 
 import com.medihistory.ai.data.auth.AuthRepository
+import com.medihistory.ai.data.model.Patient
+import com.medihistory.ai.data.repository.PatientRepository
+import com.medihistory.ai.data.security.SecurePreferencesStore
+import com.medihistory.ai.data.session.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -30,13 +37,17 @@ class LoginViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeAuthRepository
+    private lateinit var fakePatientRepository: FakePatientRepository
+    private lateinit var fakeSessionManager: FakeSessionManager
     private lateinit var viewModel: LoginViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakeAuthRepository()
-        viewModel = LoginViewModel(fakeRepository)
+        fakePatientRepository = FakePatientRepository()
+        fakeSessionManager = FakeSessionManager()
+        viewModel = LoginViewModel(fakeRepository, fakePatientRepository, fakeSessionManager)
     }
 
     @After
@@ -249,4 +260,37 @@ private class FakeAuthRepository : AuthRepository {
     override fun isLoggedIn(): Boolean = signedIn
 
     override fun currentUserEmail(): String? = if (signedIn) "test@synthetic.medihistory" else null
+
+    override fun currentUserId(): String? = if (signedIn) "uid-synthetic-test-001" else null
 }
+
+private class FakePatientRepository : PatientRepository {
+    private val _patients = MutableStateFlow<List<Patient>>(emptyList())
+
+    override suspend fun getById(patientId: String): Patient? =
+        _patients.value.find { it.id == patientId }
+
+    override suspend fun insert(patient: Patient) {
+        _patients.update { it + patient }
+    }
+
+    override suspend fun update(patient: Patient) {
+        _patients.update { list -> list.map { if (it.id == patient.id) patient else it } }
+    }
+
+    override suspend fun delete(patient: Patient) {
+        _patients.update { it.filter { p -> p.id != patient.id } }
+    }
+
+    override fun observeAll(): Flow<List<Patient>> = _patients
+}
+
+private class FakeSessionManager : SessionManager(
+    securePreferences = object : SecurePreferencesStore {
+        private val store = mutableMapOf<String, String>()
+        override fun getString(key: String): String? = store[key]
+        override fun putString(key: String, value: String) { store[key] = value }
+        override fun remove(key: String) { store.remove(key) }
+        override fun clear() { store.clear() }
+    }
+)

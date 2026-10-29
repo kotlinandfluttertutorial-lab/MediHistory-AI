@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -15,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.medihistory.ai.data.auth.AuthRepository
+import com.medihistory.ai.data.model.Patient
+import com.medihistory.ai.data.repository.PatientRepository
 import com.medihistory.ai.data.session.SessionManager
 import com.medihistory.ai.ui.auth.LoginScreen
 import com.medihistory.ai.ui.navigation.MediHistoryBottomBar
@@ -28,35 +31,56 @@ import javax.inject.Inject
  * The single activity for MediHistory AI.
  *
  * Shows [LoginScreen] until the user is authenticated via Firebase.
- * Once authenticated, shows the main NavHost with bottom navigation.
+ * Once authenticated (either by signing in now or because Firebase session is still valid),
+ * bootstraps the patient record then shows the main NavHost.
  *
- * Auth gate logic:
- * - On cold launch, checks [AuthRepository.isLoggedIn] (FirebaseAuth.currentUser != null).
- * - If already signed in (e.g. app restarted), skips login immediately.
- * - After a successful login/register, transitions to the main app.
+ * Session bootstrap happens in two places:
+ *  1. Fresh login/register  — [LoginViewModel.finaliseAuth] writes the UID + Patient row.
+ *  2. App restart (Firebase session already valid) — [LaunchedEffect] below writes the UID +
+ *     Patient row if they are missing.  This handles the case where EncryptedSharedPreferences
+ *     was cleared but FirebaseAuth still holds a valid token.
  *
- * Privacy: [patientId] is derived from [SessionManager] which reads from
- * EncryptedSharedPreferences — never logged.
+ * Privacy: patient ID is never logged.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject
-    lateinit var sessionManager: SessionManager
-
-    @Inject
-    lateinit var authRepository: AuthRepository
+    @Inject lateinit var sessionManager: SessionManager
+    @Inject lateinit var authRepository: AuthRepository
+    @Inject lateinit var patientRepository: PatientRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MediHistoryTheme {
-                // isAuthenticated drives the auth gate.
-                // rememberSaveable survives configuration changes but not process death —
-                // on cold start we re-check FirebaseAuth.currentUser below.
                 var isAuthenticated by rememberSaveable {
                     mutableStateOf(authRepository.isLoggedIn())
+                }
+
+                // ── Bootstrap session when Firebase is already signed in ────────
+                // Runs once per composition when isAuthenticated is already true
+                // (app restart with a live Firebase token).  Ensures the patient ID
+                // and Patient row are present even if EncryptedSharedPreferences
+                // was wiped since the last launch.
+                LaunchedEffect(isAuthenticated) {
+                    if (isAuthenticated) {
+                        val uid = authRepository.currentUserId() ?: return@LaunchedEffect
+                        // Persist the UID so SessionManager.getPatientId() returns it.
+                        sessionManager.setPatientId(uid)
+                        // Upsert the Patient row so FK constraints are always satisfied.
+                        if (patientRepository.getById(uid) == null) {
+                            val email = authRepository.currentUserEmail() ?: ""
+                            patientRepository.insert(
+                                Patient(
+                                    id = uid,
+                                    name = email.substringBefore('@').ifBlank { "User" },
+                                    createdAt = System.currentTimeMillis(),
+                                    updatedAt = System.currentTimeMillis(),
+                                )
+                            )
+                        }
+                    }
                 }
 
                 if (!isAuthenticated) {

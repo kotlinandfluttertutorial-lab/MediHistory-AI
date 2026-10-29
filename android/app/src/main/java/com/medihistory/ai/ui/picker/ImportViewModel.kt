@@ -5,7 +5,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.model.Prescription
+import com.medihistory.ai.data.repository.PatientRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import com.medihistory.ai.data.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -84,6 +86,7 @@ sealed class ImportState {
 class ImportViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prescriptionRepository: PrescriptionRepository,
+    private val patientRepository: PatientRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
 
@@ -147,10 +150,13 @@ class ImportViewModel @Inject constructor(
                 copyToPrivateStorage(uri, mimeType)
             }
             if (copyResult is ImportState.Success) {
-                // Persist a new Prescription record in Room immediately after the file is copied.
-                // doctorId and prescriptionDate are null until the patient fills them in
-                // (or OCR populates them). ocrStatus starts as PENDING.
                 val patientId = sessionManager.getPatientId()
+
+                // Defensive guard: ensure a Patient row exists before inserting a Prescription.
+                // This covers the rare case where MainActivity's bootstrap LaunchedEffect
+                // hasn't completed yet (e.g. first app launch before login screen finishes).
+                ensurePatientRowExists(patientId)
+
                 val prescription = Prescription(
                     id = UUID.randomUUID().toString(),
                     patientId = patientId,
@@ -161,15 +167,43 @@ class ImportViewModel @Inject constructor(
                 )
                 try {
                     prescriptionRepository.insert(prescription)
-                    // Emit success with the new prescription's ID so the caller can
-                    // navigate to the OCR review screen.
                     _importState.value = copyResult.copy(prescriptionId = prescription.id)
                 } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                    android.util.Log.e("ImportViewModel", "DB insert failed: ${e.javaClass.simpleName} — ${e.message}")
+                    e.cause?.let { android.util.Log.e("ImportViewModel", "Caused by: ${it.javaClass.simpleName} — ${it.message}") }
                     _importState.value = ImportState.Error("Could not save prescription. Please try again.")
                 }
             } else {
                 _importState.value = copyResult
             }
+        }
+    }
+
+    /**
+     * Ensures a Patient row exists for [patientId].
+     *
+     * This is a defensive guard against FK constraint failures. In normal operation
+     * [LoginViewModel] and [MainActivity] already create this row; this call is a
+     * no-op in those cases. It handles edge cases like:
+     * - EncryptedSharedPreferences wiped between launches
+     * - Very first launch before the auth bootstrap coroutine completes
+     * - Test environments where patientId is a stub value
+     */
+    private suspend fun ensurePatientRowExists(patientId: String) {
+        try {
+            if (patientRepository.getById(patientId) == null) {
+                patientRepository.insert(
+                    Patient(
+                        id = patientId,
+                        name = "User",
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                    )
+                )
+            }
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            // Non-fatal — if the insert fails the prescription insert will surface its own error.
+            android.util.Log.w("ImportViewModel", "Could not ensure patient row: ${e.message}")
         }
     }
 

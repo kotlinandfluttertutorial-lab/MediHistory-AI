@@ -24,4 +24,10 @@ interface AuthRepository {
      * Used only for display — never passed to backend as an auth credential.
      */
     fun currentUserEmail(): String?
+
+    /**
+     * Returns the Firebase UID of the signed-in user, or null.
+     * This is used as the patient ID — it is stable, unique, and never PII.
+     */
+    fun currentUserId(): String?
 }

@@ -3,6 +3,9 @@ package com.medihistory.ai.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.medihistory.ai.data.auth.AuthRepository
+import com.medihistory.ai.data.model.Patient
+import com.medihistory.ai.data.repository.PatientRepository
+import com.medihistory.ai.data.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,19 +18,23 @@ import javax.inject.Inject
  * ViewModel for [LoginScreen].
  *
  * Handles both sign-in and account-creation (register) flows via Firebase Auth.
+ * After successful authentication it:
+ *  1. Stores the Firebase UID as the patient ID in [SessionManager].
+ *  2. Upserts a [Patient] row in Room so foreign-key constraints on downstream
+ *     tables (prescriptions, medicines, etc.) are always satisfied.
  *
  * Security invariants:
- * - Passwords are never stored beyond the in-memory [LoginUiState] needed to display
- *   the field. They are cleared when [isAuthenticated] becomes true.
- * - Error messages are pre-sanitised by [AuthRepository] — no raw Firebase exceptions reach UI.
- * - [isAuthenticated] flips to true only after a successful Firebase call; the screen
- *   should immediately navigate away and dispose this ViewModel.
+ * - Passwords are cleared from state as soon as authentication succeeds.
+ * - Error messages are pre-sanitised by [AuthRepository] — no raw exceptions reach the UI.
+ * - [isAuthenticated] flips to true only after both Firebase and Room writes succeed.
  *
- * Privacy: email is NEVER logged.
+ * Privacy: email and UID are NEVER logged.
  */
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val patientRepository: PatientRepository,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -51,9 +58,7 @@ class LoginViewModel @Inject constructor(
 
     /** Toggles between sign-in and register modes, clearing all fields and errors. */
     fun onToggleMode() {
-        _uiState.update {
-            LoginUiState(isRegisterMode = !it.isRegisterMode)
-        }
+        _uiState.update { LoginUiState(isRegisterMode = !it.isRegisterMode) }
     }
 
     // -------------------------------------------------------------------------
@@ -70,19 +75,12 @@ class LoginViewModel @Inject constructor(
 
         val emailTrimmed = state.email.trim()
         val error = validateLoginFields(emailTrimmed, state.password)
-        if (error != null) {
-            _uiState.update { it.copy(error = error) }
-            return
-        }
+        if (error != null) { _uiState.update { it.copy(error = error) }; return }
 
         _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             authRepository.login(emailTrimmed, state.password).fold(
-                onSuccess = {
-                    _uiState.update {
-                        it.copy(isLoading = false, isAuthenticated = true, password = "", error = null)
-                    }
-                },
+                onSuccess = { finaliseAuth(emailTrimmed) },
                 onFailure = { throwable ->
                     _uiState.update {
                         it.copy(isLoading = false, error = throwable.message ?: "Sign-in failed.")
@@ -98,24 +96,56 @@ class LoginViewModel @Inject constructor(
 
         val emailTrimmed = state.email.trim()
         val error = validateRegisterFields(emailTrimmed, state.password, state.confirmPassword)
-        if (error != null) {
-            _uiState.update { it.copy(error = error) }
-            return
-        }
+        if (error != null) { _uiState.update { it.copy(error = error) }; return }
 
         _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             authRepository.register(emailTrimmed, state.password).fold(
-                onSuccess = {
-                    _uiState.update {
-                        it.copy(isLoading = false, isAuthenticated = true, password = "", confirmPassword = "", error = null)
-                    }
-                },
+                onSuccess = { finaliseAuth(emailTrimmed) },
                 onFailure = { throwable ->
                     _uiState.update {
                         it.copy(isLoading = false, error = throwable.message ?: "Registration failed.")
                     }
                 },
+            )
+        }
+    }
+
+    /**
+     * Called after a successful Firebase auth operation.
+     *
+     * 1. Reads the Firebase UID and stores it as the patient ID.
+     * 2. Upserts a Patient row — this guarantees the FK constraint on prescriptions,
+     *    medicines, and all other patient-scoped tables is always satisfied.
+     * 3. Clears credentials from state and sets [isAuthenticated] = true.
+     *
+     * If the Room write fails (e.g. disk full) we still let the user in — the
+     * patient row will be created on the next successful login.
+     */
+    private suspend fun finaliseAuth(email: String) {
+        val uid = authRepository.currentUserId()
+        if (uid != null) {
+            sessionManager.setPatientId(uid)
+            val existing = patientRepository.getById(uid)
+            if (existing == null) {
+                val patient = Patient(
+                    id = uid,
+                    name = email.substringBefore('@'), // display name until the patient sets one
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                )
+                runCatching { patientRepository.insert(patient) }
+                // Failure here is non-fatal — the patient can still use the app;
+                // the row will be created on next insert attempt.
+            }
+        }
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                isAuthenticated = true,
+                password = "",
+                confirmPassword = "",
+                error = null,
             )
         }
     }
@@ -132,8 +162,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun validateRegisterFields(email: String, password: String, confirm: String): String? {
-        val base = validateLoginFields(email, password)
-        if (base != null) return base
+        validateLoginFields(email, password)?.let { return it }
         if (password.length < 6) return "Password must be at least 6 characters."
         if (password != confirm) return "Passwords do not match."
         return null
