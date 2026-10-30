@@ -69,7 +69,9 @@ async def get_medicine_by_slug(
     patient_id: Annotated[str, Depends(get_current_patient)],
     service: Annotated[MedicineService, Depends(_get_medicine_service)],
 ) -> MedicineGroup:
-    group = await service.get_by_slug(patient_id=patient_id, slug=active_ingredient_slug)
+    group = await service.get_by_slug(
+        patient_id=patient_id, slug=active_ingredient_slug
+    )
     if group is None:
         raise_http_error(
             404,

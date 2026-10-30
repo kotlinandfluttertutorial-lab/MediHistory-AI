@@ -17,7 +17,11 @@ from sqlalchemy.orm import selectinload
 from app.core.errors import raise_http_error
 from app.models.medicine import PrescriptionMedicine
 from app.models.prescription import Prescription
-from app.schemas.medicine import MedicineGroup, MedicineOccurrence, UpdateMedicineRequest
+from app.schemas.medicine import (
+    MedicineGroup,
+    MedicineOccurrence,
+    UpdateMedicineRequest,
+)
 
 
 class MedicineService:
@@ -44,7 +48,9 @@ class MedicineService:
         """
         filters = [PrescriptionMedicine.patient_id == patient_id]
         if medicine_status_filter:
-            filters.append(PrescriptionMedicine.medicine_status == medicine_status_filter)
+            filters.append(
+                PrescriptionMedicine.medicine_status == medicine_status_filter
+            )
         if search:
             search_lower = search.lower()
             filters.append(
@@ -124,9 +130,7 @@ class MedicineService:
     # Get by slug
     # ------------------------------------------------------------------
 
-    async def get_by_slug(
-        self, patient_id: str, slug: str
-    ) -> Optional[MedicineGroup]:
+    async def get_by_slug(self, patient_id: str, slug: str) -> Optional[MedicineGroup]:
         """Return the MedicineGroup for the given slug, or None."""
         groups, _ = await self.list_grouped(patient_id=patient_id, search=slug)
         # Filter for exact slug match
@@ -208,14 +212,19 @@ class MedicineService:
             raise_http_error(404, "MEDICINE_NOT_FOUND", "Medicine not found.")
 
         # Patient-scope check
-        if medicine.prescription is None or medicine.prescription.patient_id != patient_id:
+        if (
+            medicine.prescription is None
+            or medicine.prescription.patient_id != patient_id
+        ):
             raise_http_error(404, "MEDICINE_NOT_FOUND", "Medicine not found.")
 
         if data.brand_name is not None:
             medicine.brand_name = data.brand_name
         if data.active_ingredient is not None:
             medicine.active_ingredient = data.active_ingredient
-            medicine.active_ingredient_slug = data.active_ingredient.lower().replace(" ", "-")
+            medicine.active_ingredient_slug = data.active_ingredient.lower().replace(
+                " ", "-"
+            )
         if data.strength is not None:
             medicine.strength = data.strength
         if data.formulation is not None:

@@ -9,7 +9,6 @@ since the reminders service does not enforce a foreign key at the API level.
 import os
 import uuid
 
-import pytest
 
 os.environ.setdefault("JWT_SECRET_KEY", "synthetic-test-secret-key-for-ci-only")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")

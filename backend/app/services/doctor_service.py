@@ -68,6 +68,7 @@ class DoctorService:
         doctor = await self.get(doctor_id, patient_id)
         if doctor is None:
             from app.core.errors import raise_http_error
+
             raise_http_error(404, "DOCTOR_NOT_FOUND", "Doctor not found.")
 
         if data.name is not None:
@@ -94,6 +95,7 @@ class DoctorService:
         doctor = await self.get(doctor_id, patient_id)
         if doctor is None:
             from app.core.errors import raise_http_error
+
             raise_http_error(404, "DOCTOR_NOT_FOUND", "Doctor not found.")
 
         doctor.is_deleted = True

@@ -8,7 +8,6 @@ Synthetic medicine: brand_name='Synthamol 500mg', active_ingredient='synthamol'.
 import io
 import os
 
-import pytest
 
 os.environ.setdefault("JWT_SECRET_KEY", "synthetic-test-secret-key-for-ci-only")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -65,7 +64,9 @@ async def _upload_prescription(client: AsyncClient, token: str) -> str:
     return resp.json()["id"]
 
 
-async def _add_medicine_directly(db: AsyncSession, prescription_id: str, patient_id_str: str) -> str:
+async def _add_medicine_directly(
+    db: AsyncSession, prescription_id: str, patient_id_str: str
+) -> str:
     """Insert a PrescriptionMedicine row directly into the test DB and return its id."""
     from app.models.medicine import PrescriptionMedicine
 
@@ -87,7 +88,9 @@ async def _add_medicine_directly(db: AsyncSession, prescription_id: str, patient
     return med.id
 
 
-async def test_list_medicines_returns_empty_initially(async_client: AsyncClient) -> None:
+async def test_list_medicines_returns_empty_initially(
+    async_client: AsyncClient,
+) -> None:
     """GET /patients/me/medicines returns empty list for a new patient."""
     token = await register_and_login(async_client)
     response = await async_client.get(
@@ -112,6 +115,7 @@ async def test_list_medicines_returns_grouped_by_active_ingredient(
 
     # Decode patient_id from the token to use for direct DB insertion
     import jwt as _jwt
+
     payload = _jwt.decode(token, options={"verify_signature": False})
     patient_id_str = payload["sub"]
 
@@ -133,7 +137,8 @@ async def test_list_medicines_returns_grouped_by_active_ingredient(
 
     # Find the synthamol group
     synthamol_groups = [
-        g for g in body["medicines"]
+        g
+        for g in body["medicines"]
         if (g.get("active_ingredient") or "").lower() == "synthamol"
     ]
     assert len(synthamol_groups) == 1
@@ -147,6 +152,7 @@ async def test_update_medicine_review_state_returns_200(
     token = await register_and_login(async_client)
 
     import jwt as _jwt
+
     payload = _jwt.decode(token, options={"verify_signature": False})
     patient_id_str = payload["sub"]
 
@@ -171,6 +177,7 @@ async def test_update_medicine_returns_404_for_other_patient(
     token_a = await register_and_login(async_client)
 
     import jwt as _jwt
+
     payload_a = _jwt.decode(token_a, options={"verify_signature": False})
     patient_id_a = payload_a["sub"]
 

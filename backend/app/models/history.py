@@ -38,9 +38,7 @@ class MedicalHistorySummary(Base):
     # Serialised SummaryContent JSON blob.
     summary_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     medicine_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    prescription_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
+    prescription_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     generated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

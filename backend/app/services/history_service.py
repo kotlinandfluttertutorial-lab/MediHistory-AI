@@ -126,9 +126,7 @@ class HistoryService:
         # transient attribute so the router can access it without DB coupling.
         if summary.summary_json:
             try:
-                parsed = SummaryContent.model_validate(
-                    json.loads(summary.summary_json)
-                )
+                parsed = SummaryContent.model_validate(json.loads(summary.summary_json))
                 summary._parsed_summary = parsed  # type: ignore[attr-defined]
             except Exception:
                 summary._parsed_summary = None  # type: ignore[attr-defined]

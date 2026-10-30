@@ -23,9 +23,7 @@ class ReminderService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    async def list_reminders(
-        self, patient_id: str
-    ) -> tuple[list[Reminder], int]:
+    async def list_reminders(self, patient_id: str) -> tuple[list[Reminder], int]:
         """
         Return all Reminder rows for the patient.
 
@@ -40,9 +38,7 @@ class ReminderService:
         reminders = list(result.scalars().all())
         return reminders, len(reminders)
 
-    async def create(
-        self, patient_id: str, data: CreateReminderRequest
-    ) -> Reminder:
+    async def create(self, patient_id: str, data: CreateReminderRequest) -> Reminder:
         """
         Create a new Reminder row, serialising reminder_times to JSON.
 

@@ -6,7 +6,6 @@ All tests use synthetic data only. No real patient names or medical data.
 
 import os
 
-import pytest
 
 os.environ.setdefault("JWT_SECRET_KEY", "synthetic-test-secret-key-for-ci-only")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")

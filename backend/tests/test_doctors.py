@@ -6,15 +6,13 @@ All tests use synthetic data only. No real doctor names or patient data.
 
 import os
 
-import pytest
 
 os.environ.setdefault("JWT_SECRET_KEY", "synthetic-test-secret-key-for-ci-only")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from tests.conftest import SYNTHETIC_DISPLAY_NAME, SYNTHETIC_EMAIL, SYNTHETIC_PASSWORD, register_and_login
+from tests.conftest import register_and_login
 
 SYNTHETIC_DOCTOR_NAME = "Dr. Synthetic"
 SYNTHETIC_SPECIALTY = "Cardiology"
@@ -44,7 +42,9 @@ async def _register_second_patient(client: AsyncClient) -> str:
     return login.json()["access_token"]
 
 
-async def test_list_doctors_returns_empty_list_initially(async_client: AsyncClient) -> None:
+async def test_list_doctors_returns_empty_list_initially(
+    async_client: AsyncClient,
+) -> None:
     """GET /patients/me/doctors returns an empty list for a new patient."""
     token = await register_and_login(async_client)
     response = await async_client.get(
@@ -72,7 +72,9 @@ async def test_create_doctor_returns_201(async_client: AsyncClient) -> None:
     assert "id" in body
 
 
-async def test_create_doctor_returns_401_unauthenticated(async_client: AsyncClient) -> None:
+async def test_create_doctor_returns_401_unauthenticated(
+    async_client: AsyncClient,
+) -> None:
     """POST /patients/me/doctors returns 401 when no token is provided."""
     response = await async_client.post(
         "/api/v1/patients/me/doctors",
@@ -81,7 +83,9 @@ async def test_create_doctor_returns_401_unauthenticated(async_client: AsyncClie
     assert response.status_code == 401, response.text
 
 
-async def test_get_doctor_returns_404_for_other_patient(async_client: AsyncClient) -> None:
+async def test_get_doctor_returns_404_for_other_patient(
+    async_client: AsyncClient,
+) -> None:
     """GET /patients/me/doctors/{id} returns 404 when the doctor belongs to another patient."""
     # Patient A creates a doctor
     token_a = await register_and_login(async_client)

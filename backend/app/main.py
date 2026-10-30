@@ -34,7 +34,10 @@ app = FastAPI(
         {"name": "doctors", "description": "Doctor record operations"},
         {"name": "prescriptions", "description": "Prescription document operations"},
         {"name": "medicines", "description": "Medicine list and update operations"},
-        {"name": "duplicates", "description": "Potential duplicate medicine alert operations"},
+        {
+            "name": "duplicates",
+            "description": "Potential duplicate medicine alert operations",
+        },
         {"name": "history", "description": "Medical history summary operations"},
         {"name": "reminders", "description": "Medication reminder operations"},
         {"name": "interactions", "description": "Drug interaction check (stub)"},

@@ -43,6 +43,7 @@ from app.middleware.rate_limit import reset_rate_limit_state
 # Create DB tables at module load time so TestClient-based tests (test_auth.py,
 # test_security.py) can find them. This is safe to call multiple times.
 import asyncio as _asyncio
+
 _asyncio.run(create_all_tables())
 
 # ---------------------------------------------------------------------------
@@ -68,6 +69,7 @@ def create_tables_for_sync_tests(event_loop_policy):
     async_client fixture.
     """
     import asyncio
+
     asyncio.run(create_all_tables())
 
 

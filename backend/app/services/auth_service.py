@@ -100,9 +100,7 @@ class AuthService:
     # Real user registration and authentication
     # ------------------------------------------------------------------
 
-    async def register(
-        self, email: str, password: str, display_name: str
-    ) -> Patient:
+    async def register(self, email: str, password: str, display_name: str) -> Patient:
         """
         Create a new patient account.
 
@@ -115,12 +113,12 @@ class AuthService:
         result = await db.execute(select(Patient).where(Patient.email == email))
         existing = result.scalar_one_or_none()
         if existing is not None:
-            raise_http_error(409, "EMAIL_ALREADY_EXISTS", "Email is already registered.")
+            raise_http_error(
+                409, "EMAIL_ALREADY_EXISTS", "Email is already registered."
+            )
 
         # Hash password with bcrypt
-        password_hash = bcrypt.hashpw(
-            password.encode(), bcrypt.gensalt()
-        ).decode()
+        password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
         patient = Patient(
             email=email,
@@ -141,7 +139,9 @@ class AuthService:
         Returns None if the credentials are invalid.
         Stores a hashed refresh token in the RefreshToken table.
         """
-        assert self._db is not None, "AuthService requires a db session for authenticate_full()"
+        assert (
+            self._db is not None
+        ), "AuthService requires a db session for authenticate_full()"
         db = self._db
 
         result = await db.execute(select(Patient).where(Patient.email == email))
@@ -202,7 +202,9 @@ class AuthService:
         )
         db_token = result.scalar_one_or_none()
         if db_token is None:
-            raise_http_error(401, "INVALID_TOKEN", "Refresh token not found or revoked.")
+            raise_http_error(
+                401, "INVALID_TOKEN", "Refresh token not found or revoked."
+            )
 
         return _make_access_token(patient_id)
 

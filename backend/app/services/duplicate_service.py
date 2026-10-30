@@ -42,13 +42,9 @@ class DuplicateService:
         Returns:
             Tuple of (alerts, total, unreviewed_count).
         """
-        base_q = select(DuplicateAlert).where(
-            DuplicateAlert.patient_id == patient_id
-        )
+        base_q = select(DuplicateAlert).where(DuplicateAlert.patient_id == patient_id)
         if reviewed_filter is not None:
-            base_q = base_q.where(
-                DuplicateAlert.reviewed_by_patient == reviewed_filter
-            )
+            base_q = base_q.where(DuplicateAlert.reviewed_by_patient == reviewed_filter)
 
         count_result = await self._db.execute(
             select(func.count()).select_from(base_q.subquery())
@@ -64,15 +60,17 @@ class DuplicateService:
         unreviewed_count: int = unreviewed_result.scalar_one()
 
         offset = (page - 1) * page_size
-        page_q = base_q.order_by(DuplicateAlert.created_at.desc()).offset(offset).limit(page_size)
+        page_q = (
+            base_q.order_by(DuplicateAlert.created_at.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
         result = await self._db.execute(page_q)
         alerts = list(result.scalars().all())
 
         return alerts, total, unreviewed_count
 
-    async def get_alert(
-        self, alert_id: str, patient_id: str
-    ) -> DuplicateAlert | None:
+    async def get_alert(self, alert_id: str, patient_id: str) -> DuplicateAlert | None:
         """
         Return a single DuplicateAlert if it belongs to the patient.
 
@@ -88,9 +86,7 @@ class DuplicateService:
         )
         return result.scalar_one_or_none()
 
-    async def mark_reviewed(
-        self, alert_id: str, patient_id: str
-    ) -> DuplicateAlert:
+    async def mark_reviewed(self, alert_id: str, patient_id: str) -> DuplicateAlert:
         """
         Mark a DuplicateAlert as reviewed by the patient.
 

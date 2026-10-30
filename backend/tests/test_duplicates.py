@@ -6,7 +6,6 @@ All tests use synthetic data only. No real patient names or medical data.
 
 import os
 
-import pytest
 
 os.environ.setdefault("JWT_SECRET_KEY", "synthetic-test-secret-key-for-ci-only")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -20,7 +19,9 @@ from app.models.duplicate_alert import DuplicateAlert
 from tests.conftest import register_and_login
 
 
-async def test_list_duplicates_returns_empty_initially(async_client: AsyncClient) -> None:
+async def test_list_duplicates_returns_empty_initially(
+    async_client: AsyncClient,
+) -> None:
     """GET /patients/me/duplicates returns empty list for a new patient."""
     token = await register_and_login(async_client)
     response = await async_client.get(
@@ -83,9 +84,7 @@ async def test_get_duplicate_returns_404_for_other_patient(
     assert response.status_code == 404, response.text
 
 
-async def test_mark_reviewed_returns_200(
-    async_client: AsyncClient, async_db
-) -> None:
+async def test_mark_reviewed_returns_200(async_client: AsyncClient, async_db) -> None:
     """PUT /patients/me/duplicates/{id}/reviewed returns 200."""
     token = await register_and_login(async_client)
     profile = await async_client.get(

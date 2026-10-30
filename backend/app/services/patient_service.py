@@ -17,9 +17,7 @@ class PatientService:
 
     async def get_by_id(self, patient_id: str) -> Patient | None:
         """Return the Patient with the given id, or None if not found."""
-        result = await self._db.execute(
-            select(Patient).where(Patient.id == patient_id)
-        )
+        result = await self._db.execute(select(Patient).where(Patient.id == patient_id))
         return result.scalar_one_or_none()
 
     async def update(self, patient_id: str, display_name: str) -> Patient:
@@ -33,6 +31,7 @@ class PatientService:
         if patient is None:
             # Should not happen if caller guards correctly, but be safe.
             from app.core.errors import raise_http_error
+
             raise_http_error(404, "PATIENT_NOT_FOUND", "Patient not found.")
 
         patient.display_name = display_name

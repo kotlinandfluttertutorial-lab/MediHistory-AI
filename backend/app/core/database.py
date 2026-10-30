@@ -35,7 +35,7 @@ def _make_engine():
     settings = get_settings()
     return create_async_engine(
         settings.DATABASE_URL,
-        echo=False,          # Set to True locally for SQL tracing; never in prod.
+        echo=False,  # Set to True locally for SQL tracing; never in prod.
         future=True,
     )
 

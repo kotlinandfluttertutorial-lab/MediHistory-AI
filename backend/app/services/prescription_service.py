@@ -21,8 +21,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.errors import raise_http_error
-from app.models.doctor import Doctor
-from app.models.medicine import PrescriptionMedicine
 from app.models.prescription import Prescription
 
 _ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "application/pdf"}

@@ -140,7 +140,9 @@ async def upload_prescription(
         try:
             parsed_date = date.fromisoformat(prescription_date)
         except ValueError:
-            raise_http_error(422, "INVALID_DATE", "prescription_date must be ISO format YYYY-MM-DD.")
+            raise_http_error(
+                422, "INVALID_DATE", "prescription_date must be ISO format YYYY-MM-DD."
+            )
 
     prescription = await service.create(
         patient_id=patient_id,

@@ -55,7 +55,5 @@ async def check_interactions(
         "checked": True,
         "medicines_checked": [],
         "interactions": [],
-        "disclaimer": (
-            "This check is not yet integrated with a reference provider."
-        ),
+        "disclaimer": ("This check is not yet integrated with a reference provider."),
     }

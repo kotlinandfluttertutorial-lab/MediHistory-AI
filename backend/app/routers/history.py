@@ -81,9 +81,7 @@ async def get_history(
     patient_id: Annotated[str, Depends(get_current_patient)],
     service: Annotated[HistoryService, Depends(_get_history_service)],
 ) -> HistoryDetail:
-    summary = await service.get_summary(
-        summary_id=summary_id, patient_id=patient_id
-    )
+    summary = await service.get_summary(summary_id=summary_id, patient_id=patient_id)
     if summary is None:
         raise_http_error(404, "SUMMARY_NOT_FOUND", "Medical history summary not found.")
 

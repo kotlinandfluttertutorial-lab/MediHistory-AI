@@ -43,6 +43,4 @@ class Reminder(Base):
         DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
     )
 
-    __table_args__ = (
-        Index("ix_reminders_patient_active", "patient_id", "is_active"),
-    )
+    __table_args__ = (Index("ix_reminders_patient_active", "patient_id", "is_active"),)

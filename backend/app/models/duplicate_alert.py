@@ -44,9 +44,7 @@ class DuplicateAlert(Base):
         String(200), nullable=True
     )
     match_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    match_confidence: Mapped[float] = mapped_column(
-        Float, nullable=False, default=0.0
-    )
+    match_confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     formulation_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     reviewed_by_patient: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
