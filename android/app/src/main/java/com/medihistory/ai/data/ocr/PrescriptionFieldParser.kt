@@ -34,6 +34,7 @@ internal class PrescriptionFieldParser {
      */
     fun parse(text: Text, pageIndex: Int = 0): List<ExtractedField> {
         val blocks = text.textBlocks
+        var flatIndex = 0
         val allLines: List<IndexedLine> = blocks.flatMapIndexed { blockIdx, block ->
             block.lines.map { line ->
                 IndexedLine(
@@ -42,6 +43,7 @@ internal class PrescriptionFieldParser {
                         .let { confs -> if (confs.isNotEmpty()) confs.average().toFloat() else 0f },
                     blockIndex = blockIdx,
                     pageIndex = pageIndex,
+                    index = flatIndex++,
                 )
             }
         }
@@ -174,6 +176,11 @@ internal class PrescriptionFieldParser {
     /**
      * Extracts medicine names, doses, and frequencies from all lines.
      *
+     * Key design: a line that contains ONLY a dosage/frequency string is a dose line,
+     * not a medicine name line. The medicine name is typically the line above or before it.
+     * Matching the dosage line as the medicine name (the old bug) produced fragments like
+     * "ML/100 MG) (1" or "2 ml four times a day" as medicine names.
+     *
      * Returns a flat list of [ExtractedField] with suffixed names:
      * medicine_name, medicine_name_2 … medicine_name_5
      * dose, dose_2 … dose_5
@@ -185,6 +192,10 @@ internal class PrescriptionFieldParser {
         val medicines = mutableListOf<MedicineCandidate>()
 
         var inMedicineSection = false
+        // Track which line indices have already been consumed as dose/frequency
+        // so we don't also emit them as medicine names.
+        val consumedAsInstruction = mutableSetOf<Int>()
+
         for ((idx, line) in lines.withIndex()) {
             // Detect section headers that signal upcoming medicine lines.
             if (MEDICINE_SECTION_LABEL.containsMatchIn(line.text)) {
@@ -192,56 +203,111 @@ internal class PrescriptionFieldParser {
                 continue
             }
 
-            // Numbered list items: "1." "2." "1)" "2)" — strong signal.
+            // Skip lines already consumed as a dose/frequency instruction.
+            if (idx in consumedAsInstruction) continue
+
+            // ----------------------------------------------------------------
+            // Strategy 1: numbered list items — "1." "2." "1)" "2)"
+            // Strong signal — the numbered prefix identifies the medicine entry.
+            // ----------------------------------------------------------------
             val numberedMatch = NUMBERED_LIST_PREFIX.find(line.text)
             if (numberedMatch != null) {
                 val rest = line.text.removeRange(numberedMatch.range).trim()
                 if (rest.isNotBlank()) {
                     val (name, dose, freq) = splitMedicineLineParts(rest)
-                    medicines.add(
-                        MedicineCandidate(
-                            name       = name,
-                            dose       = dose,
-                            frequency  = freq,
-                            confidence = heuristicConfidence(line.confidence, 0.78f),
-                            sourceRef  = "page:${line.pageIndex + 1},block:${line.blockIndex}",
+                    if (isValidMedicineName(name)) {
+                        // Peek at the next line — it might carry the instruction (dose/frequency).
+                        val nextLine = lines.getOrNull(idx + 1)
+                        val (resolvedDose, resolvedFreq) = if (
+                            dose == null && freq == null &&
+                            nextLine != null && isPureDoseOrFrequencyLine(nextLine.text)
+                        ) {
+                            consumedAsInstruction.add(idx + 1)
+                            parseDoseFreqFromLine(nextLine.text)
+                        } else {
+                            Pair(dose, freq)
+                        }
+                        medicines.add(
+                            MedicineCandidate(
+                                name       = name,
+                                dose       = resolvedDose,
+                                frequency  = resolvedFreq,
+                                confidence = heuristicConfidence(line.confidence, 0.82f),
+                                sourceRef  = "page:${line.pageIndex + 1},block:${line.blockIndex}",
+                            )
                         )
-                    )
-                    continue
+                        continue
+                    }
                 }
             }
 
-            // Lines containing a dosage suffix (mg/ml/mcg/g/IU) — medium signal.
+            // ----------------------------------------------------------------
+            // Strategy 2: line is a pure dose/frequency instruction
+            // (e.g. "2 ml four times a day", "500mg BD", "1-0-1")
+            // → look BACKWARD for the medicine name on the previous non-consumed line.
+            // ----------------------------------------------------------------
+            if (isPureDoseOrFrequencyLine(line.text) && idx !in consumedAsInstruction) {
+                val (dose, freq) = parseDoseFreqFromLine(line.text)
+                consumedAsInstruction.add(idx)
+
+                // Walk backward to find the nearest unused name line.
+                val nameLine = (idx - 1 downTo maxOf(0, idx - 3))
+                    .mapNotNull { lines.getOrNull(it) }
+                    .firstOrNull { candidate -> candidate.index !in consumedAsInstruction && isValidMedicineName(candidate.text) }
+
+                if (nameLine != null) {
+                    consumedAsInstruction.add(nameLine.index)
+                    medicines.add(
+                        MedicineCandidate(
+                            name       = nameLine.text.trim().take(120),
+                            dose       = dose,
+                            frequency  = freq,
+                            confidence = heuristicConfidence(nameLine.confidence, 0.75f),
+                            sourceRef  = "page:${nameLine.pageIndex + 1},block:${nameLine.blockIndex}",
+                        )
+                    )
+                }
+                continue
+            }
+
+            // ----------------------------------------------------------------
+            // Strategy 3: line contains a dosage suffix AND a name prefix
+            // e.g. "Augmentin 625mg Tablet" — medicine + strength on same line.
+            // Only use this path if the name part passes the validity check.
+            // ----------------------------------------------------------------
             if (DOSAGE_SUFFIX_REGEX.containsMatchIn(line.text)) {
                 val (name, dose, freq) = splitMedicineLineParts(line.text)
-                if (name.isNotBlank()) {
+                if (isValidMedicineName(name)) {
                     medicines.add(
                         MedicineCandidate(
                             name       = name,
                             dose       = dose,
                             frequency  = freq,
-                            confidence = heuristicConfidence(line.confidence, 0.70f),
+                            confidence = heuristicConfidence(line.confidence, 0.72f),
                             sourceRef  = "page:${line.pageIndex + 1},block:${line.blockIndex}",
                         )
                     )
                     continue
                 }
+                // If name is not valid (e.g. blank or a pure dosage fragment), skip —
+                // don't fall through to add a garbage name.
+                continue
             }
 
-            // Within a medicine section, capture lines that look like medicine names.
-            if (inMedicineSection && line.text.first().isUpperCase() && line.text.length > 3) {
-                val (name, dose, freq) = splitMedicineLineParts(line.text)
-                if (name.isNotBlank()) {
-                    medicines.add(
-                        MedicineCandidate(
-                            name       = name,
-                            dose       = dose,
-                            frequency  = freq,
-                            confidence = heuristicConfidence(line.confidence, 0.65f),
-                            sourceRef  = "page:${line.pageIndex + 1},block:${line.blockIndex}",
-                        )
+            // ----------------------------------------------------------------
+            // Strategy 4: inside a medicine section, plain name lines
+            // (no number prefix, no dosage suffix)
+            // ----------------------------------------------------------------
+            if (inMedicineSection && isValidMedicineName(line.text)) {
+                medicines.add(
+                    MedicineCandidate(
+                        name       = line.text.trim().take(120),
+                        dose       = null,
+                        frequency  = null,
+                        confidence = heuristicConfidence(line.confidence, 0.65f),
+                        sourceRef  = "page:${line.pageIndex + 1},block:${line.blockIndex}",
                     )
-                }
+                )
             }
         }
 
@@ -293,8 +359,11 @@ internal class PrescriptionFieldParser {
     /**
      * Splits a single medicine line into (name, dose, frequency) parts.
      *
-     * A line like "Amoxicillin 500mg BD" → ("Amoxicillin 500mg", null, "BD")
+     * A line like "Augmentin 625mg BD" → ("Augmentin 625mg", null, "BD")
      * A line like "Paracetamol 500mg 1-0-1" → ("Paracetamol 500mg", "1-0-1", null)
+     *
+     * Only used when name + dose are on the same line. For separate lines, use
+     * [isPureDoseOrFrequencyLine] + [parseDoseFreqFromLine] instead.
      */
     private fun splitMedicineLineParts(text: String): Triple<String, String?, String?> {
         var remaining = text.trim()
@@ -307,7 +376,7 @@ internal class PrescriptionFieldParser {
             remaining = remaining.removeRange(freqMatch.range).trim()
         }
 
-        // Extract Indian dosage notation (1-0-1 pattern) or standalone mg/ml value.
+        // Extract Indian dosage notation (1-0-1 pattern).
         var dose: String? = null
         val indianDoseMatch = INDIAN_DOSE_PATTERN.find(remaining)
         if (indianDoseMatch != null) {
@@ -317,6 +386,92 @@ internal class PrescriptionFieldParser {
 
         val name = remaining.trim()
         return Triple(name, dose?.ifBlank { null }, frequency?.ifBlank { null })
+    }
+
+    /**
+     * Returns true when a line is PURELY a dosage or frequency instruction
+     * with no meaningful medicine name component.
+     *
+     * Examples that return true:
+     *   "2 ml four times a day"
+     *   "500mg BD"
+     *   "1-0-1"
+     *   "Take twice daily"
+     *   "10 ml/100 mg (1 tsp)"
+     *
+     * Examples that return false (name + dosage on same line):
+     *   "Augmentin 625mg Tablet"
+     *   "Amoxicillin 500mg"
+     */
+    private fun isPureDoseOrFrequencyLine(text: String): Boolean {
+        val trimmed = text.trim()
+
+        // Contains a frequency keyword — could be pure instruction.
+        val hasFrequency = FREQUENCY_PATTERN.containsMatchIn(trimmed)
+        // Contains Indian dose notation.
+        val hasIndianDose = INDIAN_DOSE_PATTERN.containsMatchIn(trimmed)
+        // Contains only dosage quantity with no alphabetic word before it long enough to be a name.
+        val nameCandidate = splitMedicineLineParts(trimmed).first.trim()
+
+        // If the leftover name candidate is too short or looks like a dose fragment, it's pure dose.
+        if (hasFrequency || hasIndianDose) {
+            if (nameCandidate.length < MIN_MEDICINE_NAME_LENGTH) return true
+            // "Take", "Apply" etc. are instructions, not names.
+            if (INSTRUCTION_VERB_REGEX.containsMatchIn(nameCandidate)) return true
+        }
+
+        // Lines that are entirely a dose quantity: "500mg", "10 ml", "2 tsp"
+        if (PURE_DOSE_LINE_REGEX.matches(trimmed)) return true
+
+        return false
+    }
+
+    /**
+     * Extracts dose and frequency strings from a line that has been identified
+     * as a pure dose/frequency instruction line.
+     */
+    private fun parseDoseFreqFromLine(text: String): Pair<String?, String?> {
+        var remaining = text.trim()
+        var frequency: String? = null
+        val freqMatch = FREQUENCY_PATTERN.find(remaining)
+        if (freqMatch != null) {
+            frequency = freqMatch.value.trim()
+            remaining = remaining.removeRange(freqMatch.range).trim()
+        }
+        var dose: String? = null
+        val indianMatch = INDIAN_DOSE_PATTERN.find(remaining)
+        if (indianMatch != null) {
+            dose = indianMatch.value.trim()
+            remaining = remaining.removeRange(indianMatch.range).trim()
+        }
+        // Remaining text (e.g. "2 ml", "500mg") becomes the dose if no dose found yet.
+        if (dose == null) {
+            val doseSuffix = DOSAGE_SUFFIX_REGEX.find(remaining)
+            if (doseSuffix != null) dose = doseSuffix.value.trim()
+        }
+        // If still no split was possible, treat the whole line as the dose.
+        if (dose == null && frequency == null && remaining.isNotBlank()) {
+            dose = remaining.trim().take(60)
+        }
+        return Pair(dose?.ifBlank { null }, frequency?.ifBlank { null })
+    }
+
+    /**
+     * Returns true when [text] looks like a valid medicine name:
+     * - At least [MIN_MEDICINE_NAME_LENGTH] characters after trimming
+     * - Starts with a letter (not a bracket, slash, or digit)
+     * - Is not entirely composed of digits, slashes, or brackets (i.e. not a pure dosage fragment)
+     */
+    private fun isValidMedicineName(text: String): Boolean {
+        val t = text.trim()
+        if (t.length < MIN_MEDICINE_NAME_LENGTH) return false
+        if (!t.first().isLetter()) return false
+        // Reject strings that are mostly non-alpha (e.g. "ML/100 MG) (1")
+        val alphaRatio = t.count { it.isLetter() }.toFloat() / t.length
+        if (alphaRatio < 0.4f) return false
+        // Reject pure instruction verbs
+        if (INSTRUCTION_VERB_REGEX.containsMatchIn(t) && t.split(" ").size <= 2) return false
+        return true
     }
 
     // -------------------------------------------------------------------------
@@ -349,6 +504,7 @@ internal class PrescriptionFieldParser {
         val confidence: Float,
         val blockIndex: Int,
         val pageIndex: Int,
+        val index: Int = 0,   // position in the flat allLines list, set during construction
     )
 
     private data class MedicineCandidate(
@@ -365,6 +521,9 @@ internal class PrescriptionFieldParser {
 
     companion object {
         private const val MAX_MEDICINES = 5
+
+        /** Minimum number of characters for a string to be considered a valid medicine name. */
+        private const val MIN_MEDICINE_NAME_LENGTH = 3
 
         private val QUALIFICATION_REGEX = Regex(
             """M\.?B\.?B\.?S|M\.?D\.?|M\.?S\.?|D\.?G\.?O|B\.?D\.?S|F\.?R\.?C\.?S""",
@@ -409,6 +568,21 @@ internal class PrescriptionFieldParser {
 
         private val FREQUENCY_PATTERN = Regex(
             """\b(?:OD|BD|TDS|QID|once\s+daily|twice\s+daily|three\s+times\s+(?:a\s+)?daily|thrice\s+daily|four\s+times\s+daily)\b""",
+            RegexOption.IGNORE_CASE,
+        )
+
+        /** Matches instruction verbs that appear in dose lines, not medicine names. */
+        private val INSTRUCTION_VERB_REGEX = Regex(
+            """^\s*(?:take|apply|use|instil|insert|inhale|give|administer)\b""",
+            RegexOption.IGNORE_CASE,
+        )
+
+        /**
+         * Matches lines that are entirely a dosage quantity — no medicine name present.
+         * Examples: "500mg", "10 ml", "2 tsp", "100 IU"
+         */
+        private val PURE_DOSE_LINE_REGEX = Regex(
+            """^\d+(\.\d+)?\s*(?:mg|ml|mcg|g|IU|units?|tsp|tbsp|drops?)\s*${'$'}""",
             RegexOption.IGNORE_CASE,
         )
     }
