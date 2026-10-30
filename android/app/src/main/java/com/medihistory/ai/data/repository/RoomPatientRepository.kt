@@ -15,22 +15,18 @@ import javax.inject.Inject
  * - No patient data is written to Logcat or any log sink.
  * - [getById] passes [patientId] through to the DAO, which scopes the SQL query.
  */
-class RoomPatientRepository @Inject constructor(
-    private val patientDao: PatientDao,
-) : PatientRepository {
+class RoomPatientRepository
+    @Inject
+    constructor(
+        private val patientDao: PatientDao,
+    ) : PatientRepository {
+        override suspend fun getById(patientId: String): Patient? = patientDao.getById(patientId)
 
-    override suspend fun getById(patientId: String): Patient? =
-        patientDao.getById(patientId)
+        override suspend fun insert(patient: Patient) = patientDao.insert(patient)
 
-    override suspend fun insert(patient: Patient) =
-        patientDao.insert(patient)
+        override suspend fun update(patient: Patient) = patientDao.update(patient)
 
-    override suspend fun update(patient: Patient) =
-        patientDao.update(patient)
+        override suspend fun delete(patient: Patient) = patientDao.delete(patient)
 
-    override suspend fun delete(patient: Patient) =
-        patientDao.delete(patient)
-
-    override fun observeAll(): Flow<List<Patient>> =
-        patientDao.observeAll()
-}
+        override fun observeAll(): Flow<List<Patient>> = patientDao.observeAll()
+    }

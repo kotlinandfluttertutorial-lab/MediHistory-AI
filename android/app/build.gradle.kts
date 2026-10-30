@@ -6,7 +6,20 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.ktlint)
     jacoco
+}
+
+ktlint {
+    filter {
+        include("**/src/**/*.kt")
+    }
+}
+
+tasks.matching {
+    it.name == "ktlintKotlinScriptCheck" || it.name == "ktlintKotlinScriptFormat"
+}.configureEach {
+    enabled = false
 }
 
 val skipGoogleServices = providers.gradleProperty("skipGoogleServices").orNull.toBoolean()
@@ -15,7 +28,7 @@ if (file("google-services.json").isFile && !skipGoogleServices) {
 } else {
     logger.lifecycle(
         "google-services.json not found; skipping Google Services plugin. " +
-            "Firebase-dependent runtime features require this file."
+            "Firebase-dependent runtime features require this file.",
     )
 }
 
@@ -35,14 +48,18 @@ val backendBaseUrl: String =
         ?: ""
 
 val enableCloudBackup: Boolean =
-    (localProperties.getProperty("enable.cloud.backup")
-        ?: System.getenv("ENABLE_CLOUD_BACKUP")
-        ?: "false").toBoolean()
+    (
+        localProperties.getProperty("enable.cloud.backup")
+            ?: System.getenv("ENABLE_CLOUD_BACKUP")
+            ?: "false"
+    ).toBoolean()
 
 val enableInteractionCheck: Boolean =
-    (localProperties.getProperty("enable.interaction.check")
-        ?: System.getenv("ENABLE_INTERACTION_CHECK")
-        ?: "false").toBoolean()
+    (
+        localProperties.getProperty("enable.interaction.check")
+            ?: System.getenv("ENABLE_INTERACTION_CHECK")
+            ?: "false"
+    ).toBoolean()
 
 val geminiApiKey: String =
     localProperties.getProperty("gemini.api.key")
@@ -50,9 +67,11 @@ val geminiApiKey: String =
         ?: ""
 
 val enableGeminiOcr: Boolean =
-    (localProperties.getProperty("enable.gemini.ocr")
-        ?: System.getenv("ENABLE_GEMINI_OCR")
-        ?: "false").toBoolean()
+    (
+        localProperties.getProperty("enable.gemini.ocr")
+            ?: System.getenv("ENABLE_GEMINI_OCR")
+            ?: "false"
+    ).toBoolean()
 
 android {
     namespace = "com.medihistory.ai"
@@ -93,7 +112,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -252,19 +271,20 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 
     // Class files to include in the report (exclude generated / non-business code).
     val buildDir = project.layout.buildDirectory.asFile.get()
-    val classesDir = fileTree("$buildDir/tmp/kotlin-classes/debug") {
-        exclude(
-            "**/R.class", "**/R$*.class",
-            "**/BuildConfig.*",
-            "**/Manifest*.*",
-            "**/*_Hilt*.*", "**/Hilt_*.*",       // Hilt generated
-            "**/*_MembersInjector*.*",
-            "**/*_Factory*.*",
-            "**/*Dao_Impl*.*",                    // Room generated
-            "**/databinding/**",
-            "**/ComposableSingletons*.*",          // Compose generated
-        )
-    }
+    val classesDir =
+        fileTree("$buildDir/tmp/kotlin-classes/debug") {
+            exclude(
+                "**/R.class", "**/R$*.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/*_Hilt*.*", "**/Hilt_*.*", // Hilt generated
+                "**/*_MembersInjector*.*",
+                "**/*_Factory*.*",
+                "**/*Dao_Impl*.*", // Room generated
+                "**/databinding/**",
+                "**/ComposableSingletons*.*", // Compose generated
+            )
+        }
     classDirectories.setFrom(classesDir)
     sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
     executionData.setFrom(fileTree("$buildDir/jacoco") { include("*.exec") })
@@ -276,13 +296,14 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     description = "Enforces JaCoCo coverage thresholds (data layer ≥80%, DuplicateDetector/ValidationUtils 100% branch)."
 
     val buildDir = project.layout.buildDirectory.asFile.get()
-    val classesDir = fileTree("$buildDir/tmp/kotlin-classes/debug") {
-        exclude(
-            "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
-            "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_MembersInjector*.*", "**/*_Factory*.*",
-            "**/*Dao_Impl*.*", "**/databinding/**", "**/ComposableSingletons*.*",
-        )
-    }
+    val classesDir =
+        fileTree("$buildDir/tmp/kotlin-classes/debug") {
+            exclude(
+                "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
+                "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_MembersInjector*.*", "**/*_Factory*.*",
+                "**/*Dao_Impl*.*", "**/databinding/**", "**/ComposableSingletons*.*",
+            )
+        }
     classDirectories.setFrom(classesDir)
     sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
     executionData.setFrom(fileTree("$buildDir/jacoco") { include("*.exec") })
@@ -294,7 +315,7 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
             includes = listOf("com.medihistory.ai.data.*")
             limit {
                 counter = "LINE"
-                value   = "COVEREDRATIO"
+                value = "COVEREDRATIO"
                 minimum = "0.80".toBigDecimal()
             }
         }
@@ -304,7 +325,7 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
             includes = listOf("com.medihistory.ai.duplicate.DuplicateDetector")
             limit {
                 counter = "BRANCH"
-                value   = "COVEREDRATIO"
+                value = "COVEREDRATIO"
                 minimum = "1.00".toBigDecimal()
             }
         }
@@ -314,7 +335,7 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
             includes = listOf("com.medihistory.ai.data.ocr.ValidationUtils")
             limit {
                 counter = "BRANCH"
-                value   = "COVEREDRATIO"
+                value = "COVEREDRATIO"
                 minimum = "1.00".toBigDecimal()
             }
         }

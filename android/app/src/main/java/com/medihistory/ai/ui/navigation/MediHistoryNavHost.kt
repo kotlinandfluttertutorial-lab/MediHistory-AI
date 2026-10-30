@@ -163,10 +163,12 @@ fun MediHistoryNavHost(
                     // Pass the captured image result back to the IMPORT back-stack entry
                     // via SavedStateHandle — the standard Jetpack pattern for result-passing.
                     navController.previousBackStackEntry?.savedStateHandle?.set(
-                        "camera_result_path", path
+                        "camera_result_path",
+                        path,
                     )
                     navController.previousBackStackEntry?.savedStateHandle?.set(
-                        "camera_result_sha256", sha256
+                        "camera_result_sha256",
+                        sha256,
                     )
                     navController.navigateUp()
                 },

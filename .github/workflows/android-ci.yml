@@ -39,6 +39,10 @@ jobs:
         run: ./gradlew lintDebug
         working-directory: android
 
+      - name: Run ktlint
+        run: ./gradlew ktlintCheck
+        working-directory: android
+
       - name: Upload lint results
         if: always()
         uses: actions/upload-artifact@v4

@@ -15,28 +15,35 @@ import javax.inject.Inject
  */
 @HiltAndroidApp
 class MediHistoryApplication : Application(), Configuration.Provider {
-
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
     override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
+        get() =
+            Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .build()
 
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         } else {
-            Timber.plant(object : Timber.Tree() {
-                override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-                    if (priority == android.util.Log.VERBOSE || priority == android.util.Log.DEBUG) {
-                        return
+            Timber.plant(
+                object : Timber.Tree() {
+                    override fun log(
+                        priority: Int,
+                        tag: String?,
+                        message: String,
+                        t: Throwable?,
+                    ) {
+                        if (priority == android.util.Log.VERBOSE || priority == android.util.Log.DEBUG) {
+                            return
+                        }
+                        android.util.Log.println(priority, tag ?: "MediHistoryAI", message)
                     }
-                    android.util.Log.println(priority, tag ?: "MediHistoryAI", message)
-                }
-            })
+                },
+            )
         }
     }
 }

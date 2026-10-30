@@ -85,18 +85,20 @@ fun LoginScreen(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding(),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .imePadding(),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
         ) {
             // ── App icon + title ───────────────────────────────────────────────
             Icon(
@@ -128,17 +130,20 @@ fun LoginScreen(
                     Icon(Icons.Outlined.Email, contentDescription = null)
                 },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next,
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) },
-                ),
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next,
+                    ),
+                keyboardActions =
+                    KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                    ),
                 enabled = !uiState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Email address" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Email address" },
             )
 
             // ── Password field ─────────────────────────────────────────────────
@@ -148,8 +153,12 @@ fun LoginScreen(
                 label = "Password",
                 imeAction = if (uiState.isRegisterMode) ImeAction.Next else ImeAction.Done,
                 onImeAction = {
-                    if (uiState.isRegisterMode) focusManager.moveFocus(FocusDirection.Down)
-                    else { focusManager.clearFocus(); viewModel.onPrimaryAction() }
+                    if (uiState.isRegisterMode) {
+                        focusManager.moveFocus(FocusDirection.Down)
+                    } else {
+                        focusManager.clearFocus()
+                        viewModel.onPrimaryAction()
+                    }
                 },
                 enabled = !uiState.isLoading,
             )
@@ -180,9 +189,10 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Error: ${uiState.error}" },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .semantics { contentDescription = "Error: ${uiState.error}" },
                 )
             }
 
@@ -193,9 +203,10 @@ fun LoginScreen(
                     viewModel.onPrimaryAction()
                 },
                 enabled = !uiState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
@@ -215,18 +226,23 @@ fun LoginScreen(
             TextButton(
                 onClick = viewModel::onToggleMode,
                 enabled = !uiState.isLoading,
-                modifier = Modifier.semantics {
-                    contentDescription = if (uiState.isRegisterMode)
-                        "Already have an account? Sign in"
-                    else
-                        "Don't have an account? Create one"
-                },
+                modifier =
+                    Modifier.semantics {
+                        contentDescription =
+                            if (uiState.isRegisterMode) {
+                                "Already have an account? Sign in"
+                            } else {
+                                "Don't have an account? Create one"
+                            }
+                    },
             ) {
                 Text(
-                    text = if (uiState.isRegisterMode)
-                        "Already have an account? Sign in"
-                    else
-                        "Don't have an account? Create account",
+                    text =
+                        if (uiState.isRegisterMode) {
+                            "Already have an account? Sign in"
+                        } else {
+                            "Don't have an account? Create account"
+                        },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -272,17 +288,20 @@ private fun PasswordField(
         },
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = imeAction,
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { onImeAction() },
-            onDone = { onImeAction() },
-        ),
+        keyboardOptions =
+            KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = imeAction,
+            ),
+        keyboardActions =
+            KeyboardActions(
+                onNext = { onImeAction() },
+                onDone = { onImeAction() },
+            ),
         enabled = enabled,
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = label },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = label },
     )
 }

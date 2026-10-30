@@ -19,7 +19,6 @@ import java.time.LocalDate
  * Naming convention: `given_[state]_when_[action]_then_[outcome]`
  */
 class HistoryCompilerTest {
-
     // -------------------------------------------------------------------------
     // Synthetic fixtures
     // -------------------------------------------------------------------------
@@ -78,11 +77,12 @@ class HistoryCompilerTest {
 
     @Test
     fun given_empty_lists_when_compile_then_sections_have_no_entries() {
-        val sections = HistoryCompiler.compile(
-            prescriptions = emptyList(),
-            medicines = emptyList(),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = emptyList(),
+                medicines = emptyList(),
+                doctors = emptyList(),
+            )
 
         assertTrue("Should return sections even for empty input", sections.isNotEmpty())
         sections.filter { it.type != SectionType.AI_SUMMARY }.forEach { section ->
@@ -95,35 +95,40 @@ class HistoryCompilerTest {
 
     @Test
     fun given_mixed_ocr_statuses_when_compile_then_only_reviewed_prescriptions_used() {
-        val reviewedPrescription = syntheticPrescription(
-            id = "rx-reviewed",
-            ocrStatus = OcrStatus.REVIEWED,
-            prescriptionDate = LocalDate.of(2024, 2, 1),
-        )
-        val pendingPrescription = syntheticPrescription(
-            id = "rx-pending",
-            ocrStatus = OcrStatus.PENDING,
-            prescriptionDate = LocalDate.of(2024, 3, 1),
-        )
-        val needsReviewPrescription = syntheticPrescription(
-            id = "rx-needs-review",
-            ocrStatus = OcrStatus.NEEDS_REVIEW,
-            prescriptionDate = LocalDate.of(2024, 4, 1),
-        )
+        val reviewedPrescription =
+            syntheticPrescription(
+                id = "rx-reviewed",
+                ocrStatus = OcrStatus.REVIEWED,
+                prescriptionDate = LocalDate.of(2024, 2, 1),
+            )
+        val pendingPrescription =
+            syntheticPrescription(
+                id = "rx-pending",
+                ocrStatus = OcrStatus.PENDING,
+                prescriptionDate = LocalDate.of(2024, 3, 1),
+            )
+        val needsReviewPrescription =
+            syntheticPrescription(
+                id = "rx-needs-review",
+                ocrStatus = OcrStatus.NEEDS_REVIEW,
+                prescriptionDate = LocalDate.of(2024, 4, 1),
+            )
 
         // Only the reviewed prescription should appear in the timeline
         val reviewedMedicine = syntheticMedicine(prescriptionId = "rx-reviewed")
-        val pendingMedicine = syntheticMedicine(
-            id = "med-pending",
-            prescriptionId = "rx-pending",
-            medicineName = "Testocillin 250mg",
-        )
+        val pendingMedicine =
+            syntheticMedicine(
+                id = "med-pending",
+                prescriptionId = "rx-pending",
+                medicineName = "Testocillin 250mg",
+            )
 
-        val sections = HistoryCompiler.compile(
-            prescriptions = listOf(reviewedPrescription, pendingPrescription, needsReviewPrescription),
-            medicines = listOf(reviewedMedicine, pendingMedicine),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = listOf(reviewedPrescription, pendingPrescription, needsReviewPrescription),
+                medicines = listOf(reviewedMedicine, pendingMedicine),
+                doctors = emptyList(),
+            )
 
         val timelineSection = sections.first { it.type == SectionType.TIMELINE }
         assertTrue(
@@ -147,11 +152,12 @@ class HistoryCompilerTest {
         val prescription = syntheticPrescription()
         val medicine = syntheticMedicine(prescriptionId = prescription.id)
 
-        val sections = HistoryCompiler.compile(
-            prescriptions = listOf(prescription),
-            medicines = listOf(medicine),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = listOf(prescription),
+                medicines = listOf(medicine),
+                doctors = emptyList(),
+            )
 
         sections.filter { it.type != SectionType.AI_SUMMARY }.forEach { section ->
             section.entries.forEach { entry ->
@@ -166,24 +172,27 @@ class HistoryCompilerTest {
     @Test
     fun given_past_medicine_when_compile_then_excluded_from_active_medicines_section() {
         val prescription = syntheticPrescription()
-        val pastMedicine = syntheticMedicine(
-            id = "med-past",
-            medicineName = "Synthamol 500mg",
-            status = MedicineStatus.PAST,
-            prescriptionId = prescription.id,
-        )
-        val currentMedicine = syntheticMedicine(
-            id = "med-current",
-            medicineName = "Testocillin 250mg",
-            status = MedicineStatus.CURRENT,
-            prescriptionId = prescription.id,
-        )
+        val pastMedicine =
+            syntheticMedicine(
+                id = "med-past",
+                medicineName = "Synthamol 500mg",
+                status = MedicineStatus.PAST,
+                prescriptionId = prescription.id,
+            )
+        val currentMedicine =
+            syntheticMedicine(
+                id = "med-current",
+                medicineName = "Testocillin 250mg",
+                status = MedicineStatus.CURRENT,
+                prescriptionId = prescription.id,
+            )
 
-        val sections = HistoryCompiler.compile(
-            prescriptions = listOf(prescription),
-            medicines = listOf(pastMedicine, currentMedicine),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = listOf(prescription),
+                medicines = listOf(pastMedicine, currentMedicine),
+                doctors = emptyList(),
+            )
 
         val medicinesSection = sections.first { it.type == SectionType.MEDICINES }
         val medicineTexts = medicinesSection.entries.map { it.text }
@@ -203,11 +212,12 @@ class HistoryCompilerTest {
         val prescription = syntheticPrescription()
         val medicine = syntheticMedicine(prescriptionId = prescription.id)
 
-        val sections = HistoryCompiler.compile(
-            prescriptions = listOf(prescription),
-            medicines = listOf(medicine),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = listOf(prescription),
+                medicines = listOf(medicine),
+                doctors = emptyList(),
+            )
 
         val forbiddenTerms = listOf("diagnosis", "treatment", "recommend")
 
@@ -227,24 +237,27 @@ class HistoryCompilerTest {
     fun given_same_input_when_compile_called_twice_then_results_are_identical() {
         val prescription = syntheticPrescription()
         val medicine1 = syntheticMedicine(id = "med-001", prescriptionId = prescription.id)
-        val medicine2 = syntheticMedicine(
-            id = "med-002",
-            prescriptionId = prescription.id,
-            medicineName = "Testocillin 250mg",
-        )
+        val medicine2 =
+            syntheticMedicine(
+                id = "med-002",
+                prescriptionId = prescription.id,
+                medicineName = "Testocillin 250mg",
+            )
         val doctor = syntheticDoctor()
         val prescriptionWithDoctor = syntheticPrescription(doctorId = doctor.id)
 
-        val firstResult = HistoryCompiler.compile(
-            prescriptions = listOf(prescriptionWithDoctor),
-            medicines = listOf(medicine1, medicine2),
-            doctors = listOf(doctor),
-        )
-        val secondResult = HistoryCompiler.compile(
-            prescriptions = listOf(prescriptionWithDoctor),
-            medicines = listOf(medicine1, medicine2),
-            doctors = listOf(doctor),
-        )
+        val firstResult =
+            HistoryCompiler.compile(
+                prescriptions = listOf(prescriptionWithDoctor),
+                medicines = listOf(medicine1, medicine2),
+                doctors = listOf(doctor),
+            )
+        val secondResult =
+            HistoryCompiler.compile(
+                prescriptions = listOf(prescriptionWithDoctor),
+                medicines = listOf(medicine1, medicine2),
+                doctors = listOf(doctor),
+            )
 
         assertEquals(
             "HistoryCompiler must be deterministic — same input must produce same output",
@@ -255,11 +268,12 @@ class HistoryCompilerTest {
 
     @Test
     fun given_ai_summary_section_when_compile_then_isAiGenerated_is_true() {
-        val sections = HistoryCompiler.compile(
-            prescriptions = emptyList(),
-            medicines = emptyList(),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = emptyList(),
+                medicines = emptyList(),
+                doctors = emptyList(),
+            )
 
         val aiSection = sections.first { it.type == SectionType.AI_SUMMARY }
         assertTrue(
@@ -270,11 +284,12 @@ class HistoryCompilerTest {
 
     @Test
     fun given_deterministic_sections_when_compile_then_isAiGenerated_is_false() {
-        val sections = HistoryCompiler.compile(
-            prescriptions = emptyList(),
-            medicines = emptyList(),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = emptyList(),
+                medicines = emptyList(),
+                doctors = emptyList(),
+            )
 
         sections.filter { it.type != SectionType.AI_SUMMARY }.forEach { section ->
             assertFalse(
@@ -286,20 +301,23 @@ class HistoryCompilerTest {
 
     @Test
     fun given_prescription_without_date_when_compile_then_excluded_from_timeline() {
-        val prescriptionNoDate = syntheticPrescription(
-            id = "rx-no-date",
-            prescriptionDate = null,
-        )
-        val prescriptionWithDate = syntheticPrescription(
-            id = "rx-with-date",
-            prescriptionDate = LocalDate.of(2024, 5, 10),
-        )
+        val prescriptionNoDate =
+            syntheticPrescription(
+                id = "rx-no-date",
+                prescriptionDate = null,
+            )
+        val prescriptionWithDate =
+            syntheticPrescription(
+                id = "rx-with-date",
+                prescriptionDate = LocalDate.of(2024, 5, 10),
+            )
 
-        val sections = HistoryCompiler.compile(
-            prescriptions = listOf(prescriptionNoDate, prescriptionWithDate),
-            medicines = emptyList(),
-            doctors = emptyList(),
-        )
+        val sections =
+            HistoryCompiler.compile(
+                prescriptions = listOf(prescriptionNoDate, prescriptionWithDate),
+                medicines = emptyList(),
+                doctors = emptyList(),
+            )
 
         val timelineSection = sections.first { it.type == SectionType.TIMELINE }
         assertEquals(

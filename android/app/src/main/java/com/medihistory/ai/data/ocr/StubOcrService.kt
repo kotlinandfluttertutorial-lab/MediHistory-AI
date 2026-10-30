@@ -15,7 +15,6 @@ import kotlinx.coroutines.delay
  * Replace with a real adapter when the OCR provider is selected (ADR-006).
  */
 internal class StubOcrService : OcrService {
-
     override suspend fun extract(
         documentPath: String,
         mimeType: String,
@@ -27,46 +26,47 @@ internal class StubOcrService : OcrService {
 
         return OcrResult(
             prescriptionId = prescriptionId,
-            fields = listOf(
-                // High confidence — still PENDING_REVIEW until patient confirms.
-                ExtractedField(
-                    fieldName = "doctor_name",
-                    rawValue = "Dr. Synthetic",
-                    patientValue = null,
-                    confidence = 0.85f,
-                    sourceReference = "page:1",
+            fields =
+                listOf(
+                    // High confidence — still PENDING_REVIEW until patient confirms.
+                    ExtractedField(
+                        fieldName = "doctor_name",
+                        rawValue = "Dr. Synthetic",
+                        patientValue = null,
+                        confidence = 0.85f,
+                        sourceReference = "page:1",
+                    ),
+                    ExtractedField(
+                        fieldName = "prescription_date",
+                        rawValue = "2025-07-01",
+                        patientValue = null,
+                        confidence = 0.90f,
+                        sourceReference = "page:1",
+                    ),
+                    // LOW confidence — must be highlighted and reviewed before use.
+                    ExtractedField(
+                        fieldName = "medicine_name",
+                        rawValue = "Synthamol 500mg",
+                        patientValue = null,
+                        confidence = 0.62f,
+                        sourceReference = "page:1",
+                    ),
+                    // Absent fields — rawValue=null per spec. Never fabricate a value.
+                    ExtractedField(
+                        fieldName = "dose",
+                        rawValue = null,
+                        patientValue = null,
+                        confidence = 0.0f,
+                        sourceReference = null,
+                    ),
+                    ExtractedField(
+                        fieldName = "frequency",
+                        rawValue = null,
+                        patientValue = null,
+                        confidence = 0.0f,
+                        sourceReference = null,
+                    ),
                 ),
-                ExtractedField(
-                    fieldName = "prescription_date",
-                    rawValue = "2025-07-01",
-                    patientValue = null,
-                    confidence = 0.90f,
-                    sourceReference = "page:1",
-                ),
-                // LOW confidence — must be highlighted and reviewed before use.
-                ExtractedField(
-                    fieldName = "medicine_name",
-                    rawValue = "Synthamol 500mg",
-                    patientValue = null,
-                    confidence = 0.62f,
-                    sourceReference = "page:1",
-                ),
-                // Absent fields — rawValue=null per spec. Never fabricate a value.
-                ExtractedField(
-                    fieldName = "dose",
-                    rawValue = null,
-                    patientValue = null,
-                    confidence = 0.0f,
-                    sourceReference = null,
-                ),
-                ExtractedField(
-                    fieldName = "frequency",
-                    rawValue = null,
-                    patientValue = null,
-                    confidence = 0.0f,
-                    sourceReference = null,
-                ),
-            ),
             overallConfidence = 0.65f,
         )
     }

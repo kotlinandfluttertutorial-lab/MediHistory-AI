@@ -18,18 +18,18 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class DatabaseMigrationTest {
-
-    private val TEST_DB = "migration-test"
+    private val testDb = "migration-test"
 
     @get:Rule
-    val helper: MigrationTestHelper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        MediHistoryDatabase::class.java
-    )
+    val helper: MigrationTestHelper =
+        MigrationTestHelper(
+            InstrumentationRegistry.getInstrumentation(),
+            MediHistoryDatabase::class.java,
+        )
 
     @Test
     fun opensVersionOneSchema() {
-        helper.createDatabase(TEST_DB, 1).use { db ->
+        helper.createDatabase(testDb, 1).use { db ->
             assert(db.version == 1) {
                 "Expected database version 1 but was ${db.version}"
             }
@@ -38,9 +38,9 @@ class DatabaseMigrationTest {
 
     @Test
     fun migrationFromVersionFiveCreatesDuplicateAlertsTable() {
-        helper.createDatabase(TEST_DB, 5).close()
+        helper.createDatabase(testDb, 5).close()
 
-        helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6).use { db ->
+        helper.runMigrationsAndValidate(testDb, 6, true, MIGRATION_5_6).use { db ->
             assert(db.version == 6) {
                 "Expected database version 6 but was ${db.version}"
             }

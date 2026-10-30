@@ -15,7 +15,6 @@ package com.medihistory.ai.data.ocr
  *   and sourceReference (if the provider supports region attribution).
  */
 interface OcrService {
-
     /**
      * Extract structured fields from a prescription document stored in app-private storage.
      *

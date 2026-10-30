@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface MedicineDao {
-
     /**
      * Emits the live list of medicines belonging to [patientId], ordered by name.
      * Results update automatically when the underlying data changes.
@@ -41,7 +40,10 @@ interface MedicineDao {
         ORDER BY medicineName ASC
         """,
     )
-    fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>>
+    fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>>
 
     /**
      * Returns the medicine with [id] that also belongs to [patientId], or null.
@@ -50,7 +52,10 @@ interface MedicineDao {
      * the existence of records owned by another patient.
      */
     @Query("SELECT * FROM medicines WHERE id = :id AND patientId = :patientId LIMIT 1")
-    suspend fun getById(id: String, patientId: String): Medicine?
+    suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine?
 
     /** Inserts or replaces a batch of medicine records (idempotent upsert). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)

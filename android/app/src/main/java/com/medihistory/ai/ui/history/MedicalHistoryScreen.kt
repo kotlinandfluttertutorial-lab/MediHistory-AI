@@ -81,9 +81,10 @@ fun MedicalHistoryScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Back"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Back"
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
@@ -94,9 +95,10 @@ fun MedicalHistoryScreen(
                 actions = {
                     IconButton(
                         onClick = { viewModel.refresh(patientId) },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Refresh history"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Refresh history"
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Refresh,
@@ -110,9 +112,10 @@ fun MedicalHistoryScreen(
             if (uiState.sections.isNotEmpty() && !uiState.isGenerating) {
                 FloatingActionButton(
                     onClick = { viewModel.refresh(patientId) },
-                    modifier = Modifier.semantics {
-                        contentDescription = "Refresh history"
-                    },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Refresh history"
+                        },
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Refresh,
@@ -123,17 +126,19 @@ fun MedicalHistoryScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             // ----------------------------------------------------------------
             // Disclaimer card — ALWAYS visible, non-dismissible
             // ----------------------------------------------------------------
             DisclaimerCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             )
 
             // ----------------------------------------------------------------
@@ -141,15 +146,17 @@ fun MedicalHistoryScreen(
             // ----------------------------------------------------------------
             if (uiState.isGenerating) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     LinearProgressIndicator(
                         progress = { uiState.generationProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics { contentDescription = "Compiling records" },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .semantics { contentDescription = "Compiling records" },
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -192,9 +199,10 @@ fun MedicalHistoryScreen(
                 uiState.sections.isNotEmpty() -> {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                     ) {
                         items(
                             items = uiState.sections,
@@ -223,9 +231,10 @@ fun MedicalHistoryScreen(
 private fun DisclaimerCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -239,16 +248,18 @@ private fun DisclaimerCard(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
             )
             Text(
-                text = "This is a patient-compiled summary. It is not a clinical report. " +
-                    "Please verify all information with your doctor.",
+                text =
+                    "This is a patient-compiled summary. It is not a clinical report. " +
+                        "Please verify all information with your doctor.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.semantics {
-                    contentDescription =
-                        "Disclaimer: This is a patient-compiled summary. " +
-                        "It is not a clinical report. " +
-                        "Please verify all information with your doctor."
-                },
+                modifier =
+                    Modifier.semantics {
+                        contentDescription =
+                            "Disclaimer: This is a patient-compiled summary. " +
+                            "It is not a clinical report. " +
+                            "Please verify all information with your doctor."
+                    },
             )
         }
     }

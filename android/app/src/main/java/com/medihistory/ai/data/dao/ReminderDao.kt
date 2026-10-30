@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface ReminderDao {
-
     /**
      * Emits the live list of reminders for [patientId], newest first.
      * The Flow updates automatically when the underlying data changes.
@@ -50,7 +49,10 @@ interface ReminderDao {
         LIMIT 1
         """,
     )
-    suspend fun getById(id: String, patientId: String): Reminder?
+    suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Reminder?
 
     /**
      * Inserts a new reminder.

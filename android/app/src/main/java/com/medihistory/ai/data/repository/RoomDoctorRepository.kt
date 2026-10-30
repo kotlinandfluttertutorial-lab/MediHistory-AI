@@ -11,22 +11,21 @@ import javax.inject.Inject
  * All operations delegate directly to [DoctorDao], which enforces patientId
  * scoping at the SQL level. Business rules live in UseCases, not here.
  */
-class RoomDoctorRepository @Inject constructor(
-    private val doctorDao: DoctorDao,
-) : DoctorRepository {
+class RoomDoctorRepository
+    @Inject
+    constructor(
+        private val doctorDao: DoctorDao,
+    ) : DoctorRepository {
+        override fun observeByPatient(patientId: String): Flow<List<Doctor>> = doctorDao.observeByPatient(patientId)
 
-    override fun observeByPatient(patientId: String): Flow<List<Doctor>> =
-        doctorDao.observeByPatient(patientId)
+        override suspend fun getById(
+            doctorId: String,
+            patientId: String,
+        ): Doctor? = doctorDao.getById(doctorId, patientId)
 
-    override suspend fun getById(doctorId: String, patientId: String): Doctor? =
-        doctorDao.getById(doctorId, patientId)
+        override suspend fun insert(doctor: Doctor) = doctorDao.insert(doctor)
 
-    override suspend fun insert(doctor: Doctor) =
-        doctorDao.insert(doctor)
+        override suspend fun update(doctor: Doctor) = doctorDao.update(doctor)
 
-    override suspend fun update(doctor: Doctor) =
-        doctorDao.update(doctor)
-
-    override suspend fun delete(doctor: Doctor) =
-        doctorDao.delete(doctor)
-}
+        override suspend fun delete(doctor: Doctor) = doctorDao.delete(doctor)
+    }

@@ -11,7 +11,6 @@ import org.junit.Test
  * No Compose test rule is required — these tests exercise only plain Kotlin values.
  */
 class NavigationTest {
-
     // -------------------------------------------------------------------------
     // Routes constants
     // -------------------------------------------------------------------------

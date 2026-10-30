@@ -3,7 +3,6 @@ package com.medihistory.ai.ui.prescription
 import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.DoctorSpecialty
 import com.medihistory.ai.data.model.Medicine
-import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.model.Prescription
 import com.medihistory.ai.data.repository.DoctorRepository
@@ -39,7 +38,6 @@ import java.time.LocalDate
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PrescriptionListViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private val patientId = "patient-test-alpha"
 
@@ -56,12 +54,13 @@ class PrescriptionListViewModelTest {
         fakeDoctorRepository = FakeDoctorRepository()
         fakeMedicineRepository = FakeMedicineRepositoryForList()
         fakeSessionManager = FakeSessionManager(patientId)
-        viewModel = PrescriptionListViewModel(
-            prescriptionRepository = fakePrescriptionRepository,
-            doctorRepository = fakeDoctorRepository,
-            medicineRepository = fakeMedicineRepository,
-            sessionManager = fakeSessionManager,
-        )
+        viewModel =
+            PrescriptionListViewModel(
+                prescriptionRepository = fakePrescriptionRepository,
+                doctorRepository = fakeDoctorRepository,
+                medicineRepository = fakeMedicineRepository,
+                sessionManager = fakeSessionManager,
+            )
     }
 
     @After
@@ -216,40 +215,42 @@ class PrescriptionListViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `given expanded group when onToggleGroup called then group is collapsed`() = runTest {
-        val doctor = syntheticDoctor()
-        fakeDoctorRepository.add(doctor)
-        fakePrescriptionRepository.add(syntheticPrescription(doctorId = doctor.id))
-        advanceUntilIdle()
+    fun `given expanded group when onToggleGroup called then group is collapsed`() =
+        runTest {
+            val doctor = syntheticDoctor()
+            fakeDoctorRepository.add(doctor)
+            fakePrescriptionRepository.add(syntheticPrescription(doctorId = doctor.id))
+            advanceUntilIdle()
 
-        assertTrue(
-            "Group must be expanded by default",
-            viewModel.uiState.value.doctorGroups.first().isExpanded,
-        )
+            assertTrue(
+                "Group must be expanded by default",
+                viewModel.uiState.value.doctorGroups.first().isExpanded,
+            )
 
-        viewModel.onToggleGroup(doctor.name)
+            viewModel.onToggleGroup(doctor.name)
 
-        assertFalse(
-            "Group must be collapsed after toggle",
-            viewModel.uiState.value.doctorGroups.first().isExpanded,
-        )
-    }
+            assertFalse(
+                "Group must be collapsed after toggle",
+                viewModel.uiState.value.doctorGroups.first().isExpanded,
+            )
+        }
 
     @Test
-    fun `given collapsed group when onToggleGroup called again then group is expanded`() = runTest {
-        val doctor = syntheticDoctor()
-        fakeDoctorRepository.add(doctor)
-        fakePrescriptionRepository.add(syntheticPrescription(doctorId = doctor.id))
-        advanceUntilIdle()
+    fun `given collapsed group when onToggleGroup called again then group is expanded`() =
+        runTest {
+            val doctor = syntheticDoctor()
+            fakeDoctorRepository.add(doctor)
+            fakePrescriptionRepository.add(syntheticPrescription(doctorId = doctor.id))
+            advanceUntilIdle()
 
-        viewModel.onToggleGroup(doctor.name)
-        viewModel.onToggleGroup(doctor.name)
+            viewModel.onToggleGroup(doctor.name)
+            viewModel.onToggleGroup(doctor.name)
 
-        assertTrue(
-            "Group must be expanded after two toggles",
-            viewModel.uiState.value.doctorGroups.first().isExpanded,
-        )
-    }
+            assertTrue(
+                "Group must be expanded after two toggles",
+                viewModel.uiState.value.doctorGroups.first().isExpanded,
+            )
+        }
 }
 
 // -------------------------------------------------------------------------
@@ -257,18 +258,18 @@ class PrescriptionListViewModelTest {
 // -------------------------------------------------------------------------
 
 private class FakePrescriptionRepositoryForList : PrescriptionRepository {
-
     private val _prescriptions = MutableStateFlow<List<Prescription>>(emptyList())
 
     fun add(prescription: Prescription) {
         _prescriptions.update { it + prescription }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Prescription>> =
-        _prescriptions.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Prescription>> = _prescriptions.map { list -> list.filter { it.patientId == patientId } }
 
-    override suspend fun getById(id: String, patientId: String): Prescription? =
-        _prescriptions.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Prescription? = _prescriptions.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insert(prescription: Prescription) {
         _prescriptions.update { it + prescription }
@@ -292,27 +293,29 @@ private class FakePrescriptionRepositoryForList : PrescriptionRepository {
     ) {
         _prescriptions.update { list ->
             list.map { p ->
-                if (p.id == id && p.patientId == patientId)
+                if (p.id == id && p.patientId == patientId) {
                     p.copy(ocrStatus = status, updatedAt = updatedAt)
-                else p
+                } else {
+                    p
+                }
             }
         }
     }
 }
 
 private class FakeDoctorRepository : DoctorRepository {
-
     private val _doctors = MutableStateFlow<List<Doctor>>(emptyList())
 
     fun add(doctor: Doctor) {
         _doctors.update { it + doctor }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Doctor>> =
-        _doctors.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Doctor>> = _doctors.map { list -> list.filter { it.patientId == patientId } }
 
-    override suspend fun getById(doctorId: String, patientId: String): Doctor? =
-        _doctors.value.find { it.id == doctorId && it.patientId == patientId }
+    override suspend fun getById(
+        doctorId: String,
+        patientId: String,
+    ): Doctor? = _doctors.value.find { it.id == doctorId && it.patientId == patientId }
 
     override suspend fun insert(doctor: Doctor) {
         _doctors.update { it + doctor }
@@ -330,12 +333,19 @@ private class FakeDoctorRepository : DoctorRepository {
 }
 
 private class FakeSessionManager(private val patientId: String) : SessionManager(
-    securePreferences = object : com.medihistory.ai.data.security.SecurePreferencesStore {
-        override fun getString(key: String): String? = null
-        override fun putString(key: String, value: String) = Unit
-        override fun remove(key: String) = Unit
-        override fun clear() = Unit
-    }
+    securePreferences =
+        object : com.medihistory.ai.data.security.SecurePreferencesStore {
+            override fun getString(key: String): String? = null
+
+            override fun putString(
+                key: String,
+                value: String,
+            ) = Unit
+
+            override fun remove(key: String) = Unit
+
+            override fun clear() = Unit
+        },
 ) {
     override fun getPatientId(): String = patientId
 }
@@ -343,16 +353,21 @@ private class FakeSessionManager(private val patientId: String) : SessionManager
 private class FakeMedicineRepositoryForList : MedicineRepository {
     private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
 
-    fun add(medicine: Medicine) { _medicines.update { it + medicine } }
+    fun add(medicine: Medicine) {
+        _medicines.update { it + medicine }
+    }
 
-    override fun observeByPatient(patientId: String): Flow<List<Medicine>> =
-        _medicines.map { it.filter { m -> m.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = _medicines.map { it.filter { m -> m.patientId == patientId } }
 
-    override fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>> =
-        _medicines.map { it.filter { m -> m.patientId == patientId } }
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> = _medicines.map { it.filter { m -> m.patientId == patientId } }
 
-    override suspend fun getById(id: String, patientId: String): Medicine? =
-        _medicines.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? = _medicines.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insertAll(medicines: List<Medicine>) {
         _medicines.update { it + medicines }

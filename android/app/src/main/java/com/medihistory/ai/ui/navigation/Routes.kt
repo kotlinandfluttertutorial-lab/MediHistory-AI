@@ -34,10 +34,16 @@ object Routes {
     const val PATIENT_PROFILE = "patient_profile"
 
     fun prescriptionDetail(id: String) = "prescription/$id"
+
     fun medicineDetail(id: String) = "medicine/$id"
+
     fun duplicateDetail(alertId: String) = "duplicate/$alertId"
+
     fun ocrReview(id: String) = "ocr_review/$id"
+
     fun safetyCenter(patientId: String) = "safety_center/$patientId"
+
     fun doctorGroup(id: String) = "doctor_group/$id"
+
     fun doctorEdit(id: String) = "doctor_edit/$id"
 }

@@ -20,16 +20,13 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class PatientModule {
-
     @Binds
     @Singleton
     abstract fun bindPatientRepository(impl: RoomPatientRepository): PatientRepository
 
     companion object {
-
         @Provides
         @Singleton
-        fun providePatientDao(database: MediHistoryDatabase): PatientDao =
-            database.patientDao()
+        fun providePatientDao(database: MediHistoryDatabase): PatientDao = database.patientDao()
     }
 }

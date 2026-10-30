@@ -14,7 +14,6 @@ import java.time.LocalTime
  * Naming convention: `test_[outcome]_[condition]`
  */
 class ReminderAdvisorEngineTest {
-
     private lateinit var engine: ReminderAdvisorEngine
 
     @Before

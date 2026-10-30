@@ -91,9 +91,10 @@ fun DuplicateAlertCard(
 
     ElevatedCard(
         onClick = onToggleExpand,
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = cardContentDescription },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = cardContentDescription },
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -133,11 +134,12 @@ fun DuplicateAlertCard(
                     modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                 ) {
                     Icon(
-                        imageVector = if (item.isExpanded) {
-                            Icons.Outlined.ExpandLess
-                        } else {
-                            Icons.Outlined.ExpandMore
-                        },
+                        imageVector =
+                            if (item.isExpanded) {
+                                Icons.Outlined.ExpandLess
+                            } else {
+                                Icons.Outlined.ExpandMore
+                            },
                         contentDescription = if (item.isExpanded) "Collapse alert" else "Expand alert",
                     )
                 }
@@ -151,17 +153,19 @@ fun DuplicateAlertCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Match type chip
-                val matchLabel = when (item.alert.matchType) {
-                    MatchType.EXACT   -> "Exact match"
-                    MatchType.PARTIAL -> "Partial match"
-                }
+                val matchLabel =
+                    when (item.alert.matchType) {
+                        MatchType.EXACT -> "Exact match"
+                        MatchType.PARTIAL -> "Partial match"
+                    }
                 SuggestionChip(
                     onClick = {},
                     label = { Text(text = matchLabel) },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        containerColor = MaterialTheme.extendedColors.warningContainer,
-                        labelColor = MaterialTheme.extendedColors.onWarningContainer,
-                    ),
+                    colors =
+                        SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.extendedColors.warningContainer,
+                            labelColor = MaterialTheme.extendedColors.onWarningContainer,
+                        ),
                 )
 
                 // Reviewed badge — only shown when reviewed
@@ -182,9 +186,10 @@ fun DuplicateAlertCard(
                                 tint = MaterialTheme.colorScheme.onSecondaryContainer,
                             )
                         },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        ),
+                        colors =
+                            AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            ),
                     )
                 }
             }
@@ -233,9 +238,10 @@ fun DuplicateAlertCard(
                     // Required disclaimer banner
                     OutlinedCard(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.outlinedCardColors(
-                            containerColor = MaterialTheme.extendedColors.warningContainer,
-                        ),
+                        colors =
+                            CardDefaults.outlinedCardColors(
+                                containerColor = MaterialTheme.extendedColors.warningContainer,
+                            ),
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -262,13 +268,17 @@ fun DuplicateAlertCard(
                     if (item.alert.explanation != null) {
                         TextButton(
                             onClick = { showExplanation = !showExplanation },
-                            modifier = Modifier
-                                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                                .semantics {
-                                    contentDescription =
-                                        if (showExplanation) "Hide explanation for this alert"
-                                        else "Explain this alert"
-                                },
+                            modifier =
+                                Modifier
+                                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                                    .semantics {
+                                        contentDescription =
+                                            if (showExplanation) {
+                                                "Hide explanation for this alert"
+                                            } else {
+                                                "Explain this alert"
+                                            }
+                                    },
                         ) {
                             Text(text = if (showExplanation) "Hide explanation" else "Explain this alert")
                         }
@@ -297,17 +307,19 @@ fun DuplicateAlertCard(
                                             style = MaterialTheme.typography.labelSmall,
                                         )
                                     },
-                                    colors = SuggestionChipDefaults.suggestionChipColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    ),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .sizeIn(minHeight = 48.dp)
-                                        .semantics {
-                                            contentDescription =
-                                                "AI-generated — always verify with your doctor or pharmacist"
-                                        },
+                                    colors =
+                                        SuggestionChipDefaults.suggestionChipColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        ),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .sizeIn(minHeight = 48.dp)
+                                            .semantics {
+                                                contentDescription =
+                                                    "AI-generated — always verify with your doctor or pharmacist"
+                                            },
                                 )
                             }
                         }
@@ -316,11 +328,13 @@ fun DuplicateAlertCard(
                     }
 
                     // Mark as Reviewed / already reviewed
-                    if (!item.alert.isReviewed) {                        Button(
+                    if (!item.alert.isReviewed) {
+                        Button(
                             onClick = { showDisclaimerDialog = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .sizeIn(minHeight = 48.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .sizeIn(minHeight = 48.dp),
                         ) {
                             Text(text = "Mark as Reviewed")
                         }
@@ -343,8 +357,9 @@ fun DuplicateAlertCard(
             title = { Text(text = "Mark as reviewed?") },
             text = {
                 Text(
-                    text = "Marking as reviewed means you have seen this alert. " +
-                        "It does not mean this combination has been approved by a doctor.",
+                    text =
+                        "Marking as reviewed means you have seen this alert. " +
+                            "It does not mean this combination has been approved by a doctor.",
                 )
             },
             confirmButton = {

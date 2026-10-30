@@ -46,7 +46,6 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OcrReviewViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeFieldDao: FakeExtractedFieldDao
     private lateinit var fakePrescriptionDao: FakePrescriptionDao
@@ -57,15 +56,16 @@ class OcrReviewViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeFieldDao = FakeExtractedFieldDao()
         fakePrescriptionDao = FakePrescriptionDao()
-        viewModel = OcrReviewViewModel(
-            extractedFieldDao = fakeFieldDao,
-            prescriptionDao = fakePrescriptionDao,
-            postReviewProcessor = NoOpPostReviewProcessor(),
-            sessionManager = FakeSessionManager(),
-            securePrefs = FakeSecurePrefsStore(),
-            ocrCorrectionEngine = OcrCorrectionEngine(),
-            doctorRepository = FakeDoctorRepository(),
-        )
+        viewModel =
+            OcrReviewViewModel(
+                extractedFieldDao = fakeFieldDao,
+                prescriptionDao = fakePrescriptionDao,
+                postReviewProcessor = NoOpPostReviewProcessor(),
+                sessionManager = FakeSessionManager(),
+                securePrefs = FakeSecurePrefsStore(),
+                ocrCorrectionEngine = OcrCorrectionEngine(),
+                doctorRepository = FakeDoctorRepository(),
+            )
     }
 
     @After
@@ -78,24 +78,24 @@ class OcrReviewViewModelTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun syntheticField(
-        id             : String      = "field-001",
-        prescriptionId : String      = "rx-test-001",
-        fieldName      : String      = "medicine_name",
-        rawValue       : String?     = "Synthamol 500mg",
-        patientValue   : String?     = null,
-        confidence     : Float       = 0.85f,
-        reviewState    : ReviewState = ReviewState.PENDING_REVIEW,
+        id: String = "field-001",
+        prescriptionId: String = "rx-test-001",
+        fieldName: String = "medicine_name",
+        rawValue: String? = "Synthamol 500mg",
+        patientValue: String? = null,
+        confidence: Float = 0.85f,
+        reviewState: ReviewState = ReviewState.PENDING_REVIEW,
     ) = ExtractedFieldEntity(
-        id             = id,
+        id = id,
         prescriptionId = prescriptionId,
-        fieldName      = fieldName,
-        rawValue       = rawValue,
-        patientValue   = patientValue,
-        confidence     = confidence,
-        reviewState    = reviewState,
+        fieldName = fieldName,
+        rawValue = rawValue,
+        patientValue = patientValue,
+        confidence = confidence,
+        reviewState = reviewState,
         sourceReference = "page-1",
-        createdAt      = 1_700_000_000_000L,
-        updatedAt      = 1_700_000_000_000L,
+        createdAt = 1_700_000_000_000L,
+        updatedAt = 1_700_000_000_000L,
     )
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -103,28 +103,30 @@ class OcrReviewViewModelTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `given fields exist when load called then fields are emitted in UI state`() = runTest {
-        val field = syntheticField()
-        fakeFieldDao.setFields(listOf(field))
+    fun `given fields exist when load called then fields are emitted in UI state`() =
+        runTest {
+            val field = syntheticField()
+            fakeFieldDao.setFields(listOf(field))
 
-        viewModel.load("rx-test-001")
-        advanceUntilIdle()
+            viewModel.load("rx-test-001")
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertFalse("isLoading must be false after load", state.isLoading)
-        assertNull("error must be null on successful load", state.error)
-        assertEquals("one field must be present", 1, state.fields.size)
-    }
+            val state = viewModel.uiState.value
+            assertFalse("isLoading must be false after load", state.isLoading)
+            assertNull("error must be null on successful load", state.error)
+            assertEquals("one field must be present", 1, state.fields.size)
+        }
 
     @Test
-    fun `given no fields when load called then fields list is empty`() = runTest {
-        fakeFieldDao.setFields(emptyList())
+    fun `given no fields when load called then fields list is empty`() =
+        runTest {
+            fakeFieldDao.setFields(emptyList())
 
-        viewModel.load("rx-test-001")
-        advanceUntilIdle()
+            viewModel.load("rx-test-001")
+            advanceUntilIdle()
 
-        assertEquals(0, viewModel.uiState.value.fields.size)
-    }
+            assertEquals(0, viewModel.uiState.value.fields.size)
+        }
 
     // ─────────────────────────────────────────────────────────────────────────
     // onConfirmField
@@ -357,16 +359,17 @@ class OcrReviewViewModelTest {
     fun `should_emit_UNKNOWN_when_consent_key_absent`() {
         // FakeSecurePrefsStore starts empty — no KEY_GEMINI_OCR_CONSENT stored.
         // The ViewModel reads consent state during construction.
-        val prefs = FakeSecurePrefsStore()                      // nothing stored
-        val vm = OcrReviewViewModel(
-            extractedFieldDao    = fakeFieldDao,
-            prescriptionDao      = fakePrescriptionDao,
-            postReviewProcessor  = NoOpPostReviewProcessor(),
-            sessionManager       = FakeSessionManager(),
-            securePrefs          = prefs,
-            ocrCorrectionEngine  = OcrCorrectionEngine(),
-            doctorRepository     = FakeDoctorRepository(),
-        )
+        val prefs = FakeSecurePrefsStore() // nothing stored
+        val vm =
+            OcrReviewViewModel(
+                extractedFieldDao = fakeFieldDao,
+                prescriptionDao = fakePrescriptionDao,
+                postReviewProcessor = NoOpPostReviewProcessor(),
+                sessionManager = FakeSessionManager(),
+                securePrefs = prefs,
+                ocrCorrectionEngine = OcrCorrectionEngine(),
+                doctorRepository = FakeDoctorRepository(),
+            )
 
         assertEquals(
             "geminiConsentState must be UNKNOWN when no consent key is stored",
@@ -379,15 +382,16 @@ class OcrReviewViewModelTest {
     fun `should_emit_GRANTED_when_consent_key_is_true`() {
         val prefs = FakeSecurePrefsStore()
         prefs.putString(com.medihistory.ai.data.security.SecurePreferences.KEY_GEMINI_OCR_CONSENT, "true")
-        val vm = OcrReviewViewModel(
-            extractedFieldDao    = fakeFieldDao,
-            prescriptionDao      = fakePrescriptionDao,
-            postReviewProcessor  = NoOpPostReviewProcessor(),
-            sessionManager       = FakeSessionManager(),
-            securePrefs          = prefs,
-            ocrCorrectionEngine  = OcrCorrectionEngine(),
-            doctorRepository     = FakeDoctorRepository(),
-        )
+        val vm =
+            OcrReviewViewModel(
+                extractedFieldDao = fakeFieldDao,
+                prescriptionDao = fakePrescriptionDao,
+                postReviewProcessor = NoOpPostReviewProcessor(),
+                sessionManager = FakeSessionManager(),
+                securePrefs = prefs,
+                ocrCorrectionEngine = OcrCorrectionEngine(),
+                doctorRepository = FakeDoctorRepository(),
+            )
 
         assertEquals(
             "geminiConsentState must be GRANTED when consent key is 'true'",
@@ -400,15 +404,16 @@ class OcrReviewViewModelTest {
     fun `should_emit_DECLINED_when_consent_key_is_false`() {
         val prefs = FakeSecurePrefsStore()
         prefs.putString(com.medihistory.ai.data.security.SecurePreferences.KEY_GEMINI_OCR_CONSENT, "false")
-        val vm = OcrReviewViewModel(
-            extractedFieldDao    = fakeFieldDao,
-            prescriptionDao      = fakePrescriptionDao,
-            postReviewProcessor  = NoOpPostReviewProcessor(),
-            sessionManager       = FakeSessionManager(),
-            securePrefs          = prefs,
-            ocrCorrectionEngine  = OcrCorrectionEngine(),
-            doctorRepository     = FakeDoctorRepository(),
-        )
+        val vm =
+            OcrReviewViewModel(
+                extractedFieldDao = fakeFieldDao,
+                prescriptionDao = fakePrescriptionDao,
+                postReviewProcessor = NoOpPostReviewProcessor(),
+                sessionManager = FakeSessionManager(),
+                securePrefs = prefs,
+                ocrCorrectionEngine = OcrCorrectionEngine(),
+                doctorRepository = FakeDoctorRepository(),
+            )
 
         assertEquals(
             "geminiConsentState must be DECLINED when consent key is 'false'",
@@ -419,16 +424,17 @@ class OcrReviewViewModelTest {
 
     @Test
     fun `should_persist_true_and_emit_GRANTED_when_onGeminiConsentGranted_called`() {
-        val prefs = FakeSecurePrefsStore()                      // starts with no consent
-        val vm = OcrReviewViewModel(
-            extractedFieldDao    = fakeFieldDao,
-            prescriptionDao      = fakePrescriptionDao,
-            postReviewProcessor  = NoOpPostReviewProcessor(),
-            sessionManager       = FakeSessionManager(),
-            securePrefs          = prefs,
-            ocrCorrectionEngine  = OcrCorrectionEngine(),
-            doctorRepository     = FakeDoctorRepository(),
-        )
+        val prefs = FakeSecurePrefsStore() // starts with no consent
+        val vm =
+            OcrReviewViewModel(
+                extractedFieldDao = fakeFieldDao,
+                prescriptionDao = fakePrescriptionDao,
+                postReviewProcessor = NoOpPostReviewProcessor(),
+                sessionManager = FakeSessionManager(),
+                securePrefs = prefs,
+                ocrCorrectionEngine = OcrCorrectionEngine(),
+                doctorRepository = FakeDoctorRepository(),
+            )
         assertEquals("Initial state must be UNKNOWN", GeminiConsentState.UNKNOWN, vm.geminiConsentState.value)
 
         vm.onGeminiConsentGranted()
@@ -447,16 +453,17 @@ class OcrReviewViewModelTest {
 
     @Test
     fun `should_persist_false_and_emit_DECLINED_when_onGeminiConsentDeclined_called`() {
-        val prefs = FakeSecurePrefsStore()                      // starts with no consent
-        val vm = OcrReviewViewModel(
-            extractedFieldDao    = fakeFieldDao,
-            prescriptionDao      = fakePrescriptionDao,
-            postReviewProcessor  = NoOpPostReviewProcessor(),
-            sessionManager       = FakeSessionManager(),
-            securePrefs          = prefs,
-            ocrCorrectionEngine  = OcrCorrectionEngine(),
-            doctorRepository     = FakeDoctorRepository(),
-        )
+        val prefs = FakeSecurePrefsStore() // starts with no consent
+        val vm =
+            OcrReviewViewModel(
+                extractedFieldDao = fakeFieldDao,
+                prescriptionDao = fakePrescriptionDao,
+                postReviewProcessor = NoOpPostReviewProcessor(),
+                sessionManager = FakeSessionManager(),
+                securePrefs = prefs,
+                ocrCorrectionEngine = OcrCorrectionEngine(),
+                doctorRepository = FakeDoctorRepository(),
+            )
         assertEquals("Initial state must be UNKNOWN", GeminiConsentState.UNKNOWN, vm.geminiConsentState.value)
 
         vm.onGeminiConsentDeclined()
@@ -478,39 +485,40 @@ class OcrReviewViewModelTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `given any action when performed then rawValue is NEVER changed`() = runTest {
-        val originalRawValue = "Testocillin 250mg"
-        val field = syntheticField(rawValue = originalRawValue)
-        fakeFieldDao.setFields(listOf(field))
+    fun `given any action when performed then rawValue is NEVER changed`() =
+        runTest {
+            val originalRawValue = "Testocillin 250mg"
+            val field = syntheticField(rawValue = originalRawValue)
+            fakeFieldDao.setFields(listOf(field))
 
-        viewModel.load("rx-test-001")
-        advanceUntilIdle()
+            viewModel.load("rx-test-001")
+            advanceUntilIdle()
 
-        // Confirm
-        viewModel.onConfirmField(field.id)
-        advanceUntilIdle()
-        assertEquals("rawValue must not change after confirm", originalRawValue, fakeFieldDao.getField(field.id)?.rawValue)
+            // Confirm
+            viewModel.onConfirmField(field.id)
+            advanceUntilIdle()
+            assertEquals("rawValue must not change after confirm", originalRawValue, fakeFieldDao.getField(field.id)?.rawValue)
 
-        // Un-review back to pending
-        viewModel.onUnreviewField(field.id)
-        advanceUntilIdle()
+            // Un-review back to pending
+            viewModel.onUnreviewField(field.id)
+            advanceUntilIdle()
 
-        // Edit and save
-        viewModel.onEditField(field.id)
-        viewModel.onEditTextChange(field.id, "Testocillin 500mg")
-        viewModel.onSaveEdit(field.id)
-        advanceUntilIdle()
-        assertEquals("rawValue must not change after edit+save", originalRawValue, fakeFieldDao.getField(field.id)?.rawValue)
+            // Edit and save
+            viewModel.onEditField(field.id)
+            viewModel.onEditTextChange(field.id, "Testocillin 500mg")
+            viewModel.onSaveEdit(field.id)
+            advanceUntilIdle()
+            assertEquals("rawValue must not change after edit+save", originalRawValue, fakeFieldDao.getField(field.id)?.rawValue)
 
-        // Un-review again
-        viewModel.onUnreviewField(field.id)
-        advanceUntilIdle()
+            // Un-review again
+            viewModel.onUnreviewField(field.id)
+            advanceUntilIdle()
 
-        // Reject
-        viewModel.onRejectField(field.id)
-        advanceUntilIdle()
-        assertEquals("rawValue must not change after reject", originalRawValue, fakeFieldDao.getField(field.id)?.rawValue)
-    }
+            // Reject
+            viewModel.onRejectField(field.id)
+            advanceUntilIdle()
+            assertEquals("rawValue must not change after reject", originalRawValue, fakeFieldDao.getField(field.id)?.rawValue)
+        }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -518,18 +526,15 @@ class OcrReviewViewModelTest {
 // ─────────────────────────────────────────────────────────────────────────────
 
 private class FakeExtractedFieldDao : ExtractedFieldDao {
-
     private val _fields = MutableStateFlow<List<ExtractedFieldEntity>>(emptyList())
 
     fun setFields(fields: List<ExtractedFieldEntity>) {
         _fields.value = fields
     }
 
-    fun getField(id: String): ExtractedFieldEntity? =
-        _fields.value.find { it.id == id }
+    fun getField(id: String): ExtractedFieldEntity? = _fields.value.find { it.id == id }
 
-    override fun observeByPrescription(prescriptionId: String): Flow<List<ExtractedFieldEntity>> =
-        _fields.map { list -> list.filter { it.prescriptionId == prescriptionId } }
+    override fun observeByPrescription(prescriptionId: String): Flow<List<ExtractedFieldEntity>> = _fields.map { list -> list.filter { it.prescriptionId == prescriptionId } }
 
     override suspend fun insertAll(fields: List<ExtractedFieldEntity>) {
         _fields.update { current -> current + fields }
@@ -559,19 +564,23 @@ private class FakeExtractedFieldDao : ExtractedFieldDao {
 }
 
 private class FakePrescriptionDao : PrescriptionDao {
-
     private val patientIds = mutableMapOf<String, String>()
 
-    fun seedPatientId(prescriptionId: String, patientId: String) {
+    fun seedPatientId(
+        prescriptionId: String,
+        patientId: String,
+    ) {
         patientIds[prescriptionId] = patientId
     }
 
     override suspend fun getPatientId(id: String): String? = patientIds[id]
 
-    override fun observeByPatient(patientId: String): Flow<List<com.medihistory.ai.data.model.Prescription>> =
-        MutableStateFlow(emptyList())
+    override fun observeByPatient(patientId: String): Flow<List<com.medihistory.ai.data.model.Prescription>> = MutableStateFlow(emptyList())
 
-    override suspend fun getById(id: String, patientId: String): com.medihistory.ai.data.model.Prescription? = null
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): com.medihistory.ai.data.model.Prescription? = null
 
     override suspend fun insert(prescription: com.medihistory.ai.data.model.Prescription) {}
 
@@ -589,32 +598,68 @@ private class FakePrescriptionDao : PrescriptionDao {
 
 /** No-op processor — tests verify ViewModel behaviour, not downstream DB writes. */
 private class NoOpPostReviewProcessor : PostReviewProcessorInterface {
-    override suspend fun process(prescriptionId: String, patientId: String) = Unit
+    override suspend fun process(
+        prescriptionId: String,
+        patientId: String,
+    ) = Unit
 }
 
 private class FakeSecurePrefsStore : SecurePreferencesStore {
     private val map = mutableMapOf<String, String>()
+
     override fun getString(key: String): String? = map[key]
-    override fun putString(key: String, value: String) { map[key] = value }
-    override fun remove(key: String) { map.remove(key) }
-    override fun clear() { map.clear() }
+
+    override fun putString(
+        key: String,
+        value: String,
+    ) {
+        map[key] = value
+    }
+
+    override fun remove(key: String) {
+        map.remove(key)
+    }
+
+    override fun clear() {
+        map.clear()
+    }
 }
 
 private class FakeSessionManager : SessionManager(
-    securePreferences = object : SecurePreferencesStore {
-        private val map = mutableMapOf("patient_id" to "test-patient-ocr")
-        override fun getString(key: String): String? = map[key]
-        override fun putString(key: String, value: String) { map[key] = value }
-        override fun remove(key: String) { map.remove(key) }
-        override fun clear() { map.clear() }
-    }
+    securePreferences =
+        object : SecurePreferencesStore {
+            private val map = mutableMapOf("patient_id" to "test-patient-ocr")
+
+            override fun getString(key: String): String? = map[key]
+
+            override fun putString(
+                key: String,
+                value: String,
+            ) {
+                map[key] = value
+            }
+
+            override fun remove(key: String) {
+                map.remove(key)
+            }
+
+            override fun clear() {
+                map.clear()
+            }
+        },
 )
 
 private class FakeDoctorRepository : DoctorRepository {
-    override fun observeByPatient(patientId: String): kotlinx.coroutines.flow.Flow<List<com.medihistory.ai.data.model.Doctor>> =
-        MutableStateFlow(emptyList())
-    override suspend fun getById(doctorId: String, patientId: String): com.medihistory.ai.data.model.Doctor? = null
+    override fun observeByPatient(patientId: String): kotlinx.coroutines.flow.Flow<List<com.medihistory.ai.data.model.Doctor>> = MutableStateFlow(emptyList())
+
+    override suspend fun getById(
+        doctorId: String,
+        patientId: String,
+    ): com.medihistory.ai.data.model.Doctor? = null
+
     override suspend fun insert(doctor: com.medihistory.ai.data.model.Doctor) {}
+
     override suspend fun update(doctor: com.medihistory.ai.data.model.Doctor) {}
+
     override suspend fun delete(doctor: com.medihistory.ai.data.model.Doctor) {}
 }

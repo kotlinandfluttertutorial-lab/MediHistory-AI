@@ -20,7 +20,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class MediHistoryDatabaseTest {
-
     private var db: MediHistoryDatabase? = null
 
     @After
@@ -31,18 +30,20 @@ class MediHistoryDatabaseTest {
     @Test
     fun `should open in-memory database without error`() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         assertNotNull("Database must not be null after build()", db)
     }
 
     @Test
     fun `should report schema version 7`() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         val version = db!!.openHelper.readableDatabase.version
         assertEquals(
             "Schema version must be 8 (explanation column added to duplicate_alerts)",
@@ -54,27 +55,30 @@ class MediHistoryDatabaseTest {
     @Test
     fun `should expose extractedFieldDao`() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         assertNotNull("extractedFieldDao must not be null", db!!.extractedFieldDao())
     }
 
     @Test
     fun `should expose prescriptionDao`() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         assertNotNull("prescriptionDao must not be null", db!!.prescriptionDao())
     }
 
     @Test
     fun `should expose duplicateAlertDao`() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         assertNotNull("duplicateAlertDao must not be null", db!!.duplicateAlertDao())
     }
 }

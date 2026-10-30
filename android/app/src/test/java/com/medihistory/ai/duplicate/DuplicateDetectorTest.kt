@@ -24,7 +24,6 @@ import org.junit.Test
  * No real brand names or real patient names are used.
  */
 class DuplicateDetectorTest {
-
     // --- Fixture builder ---
 
     private fun medicine(
@@ -47,10 +46,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should return EXACT match when two medicines have same active ingredient different brands`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Testamol XR", "paracetamol"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Testamol XR", "paracetamol"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)
@@ -66,10 +66,11 @@ class DuplicateDetectorTest {
     @Test
     fun `should return no match when medicines have different active ingredients with similar names`() {
         // "testocillin" and "testocillinase" are different — no synonym relationship
-        val medicines = listOf(
-            medicine("med-001", "Testocillin 250mg", "testocillin"),
-            medicine("med-002", "Testocillinase 100mg", "testocillinase"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Testocillin 250mg", "testocillin"),
+                medicine("med-002", "Testocillinase 100mg", "testocillinase"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertTrue(result.isEmpty())
@@ -79,10 +80,11 @@ class DuplicateDetectorTest {
     fun `should return PARTIAL match when combination product contains ingredient of single medicine`() {
         // med-001 = "synthamol" (single ingredient)
         // med-002 = "synthamol+testocillin" (combination containing synthamol)
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "synthamol"),
-            medicine("med-002", "Synthacillin-T Combo", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "synthamol"),
+                medicine("med-002", "Synthacillin-T Combo", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)
@@ -101,10 +103,11 @@ class DuplicateDetectorTest {
     @Test
     fun `should return EXACT match when two combination products share all ingredients`() {
         // Both have identical ingredient string — full exact match
-        val medicines = listOf(
-            medicine("med-001", "Synthacillin Combo A", "synthamol+testocillin"),
-            medicine("med-002", "Synthacillin Combo B", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthacillin Combo A", "synthamol+testocillin"),
+                medicine("med-002", "Synthacillin Combo B", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)
@@ -114,10 +117,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should return EXACT match when paracetamol meets acetaminophen synonym`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Acetamol 500mg", "acetaminophen"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Acetamol 500mg", "acetaminophen"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)
@@ -131,10 +135,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should exclude PAST medicines from detection`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol", status = MedicineStatus.CURRENT),
-            medicine("med-002", "Testamol XR", "paracetamol", status = MedicineStatus.PAST),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol", status = MedicineStatus.CURRENT),
+                medicine("med-002", "Testamol XR", "paracetamol", status = MedicineStatus.PAST),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         // PAST medicine is excluded — no duplicate found
@@ -143,10 +148,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should include UNKNOWN status medicines in detection`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol", status = MedicineStatus.UNKNOWN),
-            medicine("med-002", "Testamol XR", "paracetamol", status = MedicineStatus.CURRENT),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol", status = MedicineStatus.UNKNOWN),
+                medicine("med-002", "Testamol XR", "paracetamol", status = MedicineStatus.CURRENT),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)
@@ -161,10 +167,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should return empty list when all medicines have null activeIngredient`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", null),
-            medicine("med-002", "Testamol XR", null),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", null),
+                medicine("med-002", "Testamol XR", null),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertTrue(result.isEmpty())
@@ -172,10 +179,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should return empty list when all medicines have blank activeIngredient`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "   "),
-            medicine("med-002", "Testamol XR", ""),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "   "),
+                medicine("med-002", "Testamol XR", ""),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertTrue(result.isEmpty())
@@ -183,9 +191,10 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should return empty list for a single medicine`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+            )
         val result = DuplicateDetector.detect(medicines)
         assertTrue(result.isEmpty())
     }
@@ -194,11 +203,12 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should produce identical output when called twice with same input`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Acetamol 500mg", "acetaminophen"),
-            medicine("med-003", "Ibusynth 200mg", "ibuprofen"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Acetamol 500mg", "acetaminophen"),
+                medicine("med-003", "Ibusynth 200mg", "ibuprofen"),
+            )
         val result1 = DuplicateDetector.detect(medicines)
         val result2 = DuplicateDetector.detect(medicines)
 
@@ -207,16 +217,18 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should produce identical output when input is shuffled`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Acetamol 500mg", "acetaminophen"),
-            medicine("med-003", "Ibusynth 200mg", "ibuprofen"),
-        )
-        val shuffled = listOf(
-            medicine("med-003", "Ibusynth 200mg", "ibuprofen"),
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Acetamol 500mg", "acetaminophen"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Acetamol 500mg", "acetaminophen"),
+                medicine("med-003", "Ibusynth 200mg", "ibuprofen"),
+            )
+        val shuffled =
+            listOf(
+                medicine("med-003", "Ibusynth 200mg", "ibuprofen"),
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Acetamol 500mg", "acetaminophen"),
+            )
         val result1 = DuplicateDetector.detect(medicines)
         val result2 = DuplicateDetector.detect(shuffled)
 
@@ -228,20 +240,22 @@ class DuplicateDetectorTest {
     @Test
     fun `should return no PARTIAL match when two single-ingredient medicines differ`() {
         // Neither is a combination product — no partial match logic applies
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Ibusynth 200mg", "ibuprofen"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Ibusynth 200mg", "ibuprofen"),
+            )
         val result = DuplicateDetector.detect(medicines)
         assertTrue(result.isEmpty())
     }
 
     @Test
     fun `should return PARTIAL match using slash delimiter in combination product`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthacillin Mono", "synthamol"),
-            medicine("med-002", "Synthacillin Combo", "synthamol/testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthacillin Mono", "synthamol"),
+                medicine("med-002", "Synthacillin Combo", "synthamol/testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)
@@ -251,10 +265,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should return PARTIAL match using comma delimiter in combination product`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthacillin Mono", "synthamol"),
-            medicine("med-002", "Synthacillin Combo", "synthamol, testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthacillin Mono", "synthamol"),
+                medicine("med-002", "Synthacillin Combo", "synthamol, testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)
@@ -266,12 +281,13 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should detect multiple duplicate pairs in a larger medicine list`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Acetamol 500mg", "acetaminophen"), // synonym of med-001
-            medicine("med-003", "Ibusynth A", "ibuprofen"),
-            medicine("med-004", "Ibusynth B", "ibuprofen"),         // duplicate of med-003
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Acetamol 500mg", "acetaminophen"), // synonym of med-001
+                medicine("med-003", "Ibusynth A", "ibuprofen"),
+                medicine("med-004", "Ibusynth B", "ibuprofen"), // duplicate of med-003
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(2, result.size)
@@ -286,11 +302,12 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should sort output by medicineAId then medicineBId`() {
-        val medicines = listOf(
-            medicine("med-003", "Testamol XR", "paracetamol"),
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Acetamol 500mg", "paracetamol"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-003", "Testamol XR", "paracetamol"),
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Acetamol 500mg", "paracetamol"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(3, result.size)
@@ -307,10 +324,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `DuplicateCandidate combinationNote never contains the word safe`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "synthamol"),
-            medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "synthamol"),
+                medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         for (candidate in result) {
@@ -326,10 +344,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `DuplicateCandidate combinationNote never contains the word approved`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "synthamol"),
-            medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "synthamol"),
+                medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         for (candidate in result) {
@@ -345,10 +364,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `DuplicateCandidate combinationNote never contains the word interchangeable`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "synthamol"),
-            medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "synthamol"),
+                medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         for (candidate in result) {
@@ -364,12 +384,13 @@ class DuplicateDetectorTest {
 
     @Test
     fun `DuplicateCandidate matchType is always EXACT or PARTIAL never a clinical term`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Testamol XR", "paracetamol"),
-            medicine("med-003", "Synthacillin Mono", "synthamol"),
-            medicine("med-004", "Synthacillin Combo", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Testamol XR", "paracetamol"),
+                medicine("med-003", "Synthacillin Mono", "synthamol"),
+                medicine("med-004", "Synthacillin Combo", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertTrue("Expected at least one result", result.isNotEmpty())
@@ -383,10 +404,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `EXACT match has no combinationNote`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Testamol XR", "paracetamol"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Testamol XR", "paracetamol"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         val exactMatches = result.filter { it.matchType == MatchType.EXACT }
@@ -401,10 +423,11 @@ class DuplicateDetectorTest {
 
     @Test
     fun `PARTIAL match has non-null combinationNote`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "synthamol"),
-            medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "synthamol"),
+                medicine("med-002", "Synthacillin Combo", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         val partialMatches = result.filter { it.matchType == MatchType.PARTIAL }
@@ -419,12 +442,13 @@ class DuplicateDetectorTest {
 
     @Test
     fun `PARTIAL match confidence is less than EXACT match confidence`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol"),
-            medicine("med-002", "Testamol XR", "paracetamol"),
-            medicine("med-003", "Synthacillin Mono", "synthamol"),
-            medicine("med-004", "Synthacillin Combo", "synthamol+testocillin"),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol"),
+                medicine("med-002", "Testamol XR", "paracetamol"),
+                medicine("med-003", "Synthacillin Mono", "synthamol"),
+                medicine("med-004", "Synthacillin Combo", "synthamol+testocillin"),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         val exactConf = result.first { it.matchType == MatchType.EXACT }.confidence
@@ -440,11 +464,12 @@ class DuplicateDetectorTest {
 
     @Test
     fun `should detect duplicate between two CURRENT medicines but not PAST`() {
-        val medicines = listOf(
-            medicine("med-001", "Synthamol 500mg", "paracetamol", status = MedicineStatus.CURRENT),
-            medicine("med-002", "Testamol XR", "paracetamol", status = MedicineStatus.PAST),
-            medicine("med-003", "Acetamol Forte", "paracetamol", status = MedicineStatus.CURRENT),
-        )
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthamol 500mg", "paracetamol", status = MedicineStatus.CURRENT),
+                medicine("med-002", "Testamol XR", "paracetamol", status = MedicineStatus.PAST),
+                medicine("med-003", "Acetamol Forte", "paracetamol", status = MedicineStatus.CURRENT),
+            )
         val result = DuplicateDetector.detect(medicines)
 
         assertEquals(1, result.size)

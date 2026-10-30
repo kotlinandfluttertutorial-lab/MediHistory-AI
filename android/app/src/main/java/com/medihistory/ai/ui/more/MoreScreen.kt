@@ -129,11 +129,12 @@ private fun MoreRow(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = modifier
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .semantics(mergeDescendants = true) {
-                contentDescription = "$title. $subtitle"
-            },
+        modifier =
+            modifier
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .semantics(mergeDescendants = true) {
+                    contentDescription = "$title. $subtitle"
+                },
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

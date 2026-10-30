@@ -21,18 +21,13 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DuplicateAlertModule {
-
     @Binds
     @Singleton
-    abstract fun bindDuplicateAlertRepository(
-        impl: RoomDuplicateAlertRepository,
-    ): DuplicateAlertRepository
+    abstract fun bindDuplicateAlertRepository(impl: RoomDuplicateAlertRepository): DuplicateAlertRepository
 
     companion object {
-
         @Provides
         @Singleton
-        fun provideDuplicateAlertDao(database: MediHistoryDatabase): DuplicateAlertDao =
-            database.duplicateAlertDao()
+        fun provideDuplicateAlertDao(database: MediHistoryDatabase): DuplicateAlertDao = database.duplicateAlertDao()
     }
 }

@@ -34,7 +34,6 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DuplicateReviewViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeAlertDao: FakeDuplicateAlertDao
     private lateinit var fakeMedicineRepo: FakeMedicineRepository
@@ -97,148 +96,156 @@ class DuplicateReviewViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun given_alerts_in_dao_when_loadAlerts_called_then_alerts_list_is_populated() = runTest {
-        val alert = syntheticAlert()
-        fakeAlertDao.add(alert)
-        fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
+    fun given_alerts_in_dao_when_loadAlerts_called_then_alerts_list_is_populated() =
+        runTest {
+            val alert = syntheticAlert()
+            fakeAlertDao.add(alert)
+            fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
 
-        viewModel.loadAlerts("test-patient-alpha")
-        advanceUntilIdle()
+            viewModel.loadAlerts("test-patient-alpha")
+            advanceUntilIdle()
 
-        val alerts = viewModel.uiState.value.alerts
-        assertEquals("alerts list must contain the inserted alert", 1, alerts.size)
-        assertEquals(alert.id, alerts.first().alert.id)
-        assertEquals("Synthamol 500mg", alerts.first().medicineAName)
-        assertEquals("Testocillin 250mg", alerts.first().medicineBName)
-    }
-
-    @Test
-    fun given_unreviewed_alert_when_onMarkReviewed_called_then_isReviewed_becomes_true() = runTest {
-        val alert = syntheticAlert(isReviewed = false)
-        fakeAlertDao.add(alert)
-        fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
-
-        viewModel.loadAlerts("test-patient-alpha")
-        advanceUntilIdle()
-
-        viewModel.onMarkReviewed(alert.id)
-        advanceUntilIdle()
-
-        val updatedAlert = viewModel.uiState.value.alerts.firstOrNull { it.alert.id == alert.id }
-        assertTrue(
-            "alert must be reviewed after onMarkReviewed",
-            updatedAlert?.alert?.isReviewed == true,
-        )
-    }
+            val alerts = viewModel.uiState.value.alerts
+            assertEquals("alerts list must contain the inserted alert", 1, alerts.size)
+            assertEquals(alert.id, alerts.first().alert.id)
+            assertEquals("Synthamol 500mg", alerts.first().medicineAName)
+            assertEquals("Testocillin 250mg", alerts.first().medicineBName)
+        }
 
     @Test
-    fun given_collapsed_alert_when_onToggleExpanded_called_then_isExpanded_becomes_true() = runTest {
-        val alert = syntheticAlert()
-        fakeAlertDao.add(alert)
-        fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
+    fun given_unreviewed_alert_when_onMarkReviewed_called_then_isReviewed_becomes_true() =
+        runTest {
+            val alert = syntheticAlert(isReviewed = false)
+            fakeAlertDao.add(alert)
+            fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
 
-        viewModel.loadAlerts("test-patient-alpha")
-        advanceUntilIdle()
+            viewModel.loadAlerts("test-patient-alpha")
+            advanceUntilIdle()
 
-        assertFalse(
-            "alert must start collapsed",
-            viewModel.uiState.value.alerts.first().isExpanded,
-        )
+            viewModel.onMarkReviewed(alert.id)
+            advanceUntilIdle()
 
-        viewModel.onToggleExpanded(alert.id)
-        advanceUntilIdle()
-
-        assertTrue(
-            "alert must be expanded after toggle",
-            viewModel.uiState.value.alerts.first().isExpanded,
-        )
-    }
+            val updatedAlert = viewModel.uiState.value.alerts.firstOrNull { it.alert.id == alert.id }
+            assertTrue(
+                "alert must be reviewed after onMarkReviewed",
+                updatedAlert?.alert?.isReviewed == true,
+            )
+        }
 
     @Test
-    fun given_expanded_alert_when_onToggleExpanded_called_again_then_isExpanded_becomes_false() = runTest {
-        val alert = syntheticAlert()
-        fakeAlertDao.add(alert)
-        fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
+    fun given_collapsed_alert_when_onToggleExpanded_called_then_isExpanded_becomes_true() =
+        runTest {
+            val alert = syntheticAlert()
+            fakeAlertDao.add(alert)
+            fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
 
-        viewModel.loadAlerts("test-patient-alpha")
-        advanceUntilIdle()
+            viewModel.loadAlerts("test-patient-alpha")
+            advanceUntilIdle()
 
-        viewModel.onToggleExpanded(alert.id)
-        advanceUntilIdle()
-        assertTrue(viewModel.uiState.value.alerts.first().isExpanded)
+            assertFalse(
+                "alert must start collapsed",
+                viewModel.uiState.value.alerts.first().isExpanded,
+            )
 
-        viewModel.onToggleExpanded(alert.id)
-        advanceUntilIdle()
+            viewModel.onToggleExpanded(alert.id)
+            advanceUntilIdle()
 
-        assertFalse(
-            "alert must collapse on second toggle",
-            viewModel.uiState.value.alerts.first().isExpanded,
-        )
-    }
-
-    @Test
-    fun given_reviewed_alert_when_onMarkReviewed_called_then_unreviewedCount_decreases() = runTest {
-        val alertA = syntheticAlert(id = "alert-001", isReviewed = false)
-        val alertB = syntheticAlert(
-            id = "alert-002",
-            medicineAId = "med-003",
-            medicineBId = "med-004",
-            isReviewed = false,
-        )
-        fakeAlertDao.add(alertA)
-        fakeAlertDao.add(alertB)
-        fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-003", medicineName = "Syntheprofen 200mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-004", medicineName = "Fakecillin 100mg"))
-
-        viewModel.loadAlerts("test-patient-alpha")
-        advanceUntilIdle()
-
-        assertEquals("unreviewedCount must be 2 before marking", 2, viewModel.uiState.value.unreviewedCount)
-
-        viewModel.onMarkReviewed(alertA.id)
-        advanceUntilIdle()
-
-        assertEquals(
-            "unreviewedCount must decrease to 1 after marking one reviewed",
-            1,
-            viewModel.uiState.value.unreviewedCount,
-        )
-    }
+            assertTrue(
+                "alert must be expanded after toggle",
+                viewModel.uiState.value.alerts.first().isExpanded,
+            )
+        }
 
     @Test
-    fun given_reviewed_alert_when_showReviewed_false_then_reviewed_alerts_are_filtered() = runTest {
-        val unreviewedAlert = syntheticAlert(id = "alert-001", isReviewed = false)
-        val reviewedAlert = syntheticAlert(
-            id = "alert-002",
-            medicineAId = "med-003",
-            medicineBId = "med-004",
-            isReviewed = true,
-        )
-        fakeAlertDao.add(unreviewedAlert)
-        fakeAlertDao.add(reviewedAlert)
-        fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-003", medicineName = "Syntheprofen 200mg"))
-        fakeMedicineRepo.add(syntheticMedicine("med-004", medicineName = "Fakecillin 100mg"))
+    fun given_expanded_alert_when_onToggleExpanded_called_again_then_isExpanded_becomes_false() =
+        runTest {
+            val alert = syntheticAlert()
+            fakeAlertDao.add(alert)
+            fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
 
-        viewModel.loadAlerts("test-patient-alpha")
-        advanceUntilIdle()
+            viewModel.loadAlerts("test-patient-alpha")
+            advanceUntilIdle()
 
-        assertEquals("both alerts must show by default", 2, viewModel.uiState.value.alerts.size)
+            viewModel.onToggleExpanded(alert.id)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.alerts.first().isExpanded)
 
-        viewModel.onToggleShowReviewed() // now showReviewedAlerts = false
-        advanceUntilIdle()
+            viewModel.onToggleExpanded(alert.id)
+            advanceUntilIdle()
 
-        val filtered = viewModel.uiState.value.alerts
-        assertEquals("only unreviewed alerts must show when filter is off", 1, filtered.size)
-        assertEquals(unreviewedAlert.id, filtered.first().alert.id)
-    }
+            assertFalse(
+                "alert must collapse on second toggle",
+                viewModel.uiState.value.alerts.first().isExpanded,
+            )
+        }
+
+    @Test
+    fun given_reviewed_alert_when_onMarkReviewed_called_then_unreviewedCount_decreases() =
+        runTest {
+            val alertA = syntheticAlert(id = "alert-001", isReviewed = false)
+            val alertB =
+                syntheticAlert(
+                    id = "alert-002",
+                    medicineAId = "med-003",
+                    medicineBId = "med-004",
+                    isReviewed = false,
+                )
+            fakeAlertDao.add(alertA)
+            fakeAlertDao.add(alertB)
+            fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-003", medicineName = "Syntheprofen 200mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-004", medicineName = "Fakecillin 100mg"))
+
+            viewModel.loadAlerts("test-patient-alpha")
+            advanceUntilIdle()
+
+            assertEquals("unreviewedCount must be 2 before marking", 2, viewModel.uiState.value.unreviewedCount)
+
+            viewModel.onMarkReviewed(alertA.id)
+            advanceUntilIdle()
+
+            assertEquals(
+                "unreviewedCount must decrease to 1 after marking one reviewed",
+                1,
+                viewModel.uiState.value.unreviewedCount,
+            )
+        }
+
+    @Test
+    fun given_reviewed_alert_when_showReviewed_false_then_reviewed_alerts_are_filtered() =
+        runTest {
+            val unreviewedAlert = syntheticAlert(id = "alert-001", isReviewed = false)
+            val reviewedAlert =
+                syntheticAlert(
+                    id = "alert-002",
+                    medicineAId = "med-003",
+                    medicineBId = "med-004",
+                    isReviewed = true,
+                )
+            fakeAlertDao.add(unreviewedAlert)
+            fakeAlertDao.add(reviewedAlert)
+            fakeMedicineRepo.add(syntheticMedicine("med-001", medicineName = "Synthamol 500mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-002", medicineName = "Testocillin 250mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-003", medicineName = "Syntheprofen 200mg"))
+            fakeMedicineRepo.add(syntheticMedicine("med-004", medicineName = "Fakecillin 100mg"))
+
+            viewModel.loadAlerts("test-patient-alpha")
+            advanceUntilIdle()
+
+            assertEquals("both alerts must show by default", 2, viewModel.uiState.value.alerts.size)
+
+            viewModel.onToggleShowReviewed() // now showReviewedAlerts = false
+            advanceUntilIdle()
+
+            val filtered = viewModel.uiState.value.alerts
+            assertEquals("only unreviewed alerts must show when filter is off", 1, filtered.size)
+            assertEquals(unreviewedAlert.id, filtered.first().alert.id)
+        }
 }
 
 // ---------------------------------------------------------------------------
@@ -246,27 +253,31 @@ class DuplicateReviewViewModelTest {
 // ---------------------------------------------------------------------------
 
 private class FakeDuplicateAlertDao : DuplicateAlertDao {
-
     private val _alerts = MutableStateFlow<List<DuplicateAlert>>(emptyList())
 
     fun add(alert: DuplicateAlert) {
         _alerts.update { current -> current + alert }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<DuplicateAlert>> =
-        _alerts.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<DuplicateAlert>> = _alerts.map { list -> list.filter { it.patientId == patientId } }
 
-    override fun observeUnreviewedCount(patientId: String): Flow<Int> =
-        observeByPatient(patientId).map { alerts -> alerts.count { !it.isReviewed } }
+    override fun observeUnreviewedCount(patientId: String): Flow<Int> = observeByPatient(patientId).map { alerts -> alerts.count { !it.isReviewed } }
 
     override suspend fun insert(alert: DuplicateAlert) {
         _alerts.update { current ->
-            if (current.any { it.id == alert.id }) current
-            else current + alert
+            if (current.any { it.id == alert.id }) {
+                current
+            } else {
+                current + alert
+            }
         }
     }
 
-    override suspend fun markReviewed(id: String, patientId: String, timestamp: Long) {
+    override suspend fun markReviewed(
+        id: String,
+        patientId: String,
+        timestamp: Long,
+    ) {
         _alerts.update { current ->
             current.map { alert ->
                 if (alert.id == id && alert.patientId == patientId) {
@@ -282,10 +293,16 @@ private class FakeDuplicateAlertDao : DuplicateAlertDao {
         _alerts.update { current -> current.filter { it.patientId != patientId } }
     }
 
-    override suspend fun getById(id: String, patientId: String): DuplicateAlert? =
-        _alerts.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): DuplicateAlert? = _alerts.value.find { it.id == id && it.patientId == patientId }
 
-    override suspend fun updateExplanation(id: String, patientId: String, explanation: String) {
+    override suspend fun updateExplanation(
+        id: String,
+        patientId: String,
+        explanation: String,
+    ) {
         _alerts.update { current ->
             current.map { alert ->
                 if (alert.id == id && alert.patientId == patientId) {
@@ -303,27 +320,32 @@ private class FakeDuplicateAlertDao : DuplicateAlertDao {
 // ---------------------------------------------------------------------------
 
 private class FakeMedicineRepository : MedicineRepository {
-
     private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
 
     fun add(medicine: Medicine) {
         _medicines.update { current -> current + medicine }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Medicine>> =
-        _medicines.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = _medicines.map { list -> list.filter { it.patientId == patientId } }
 
-    override fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>> =
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> =
         _medicines.map { list ->
             list.filter { m ->
                 m.patientId == patientId &&
-                    (m.medicineName.contains(query, ignoreCase = true) ||
-                        m.activeIngredient?.contains(query, ignoreCase = true) == true)
+                    (
+                        m.medicineName.contains(query, ignoreCase = true) ||
+                            m.activeIngredient?.contains(query, ignoreCase = true) == true
+                    )
             }
         }
 
-    override suspend fun getById(id: String, patientId: String): Medicine? =
-        _medicines.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? = _medicines.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insertAll(medicines: List<Medicine>) {
         _medicines.update { current -> current + medicines }

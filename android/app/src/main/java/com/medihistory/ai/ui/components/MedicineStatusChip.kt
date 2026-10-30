@@ -25,30 +25,34 @@ fun MedicineStatusChip(
     status: MedicineStatus,
     modifier: Modifier = Modifier,
 ) {
-    val label = when (status) {
-        MedicineStatus.CURRENT -> "Current"
-        MedicineStatus.PAST    -> "Past"
-        MedicineStatus.UNKNOWN -> "Unknown"
-    }
+    val label =
+        when (status) {
+            MedicineStatus.CURRENT -> "Current"
+            MedicineStatus.PAST -> "Past"
+            MedicineStatus.UNKNOWN -> "Unknown"
+        }
 
-    val containerColor = when (status) {
-        MedicineStatus.CURRENT -> MaterialTheme.extendedColors.statusCurrent
-        MedicineStatus.PAST    -> MaterialTheme.extendedColors.statusPast
-        MedicineStatus.UNKNOWN -> MaterialTheme.extendedColors.statusUnknown
-    }
+    val containerColor =
+        when (status) {
+            MedicineStatus.CURRENT -> MaterialTheme.extendedColors.statusCurrent
+            MedicineStatus.PAST -> MaterialTheme.extendedColors.statusPast
+            MedicineStatus.UNKNOWN -> MaterialTheme.extendedColors.statusUnknown
+        }
 
-    val labelColor = when (status) {
-        MedicineStatus.CURRENT -> MaterialTheme.extendedColors.onStatusCurrent
-        MedicineStatus.PAST    -> MaterialTheme.extendedColors.onStatusPast
-        MedicineStatus.UNKNOWN -> MaterialTheme.extendedColors.onStatusUnknown
-    }
+    val labelColor =
+        when (status) {
+            MedicineStatus.CURRENT -> MaterialTheme.extendedColors.onStatusCurrent
+            MedicineStatus.PAST -> MaterialTheme.extendedColors.onStatusPast
+            MedicineStatus.UNKNOWN -> MaterialTheme.extendedColors.onStatusUnknown
+        }
 
     SuggestionChip(
         onClick = {},
         label = { Text(text = label, color = labelColor) },
         colors = SuggestionChipDefaults.suggestionChipColors(containerColor = containerColor),
-        modifier = modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .semantics { contentDescription = "Medication status: $label" },
+        modifier =
+            modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = "Medication status: $label" },
     )
 }

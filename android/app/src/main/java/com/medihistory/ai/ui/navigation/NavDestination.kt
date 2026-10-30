@@ -73,12 +73,13 @@ sealed class NavDestination(
     )
 
     companion object {
-        val bottomNavDestinations: List<NavDestination> = listOf(
-            Dashboard,
-            Prescriptions,
-            MedicineExplorer,
-            History,
-            More,
-        )
+        val bottomNavDestinations: List<NavDestination> =
+            listOf(
+                Dashboard,
+                Prescriptions,
+                MedicineExplorer,
+                History,
+                More,
+            )
     }
 }

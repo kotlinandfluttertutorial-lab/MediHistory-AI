@@ -54,10 +54,11 @@ fun PdfPreviewScreen(
     modifier: Modifier = Modifier,
 ) {
     // Extract a display-friendly filename from the URI
-    val fileName = pdfUri.lastPathSegment
-        ?.substringAfterLast('/')
-        ?.substringAfterLast(':')
-        ?: "mha_summary.pdf"
+    val fileName =
+        pdfUri.lastPathSegment
+            ?.substringAfterLast('/')
+            ?.substringAfterLast(':')
+            ?: "mha_summary.pdf"
 
     Scaffold(
         modifier = modifier,
@@ -76,19 +77,21 @@ fun PdfPreviewScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // PDF thumbnail placeholder
             OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -123,8 +126,9 @@ fun PdfPreviewScreen(
 
             // Disclaimer reminder
             Text(
-                text = "Patient-compiled record. Not a clinical report. " +
-                    "Please verify all information with your doctor.",
+                text =
+                    "Patient-compiled record. Not a clinical report. " +
+                        "Please verify all information with your doctor.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

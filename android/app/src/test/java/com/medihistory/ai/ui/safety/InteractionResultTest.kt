@@ -18,7 +18,6 @@ import org.junit.Test
  * Naming convention: `test_[outcome]_[condition]`
  */
 class InteractionResultTest {
-
     // ─────────────────────────────────────────────────────────────────────────
     // InteractionResult construction
     // ─────────────────────────────────────────────────────────────────────────
@@ -26,24 +25,26 @@ class InteractionResultTest {
     @Test
     fun test_valid_InteractionResult_when_severity_is_consult_doctor() {
         // Must not throw
-        val result = InteractionResult(
-            medicineAName = "Synthamol 500mg",
-            medicineBName = "Testocillin 250mg",
-            severity = "Consult doctor",
-            reviewWarning = "Please review this with your doctor or pharmacist.",
-        )
+        val result =
+            InteractionResult(
+                medicineAName = "Synthamol 500mg",
+                medicineBName = "Testocillin 250mg",
+                severity = "Consult doctor",
+                reviewWarning = "Please review this with your doctor or pharmacist.",
+            )
         assertTrue(result.reviewWarning.isNotBlank())
         assertEquals("Consult doctor", result.severity)
     }
 
     @Test
     fun test_valid_InteractionResult_when_severity_is_review_with_pharmacist() {
-        val result = InteractionResult(
-            medicineAName = "Synthamol 500mg",
-            medicineBName = "Testocillin 250mg",
-            severity = "Review with pharmacist",
-            reviewWarning = "Please review this with your doctor or pharmacist.",
-        )
+        val result =
+            InteractionResult(
+                medicineAName = "Synthamol 500mg",
+                medicineBName = "Testocillin 250mg",
+                severity = "Review with pharmacist",
+                reviewWarning = "Please review this with your doctor or pharmacist.",
+            )
         assertTrue(result.reviewWarning.isNotBlank())
         assertEquals("Review with pharmacist", result.severity)
     }
@@ -54,7 +55,7 @@ class InteractionResultTest {
             medicineAName = "Synthamol 500mg",
             medicineBName = "Testocillin 250mg",
             severity = "Consult doctor",
-            reviewWarning = "",   // blank — must throw
+            reviewWarning = "", // blank — must throw
         )
     }
 
@@ -64,7 +65,7 @@ class InteractionResultTest {
             medicineAName = "Synthamol 500mg",
             medicineBName = "Testocillin 250mg",
             severity = "Consult doctor",
-            reviewWarning = "   ",   // whitespace only — must throw
+            reviewWarning = "   ", // whitespace only — must throw
         )
     }
 
@@ -73,7 +74,7 @@ class InteractionResultTest {
         InteractionResult(
             medicineAName = "Synthamol 500mg",
             medicineBName = "Testocillin 250mg",
-            severity = "safe",   // forbidden — must throw
+            severity = "safe", // forbidden — must throw
             reviewWarning = "Please review with your doctor.",
         )
     }
@@ -83,7 +84,7 @@ class InteractionResultTest {
         InteractionResult(
             medicineAName = "Synthamol 500mg",
             medicineBName = "Testocillin 250mg",
-            severity = "Safe to combine",   // contains "safe" — must throw
+            severity = "Safe to combine", // contains "safe" — must throw
             reviewWarning = "Please review with your doctor.",
         )
     }
@@ -93,7 +94,7 @@ class InteractionResultTest {
         InteractionResult(
             medicineAName = "Synthamol 500mg",
             medicineBName = "Testocillin 250mg",
-            severity = "no interaction",   // forbidden — must throw
+            severity = "no interaction", // forbidden — must throw
             reviewWarning = "Please review with your doctor.",
         )
     }
@@ -103,27 +104,28 @@ class InteractionResultTest {
         InteractionResult(
             medicineAName = "Synthamol 500mg",
             medicineBName = "Testocillin 250mg",
-            severity = "No Interaction Found",   // contains "no interaction" — must throw
+            severity = "No Interaction Found", // contains "no interaction" — must throw
             reviewWarning = "Please review with your doctor.",
         )
     }
 
     @Test
     fun test_reviewWarning_is_non_empty_in_all_valid_results() {
-        val results = listOf(
-            InteractionResult(
-                medicineAName = "Synthamol 500mg",
-                medicineBName = "Testocillin 250mg",
-                severity = "Consult doctor",
-                reviewWarning = "Please review this with your doctor or pharmacist.",
-            ),
-            InteractionResult(
-                medicineAName = "Synth-B 100mg",
-                medicineBName = "Testomycin 500mg",
-                severity = "Review with pharmacist",
-                reviewWarning = "Discuss with your pharmacist before continuing.",
-            ),
-        )
+        val results =
+            listOf(
+                InteractionResult(
+                    medicineAName = "Synthamol 500mg",
+                    medicineBName = "Testocillin 250mg",
+                    severity = "Consult doctor",
+                    reviewWarning = "Please review this with your doctor or pharmacist.",
+                ),
+                InteractionResult(
+                    medicineAName = "Synth-B 100mg",
+                    medicineBName = "Testomycin 500mg",
+                    severity = "Review with pharmacist",
+                    reviewWarning = "Discuss with your pharmacist before continuing.",
+                ),
+            )
         for (result in results) {
             assertTrue(
                 "reviewWarning must be non-empty for result: $result",
@@ -136,12 +138,13 @@ class InteractionResultTest {
     fun test_severity_never_contains_safe_in_valid_results() {
         val validSeverities = listOf("Consult doctor", "Review with pharmacist")
         for (severity in validSeverities) {
-            val result = InteractionResult(
-                medicineAName = "Synthamol 500mg",
-                medicineBName = "Testocillin 250mg",
-                severity = severity,
-                reviewWarning = "Please review with your doctor.",
-            )
+            val result =
+                InteractionResult(
+                    medicineAName = "Synthamol 500mg",
+                    medicineBName = "Testocillin 250mg",
+                    severity = severity,
+                    reviewWarning = "Please review with your doctor.",
+                )
             assertFalse(
                 "severity must not contain 'safe', was: ${result.severity}",
                 result.severity.lowercase().contains("safe"),
@@ -151,12 +154,13 @@ class InteractionResultTest {
 
     @Test
     fun test_severity_never_contains_no_interaction_in_valid_results() {
-        val result = InteractionResult(
-            medicineAName = "Synthamol 500mg",
-            medicineBName = "Testocillin 250mg",
-            severity = "Consult doctor",
-            reviewWarning = "Please review with your doctor.",
-        )
+        val result =
+            InteractionResult(
+                medicineAName = "Synthamol 500mg",
+                medicineBName = "Testocillin 250mg",
+                severity = "Consult doctor",
+                reviewWarning = "Please review with your doctor.",
+            )
         assertFalse(
             "severity must not contain 'no interaction', was: ${result.severity}",
             result.severity.lowercase().contains("no interaction"),
@@ -202,12 +206,13 @@ class InteractionResultTest {
 
     @Test
     fun test_Results_with_non_empty_list_contains_expected_interaction() {
-        val result = InteractionResult(
-            medicineAName = "Synthamol 500mg",
-            medicineBName = "Testocillin 250mg",
-            severity = "Consult doctor",
-            reviewWarning = "Please review this with your doctor or pharmacist.",
-        )
+        val result =
+            InteractionResult(
+                medicineAName = "Synthamol 500mg",
+                medicineBName = "Testocillin 250mg",
+                severity = "Consult doctor",
+                reviewWarning = "Please review this with your doctor or pharmacist.",
+            )
         val status: InteractionCheckStatus = InteractionCheckStatus.Results(listOf(result))
 
         assertTrue(status is InteractionCheckStatus.Results)

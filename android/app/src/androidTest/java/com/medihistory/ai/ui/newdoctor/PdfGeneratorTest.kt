@@ -16,35 +16,36 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class PdfGeneratorTest {
-
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
 
-    private val syntheticSelections = listOf(
-        RecordSelection(
-            prescriptionId = "rx-synth-001",
-            doctorName = "Dr. Synthetic Mehta",
-            prescriptionDate = "15 Mar 2024",
-            medicineCount = 2,
-            isSelected = true,
-        ),
-        RecordSelection(
-            prescriptionId = "rx-synth-002",
-            doctorName = "Dr. Test Cardiologist",
-            prescriptionDate = "20 Jun 2024",
-            medicineCount = 1,
-            isSelected = true,
-        ),
-    )
+    private val syntheticSelections =
+        listOf(
+            RecordSelection(
+                prescriptionId = "rx-synth-001",
+                doctorName = "Dr. Synthetic Mehta",
+                prescriptionDate = "15 Mar 2024",
+                medicineCount = 2,
+                isSelected = true,
+            ),
+            RecordSelection(
+                prescriptionId = "rx-synth-002",
+                doctorName = "Dr. Test Cardiologist",
+                prescriptionDate = "20 Jun 2024",
+                medicineCount = 1,
+                isSelected = true,
+            ),
+        )
 
     private val syntheticPatientName = "Test Patient Alpha"
 
     @Test
     fun test_generated_pdf_file_exists_in_cacheDir() {
-        val file = PdfGenerator.generate(
-            context = context,
-            selections = syntheticSelections,
-            patientName = syntheticPatientName,
-        )
+        val file =
+            PdfGenerator.generate(
+                context = context,
+                selections = syntheticSelections,
+                patientName = syntheticPatientName,
+            )
 
         assertTrue("Generated PDF file must exist", file.exists())
         assertTrue(
@@ -56,11 +57,12 @@ class PdfGeneratorTest {
     @Test
     fun test_pdf_filename_contains_timestamp() {
         val before = System.currentTimeMillis()
-        val file = PdfGenerator.generate(
-            context = context,
-            selections = syntheticSelections,
-            patientName = syntheticPatientName,
-        )
+        val file =
+            PdfGenerator.generate(
+                context = context,
+                selections = syntheticSelections,
+                patientName = syntheticPatientName,
+            )
         val after = System.currentTimeMillis()
 
         assertTrue(
@@ -68,9 +70,10 @@ class PdfGeneratorTest {
             file.name.startsWith("mha_summary_"),
         )
 
-        val timestampStr = file.name
-            .removePrefix("mha_summary_")
-            .removeSuffix(".pdf")
+        val timestampStr =
+            file.name
+                .removePrefix("mha_summary_")
+                .removeSuffix(".pdf")
         val timestamp = timestampStr.toLongOrNull()
 
         assertTrue(
@@ -85,11 +88,12 @@ class PdfGeneratorTest {
 
     @Test
     fun test_pdf_file_is_non_empty() {
-        val file = PdfGenerator.generate(
-            context = context,
-            selections = syntheticSelections,
-            patientName = syntheticPatientName,
-        )
+        val file =
+            PdfGenerator.generate(
+                context = context,
+                selections = syntheticSelections,
+                patientName = syntheticPatientName,
+            )
 
         assertTrue("Generated PDF file must not be empty", file.length() > 0)
     }
@@ -105,11 +109,12 @@ class PdfGeneratorTest {
             fullDisclaimer.contains(requiredDisclaimer),
         )
 
-        val file = PdfGenerator.generate(
-            context = context,
-            selections = syntheticSelections,
-            patientName = syntheticPatientName,
-        )
+        val file =
+            PdfGenerator.generate(
+                context = context,
+                selections = syntheticSelections,
+                patientName = syntheticPatientName,
+            )
 
         val headerBytes = file.inputStream().use { it.readNBytes(4) }
         val header = String(headerBytes)
@@ -121,21 +126,23 @@ class PdfGeneratorTest {
 
     @Test
     fun test_pdf_generated_with_no_selected_records() {
-        val emptySelections = listOf(
-            RecordSelection(
-                prescriptionId = "rx-synth-999",
-                doctorName = "Dr. Synthetic",
-                prescriptionDate = "01 Jan 2024",
-                medicineCount = 0,
-                isSelected = false,
-            ),
-        )
+        val emptySelections =
+            listOf(
+                RecordSelection(
+                    prescriptionId = "rx-synth-999",
+                    doctorName = "Dr. Synthetic",
+                    prescriptionDate = "01 Jan 2024",
+                    medicineCount = 0,
+                    isSelected = false,
+                ),
+            )
 
-        val file = PdfGenerator.generate(
-            context = context,
-            selections = emptySelections,
-            patientName = syntheticPatientName,
-        )
+        val file =
+            PdfGenerator.generate(
+                context = context,
+                selections = emptySelections,
+                patientName = syntheticPatientName,
+            )
 
         assertTrue("PDF must be generated even when no records are selected", file.exists())
         assertTrue("PDF must not be empty even when no records are selected", file.length() > 0)

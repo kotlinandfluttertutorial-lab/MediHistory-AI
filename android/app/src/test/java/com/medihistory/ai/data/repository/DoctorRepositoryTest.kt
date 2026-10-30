@@ -28,16 +28,16 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class DoctorRepositoryTest {
-
     private lateinit var db: MediHistoryDatabase
     private lateinit var repository: DoctorRepository
 
     @Before
     fun setUp() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         repository = RoomDoctorRepository(db.doctorDao())
     }
 
@@ -69,63 +69,68 @@ class DoctorRepositoryTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `test insert and getById returns inserted doctor`() = runTest {
-        val doctor = syntheticDoctor()
-        repository.insert(doctor)
+    fun `test insert and getById returns inserted doctor`() =
+        runTest {
+            val doctor = syntheticDoctor()
+            repository.insert(doctor)
 
-        val result = repository.getById(doctor.id, doctor.patientId)
+            val result = repository.getById(doctor.id, doctor.patientId)
 
-        assertNotNull("getById must return the inserted doctor", result)
-        assertEquals(doctor.id, result!!.id)
-        assertEquals(doctor.name, result.name)
-        assertEquals(doctor.specialty, result.specialty)
-    }
-
-    @Test
-    fun `test listByPatient is scoped to patientId`() = runTest {
-        val doctorAlpha = syntheticDoctor(id = "doc-001", patientId = "patient-alpha")
-        val doctorBeta = syntheticDoctor(
-            id = "doc-002",
-            patientId = "patient-beta",
-            name = "Dr. Synthetic Beta",
-        )
-        repository.insert(doctorAlpha)
-        repository.insert(doctorBeta)
-
-        val alphaList = repository.observeByPatient("patient-alpha").first()
-        val betaList = repository.observeByPatient("patient-beta").first()
-
-        assertEquals("patient-alpha must have exactly 1 doctor", 1, alphaList.size)
-        assertEquals("patient-beta must have exactly 1 doctor", 1, betaList.size)
-        assertEquals(doctorAlpha.id, alphaList.first().id)
-        assertEquals(doctorBeta.id, betaList.first().id)
-    }
+            assertNotNull("getById must return the inserted doctor", result)
+            assertEquals(doctor.id, result!!.id)
+            assertEquals(doctor.name, result.name)
+            assertEquals(doctor.specialty, result.specialty)
+        }
 
     @Test
-    fun `test delete removes doctor from list`() = runTest {
-        val doctor = syntheticDoctor()
-        repository.insert(doctor)
+    fun `test listByPatient is scoped to patientId`() =
+        runTest {
+            val doctorAlpha = syntheticDoctor(id = "doc-001", patientId = "patient-alpha")
+            val doctorBeta =
+                syntheticDoctor(
+                    id = "doc-002",
+                    patientId = "patient-beta",
+                    name = "Dr. Synthetic Beta",
+                )
+            repository.insert(doctorAlpha)
+            repository.insert(doctorBeta)
 
-        repository.delete(doctor)
+            val alphaList = repository.observeByPatient("patient-alpha").first()
+            val betaList = repository.observeByPatient("patient-beta").first()
 
-        val list = repository.observeByPatient(doctor.patientId).first()
-        assertEquals("List must be empty after delete", 0, list.size)
-    }
+            assertEquals("patient-alpha must have exactly 1 doctor", 1, alphaList.size)
+            assertEquals("patient-beta must have exactly 1 doctor", 1, betaList.size)
+            assertEquals(doctorAlpha.id, alphaList.first().id)
+            assertEquals(doctorBeta.id, betaList.first().id)
+        }
 
     @Test
-    fun `test getById with wrong patientId returns null`() = runTest {
-        val doctor = syntheticDoctor(patientId = "patient-alpha")
-        repository.insert(doctor)
+    fun `test delete removes doctor from list`() =
+        runTest {
+            val doctor = syntheticDoctor()
+            repository.insert(doctor)
 
-        // Security: requesting with a different patientId must return null,
-        // preventing cross-patient data exposure.
-        val result = repository.getById(doctor.id, "patient-beta")
+            repository.delete(doctor)
 
-        assertNull(
-            "getById with wrong patientId must return null to prevent cross-patient access",
-            result,
-        )
-    }
+            val list = repository.observeByPatient(doctor.patientId).first()
+            assertEquals("List must be empty after delete", 0, list.size)
+        }
+
+    @Test
+    fun `test getById with wrong patientId returns null`() =
+        runTest {
+            val doctor = syntheticDoctor(patientId = "patient-alpha")
+            repository.insert(doctor)
+
+            // Security: requesting with a different patientId must return null,
+            // preventing cross-patient data exposure.
+            val result = repository.getById(doctor.id, "patient-beta")
+
+            assertNull(
+                "getById with wrong patientId must return null to prevent cross-patient access",
+                result,
+            )
+        }
 
     @Test
     fun `test DoctorSpecialty enum has exactly 7 values`() {

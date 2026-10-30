@@ -10,7 +10,6 @@ package com.medihistory.ai.ui.picker
  *   user data or internal storage layout.
  */
 object FileTypeValidator {
-
     /** MIME types accepted for prescription import. */
     val ALLOWED_MIME_TYPES = setOf("image/jpeg", "image/png", "application/pdf")
 
@@ -26,7 +25,10 @@ object FileTypeValidator {
      *
      * Returns false when both [mimeType] and [fileName] are null/blank.
      */
-    fun isAllowed(mimeType: String?, fileName: String?): Boolean {
+    fun isAllowed(
+        mimeType: String?,
+        fileName: String?,
+    ): Boolean {
         if (!mimeType.isNullOrBlank()) {
             return mimeType.lowercase() in ALLOWED_MIME_TYPES
         }
@@ -41,6 +43,8 @@ object FileTypeValidator {
      * user-supplied string is echoed back through the UI.
      */
     @Suppress("UNUSED_PARAMETER")
-    fun userFriendlyError(mimeType: String?, fileName: String?): String =
-        "This file type is not supported. Please use a JPG, PNG, or PDF."
+    fun userFriendlyError(
+        mimeType: String?,
+        fileName: String?,
+    ): String = "This file type is not supported. Please use a JPG, PNG, or PDF."
 }

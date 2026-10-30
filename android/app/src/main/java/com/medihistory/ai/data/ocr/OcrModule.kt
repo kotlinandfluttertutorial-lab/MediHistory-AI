@@ -23,7 +23,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object OcrModule {
-
     /**
      * Provides [MlKitOcrService] as a [Singleton] so the [TextRecognizer] inside
      * it is created once per process (ML Kit recommendation).

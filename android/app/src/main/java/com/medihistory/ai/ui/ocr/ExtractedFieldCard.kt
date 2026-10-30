@@ -84,48 +84,51 @@ fun ExtractedFieldCard(
     val isLowConfidencePending =
         field.reviewState == ReviewState.PENDING_REVIEW && field.confidence < LOW_CONFIDENCE_THRESHOLD
 
-    val cardDescription = buildString {
-        append("${field.fieldName}: ${field.displayValue}. ")
-        append("Confidence ${(field.confidence * 100).roundToInt()}%. ")
-        append("Status: ${field.reviewState.name.replace('_', ' ')}")
-    }
+    val cardDescription =
+        buildString {
+            append("${field.fieldName}: ${field.displayValue}. ")
+            append("Confidence ${(field.confidence * 100).roundToInt()}%. ")
+            append("Status: ${field.reviewState.name.replace('_', ' ')}")
+        }
 
     var showSuggestionDialog by rememberSaveable { mutableStateOf(false) }
 
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(
-                if (isLowConfidencePending) {
-                    Modifier.border(
-                        width  = 2.dp,
-                        color  = MaterialTheme.extendedColors.warning,
-                        shape  = CardDefaults.elevatedShape,
-                    )
-                } else {
-                    Modifier
-                },
-            )
-            .semantics { contentDescription = cardDescription },
-    ) {
-        Column(
-            modifier = Modifier
+        modifier =
+            modifier
                 .fillMaxWidth()
                 .then(
                     if (isLowConfidencePending) {
-                        Modifier.background(
-                            color = MaterialTheme.extendedColors.warningContainer.copy(alpha = 0.18f),
+                        Modifier.border(
+                            width = 2.dp,
+                            color = MaterialTheme.extendedColors.warning,
                             shape = CardDefaults.elevatedShape,
                         )
                     } else {
                         Modifier
-                    }
+                    },
                 )
-                .padding(16.dp),
+                .semantics { contentDescription = cardDescription },
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (isLowConfidencePending) {
+                            Modifier.background(
+                                color = MaterialTheme.extendedColors.warningContainer.copy(alpha = 0.18f),
+                                shape = CardDefaults.elevatedShape,
+                            )
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .padding(16.dp),
         ) {
             // ── Field name ────────────────────────────────────────────────────
             Text(
-                text  = field.fieldName,
+                text = field.fieldName,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -139,13 +142,13 @@ fun ExtractedFieldCard(
                     modifier = Modifier.padding(bottom = 4.dp),
                 ) {
                     Icon(
-                        imageVector        = Icons.Outlined.Warning,
-                        contentDescription = null,  // announced via card contentDescription
-                        tint               = MaterialTheme.extendedColors.warning,
+                        imageVector = Icons.Outlined.Warning,
+                        contentDescription = null, // announced via card contentDescription
+                        tint = MaterialTheme.extendedColors.warning,
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text  = "Low confidence — please verify",
+                        text = "Low confidence — please verify",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.extendedColors.warning,
                     )
@@ -153,14 +156,15 @@ fun ExtractedFieldCard(
             }
 
             // ── Display value ─────────────────────────────────────────────────
-            val valueStyle = if (field.patientValue == null && field.rawValue != null) {
-                // rawValue shown but not yet confirmed — italic to indicate unverified
-                MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
-            } else {
-                MaterialTheme.typography.bodyMedium
-            }
+            val valueStyle =
+                if (field.patientValue == null && field.rawValue != null) {
+                    // rawValue shown but not yet confirmed — italic to indicate unverified
+                    MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic)
+                } else {
+                    MaterialTheme.typography.bodyMedium
+                }
             Text(
-                text  = field.displayValue,
+                text = field.displayValue,
                 style = valueStyle,
             )
 
@@ -183,26 +187,26 @@ fun ExtractedFieldCard(
             if (field.isEditing) {
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
-                    value         = field.editText,
+                    value = field.editText,
                     onValueChange = onEditTextChange,
-                    label         = { Text("Edit value") },
-                    singleLine    = true,
-                    modifier      = Modifier.fillMaxWidth(),
+                    label = { Text("Edit value") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier              = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     TextButton(
-                        onClick  = onCancelEdit,    // cancels without saving
+                        onClick = onCancelEdit, // cancels without saving
                         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                     ) {
                         Text("Cancel")
                     }
                     Spacer(Modifier.width(8.dp))
                     TextButton(
-                        onClick  = onSaveEdit,
+                        onClick = onSaveEdit,
                         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                     ) {
                         Text("Save")
@@ -215,18 +219,18 @@ fun ExtractedFieldCard(
                 Spacer(Modifier.height(8.dp))
                 Row(
                     horizontalArrangement = Arrangement.Start,
-                    modifier              = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     TextButton(
-                        onClick  = onConfirm,
+                        onClick = onConfirm,
                         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                     ) { Text("Confirm") }
                     TextButton(
-                        onClick  = onEdit,
+                        onClick = onEdit,
                         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                     ) { Text("Edit") }
                     TextButton(
-                        onClick  = onReject,
+                        onClick = onReject,
                         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                     ) { Text("Reject") }
                 }
@@ -237,12 +241,13 @@ fun ExtractedFieldCard(
                     SuggestionChip(
                         onClick = { showSuggestionDialog = true },
                         label = { Text("\uD83D\uDCA1 Suggestion: $suggestion") },
-                        modifier = Modifier
-                            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                            .semantics {
-                                contentDescription =
-                                    "Suggestion for ${field.fieldName}: $suggestion. Tap to review."
-                            },
+                        modifier =
+                            Modifier
+                                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                                .semantics {
+                                    contentDescription =
+                                        "Suggestion for ${field.fieldName}: $suggestion. Tap to review."
+                                },
                     )
                 }
             }
@@ -251,11 +256,11 @@ fun ExtractedFieldCard(
             if (field.reviewState == ReviewState.REVIEWED) {
                 Spacer(Modifier.height(4.dp))
                 TextButton(
-                    onClick  = onUnreview,
+                    onClick = onUnreview,
                     modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                 ) {
                     Text(
-                        text  = "Un-review",
+                        text = "Un-review",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -266,11 +271,11 @@ fun ExtractedFieldCard(
             if (field.reviewState == ReviewState.REJECTED) {
                 Spacer(Modifier.height(4.dp))
                 TextButton(
-                    onClick  = onUnreview,
+                    onClick = onUnreview,
                     modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                 ) {
                     Text(
-                        text  = "Un-reject",
+                        text = "Un-reject",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -287,22 +292,22 @@ fun ExtractedFieldCard(
             text = {
                 Column {
                     Text(
-                        text  = "Current value:",
+                        text = "Current value:",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text  = field.rawValue ?: "(empty)",
+                        text = field.rawValue ?: "(empty)",
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text  = "Suggestion:",
+                        text = "Suggestion:",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text  = suggestion,
+                        text = suggestion,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -354,11 +359,12 @@ fun ExtractedFieldCard(
 private fun NotExtractedChip() {
     SuggestionChip(
         onClick = {},
-        label   = { Text("Not extracted") },
-        colors  = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            labelColor     = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
+        label = { Text("Not extracted") },
+        colors =
+            SuggestionChipDefaults.suggestionChipColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
     )
 }
@@ -373,31 +379,36 @@ private fun NotExtractedChip() {
  */
 @Composable
 private fun ReviewStateChip(reviewState: ReviewState) {
-    val (containerColor, labelColor, label) = when (reviewState) {
-        ReviewState.REVIEWED -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
-            "Reviewed",
-        )
-        ReviewState.PENDING_REVIEW -> Triple(
-            MaterialTheme.extendedColors.warningContainer,
-            MaterialTheme.extendedColors.onWarningContainer,
-            "Pending review",
-        )
-        ReviewState.REJECTED -> Triple(
-            MaterialTheme.colorScheme.errorContainer,
-            MaterialTheme.colorScheme.onErrorContainer,
-            "Rejected",
-        )
-    }
+    val (containerColor, labelColor, label) =
+        when (reviewState) {
+            ReviewState.REVIEWED ->
+                Triple(
+                    MaterialTheme.colorScheme.tertiaryContainer,
+                    MaterialTheme.colorScheme.onTertiaryContainer,
+                    "Reviewed",
+                )
+            ReviewState.PENDING_REVIEW ->
+                Triple(
+                    MaterialTheme.extendedColors.warningContainer,
+                    MaterialTheme.extendedColors.onWarningContainer,
+                    "Pending review",
+                )
+            ReviewState.REJECTED ->
+                Triple(
+                    MaterialTheme.colorScheme.errorContainer,
+                    MaterialTheme.colorScheme.onErrorContainer,
+                    "Rejected",
+                )
+        }
 
     SuggestionChip(
         onClick = {},
-        label   = { Text(label) },
-        colors  = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = containerColor,
-            labelColor     = labelColor,
-        ),
+        label = { Text(label) },
+        colors =
+            SuggestionChipDefaults.suggestionChipColors(
+                containerColor = containerColor,
+                labelColor = labelColor,
+            ),
         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
     )
 }

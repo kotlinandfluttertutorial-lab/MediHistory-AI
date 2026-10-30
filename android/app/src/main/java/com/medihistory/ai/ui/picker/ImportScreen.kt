@@ -53,18 +53,20 @@ fun ImportScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Photo Picker — images only; no READ_MEDIA_IMAGES permission needed on API 33+
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-    ) { uri ->
-        uri?.let { viewModel.onImageSelected(it) }
-    }
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickVisualMedia(),
+        ) { uri ->
+            uri?.let { viewModel.onImageSelected(it) }
+        }
 
     // System file picker — restricted to PDF MIME type
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-    ) { uri ->
-        uri?.let { viewModel.onFileSelected(it) }
-    }
+    val filePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri ->
+            uri?.let { viewModel.onFileSelected(it) }
+        }
 
     // React to terminal states
     LaunchedEffect(importState) {
@@ -83,10 +85,11 @@ fun ImportScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(

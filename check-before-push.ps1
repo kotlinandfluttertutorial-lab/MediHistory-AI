@@ -277,8 +277,17 @@ if (-not (Test-Path $GRADLEW_BAT)) {
         Write-CheckResult "android-lint" "FAIL" ":app:lintDebug exited $exitCode -- see android/app/build/reports/lint-results-debug.html"
     }
 
-    # 1.3 -- ktlint (not configured)
-    Write-CheckResult "android-ktlint" "SKIP" "ktlint not configured (no ktlint plugin in android/build.gradle.kts)"
+    # 1.3 -- ktlint
+    Write-Info "Running :app:ktlintCheck..."
+    Set-Location $ANDROID_DIR
+    & ".\gradlew.bat" ":app:ktlintCheck" "--no-daemon" "-PskipGoogleServices=true"
+    $exitCode = $LASTEXITCODE
+    Set-Location $REPO_ROOT
+    if ($exitCode -eq 0) {
+        Write-CheckResult "android-ktlint" "PASS"
+    } else {
+        Write-CheckResult "android-ktlint" "FAIL" ":app:ktlintCheck exited $exitCode -- run :app:ktlintFormat to apply formatting"
+    }
 
     # 1.4 -- Unit tests
     Write-Info "Running :app:testDebugUnitTest..."

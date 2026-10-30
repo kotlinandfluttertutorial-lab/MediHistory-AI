@@ -14,7 +14,6 @@ import org.junit.Test
  * Naming convention: `test_[outcome]_[condition]`
  */
 class OcrCorrectionEngineTest {
-
     private lateinit var engine: OcrCorrectionEngine
 
     @Before
@@ -26,14 +25,15 @@ class OcrCorrectionEngineTest {
     // Synthetic doctor fixture
     // -------------------------------------------------------------------------
 
-    private fun syntheticDoctor(name: String) = Doctor(
-        id           = "doc-synth-001",
-        patientId    = "test-patient-alpha",
-        name         = name,
-        specialty    = DoctorSpecialty.OTHER,
-        createdAt    = 1_700_000_000_000L,
-        updatedAt    = 1_700_000_000_000L,
-    )
+    private fun syntheticDoctor(name: String) =
+        Doctor(
+            id = "doc-synth-001",
+            patientId = "test-patient-alpha",
+            name = name,
+            specialty = DoctorSpecialty.OTHER,
+            createdAt = 1_700_000_000_000L,
+            updatedAt = 1_700_000_000_000L,
+        )
 
     // -------------------------------------------------------------------------
     // Date field tests

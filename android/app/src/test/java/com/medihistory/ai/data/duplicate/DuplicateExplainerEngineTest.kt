@@ -16,58 +16,61 @@ import org.junit.Test
  * Naming convention: `test_[outcome]_[condition]`
  */
 class DuplicateExplainerEngineTest {
-
     private lateinit var engine: DuplicateExplainerEngine
 
     // -------------------------------------------------------------------------
     // Synthetic fixtures
     // -------------------------------------------------------------------------
 
-    private fun syntheticMedicineA() = Medicine(
-        id                  = "med-synth-a",
-        prescriptionId      = "presc-synth-001",
-        patientId           = "test-patient-alpha",
-        medicineName        = "Synthamol 500mg",
-        activeIngredient    = "paracetamol",
-        status              = MedicineStatus.CURRENT,
-        createdAt           = 1_700_000_000_000L,
-        updatedAt           = 1_700_000_000_000L,
-    )
+    private fun syntheticMedicineA() =
+        Medicine(
+            id = "med-synth-a",
+            prescriptionId = "presc-synth-001",
+            patientId = "test-patient-alpha",
+            medicineName = "Synthamol 500mg",
+            activeIngredient = "paracetamol",
+            status = MedicineStatus.CURRENT,
+            createdAt = 1_700_000_000_000L,
+            updatedAt = 1_700_000_000_000L,
+        )
 
-    private fun syntheticMedicineB() = Medicine(
-        id                  = "med-synth-b",
-        prescriptionId      = "presc-synth-002",
-        patientId           = "test-patient-alpha",
-        medicineName        = "Testamol XR",
-        activeIngredient    = "paracetamol",
-        status              = MedicineStatus.CURRENT,
-        createdAt           = 1_700_000_000_000L,
-        updatedAt           = 1_700_000_000_000L,
-    )
+    private fun syntheticMedicineB() =
+        Medicine(
+            id = "med-synth-b",
+            prescriptionId = "presc-synth-002",
+            patientId = "test-patient-alpha",
+            medicineName = "Testamol XR",
+            activeIngredient = "paracetamol",
+            status = MedicineStatus.CURRENT,
+            createdAt = 1_700_000_000_000L,
+            updatedAt = 1_700_000_000_000L,
+        )
 
-    private fun exactAlert(combinationNote: String? = null) = DuplicateAlert(
-        id                 = "alert-exact-001",
-        patientId          = "test-patient-alpha",
-        medicineAId        = "med-synth-a",
-        medicineBId        = "med-synth-b",
-        matchingIngredient = "paracetamol",
-        matchType          = MatchType.EXACT,
-        confidence         = 0.95f,
-        combinationNote    = combinationNote,
-        createdAt          = 1_700_000_000_000L,
-    )
+    private fun exactAlert(combinationNote: String? = null) =
+        DuplicateAlert(
+            id = "alert-exact-001",
+            patientId = "test-patient-alpha",
+            medicineAId = "med-synth-a",
+            medicineBId = "med-synth-b",
+            matchingIngredient = "paracetamol",
+            matchType = MatchType.EXACT,
+            confidence = 0.95f,
+            combinationNote = combinationNote,
+            createdAt = 1_700_000_000_000L,
+        )
 
-    private fun partialAlert(combinationNote: String? = null) = DuplicateAlert(
-        id                 = "alert-partial-001",
-        patientId          = "test-patient-alpha",
-        medicineAId        = "med-synth-a",
-        medicineBId        = "med-synth-b",
-        matchingIngredient = "paracetamol",
-        matchType          = MatchType.PARTIAL,
-        confidence         = 0.70f,
-        combinationNote    = combinationNote,
-        createdAt          = 1_700_000_000_000L,
-    )
+    private fun partialAlert(combinationNote: String? = null) =
+        DuplicateAlert(
+            id = "alert-partial-001",
+            patientId = "test-patient-alpha",
+            medicineAId = "med-synth-a",
+            medicineBId = "med-synth-b",
+            matchingIngredient = "paracetamol",
+            matchType = MatchType.PARTIAL,
+            confidence = 0.70f,
+            combinationNote = combinationNote,
+            createdAt = 1_700_000_000_000L,
+        )
 
     @Before
     fun setUp() {
@@ -99,11 +102,12 @@ class DuplicateExplainerEngineTest {
     @Test
     fun test_partial_match_with_combination_note_uses_note() {
         val combinationNote = "Synthamol 500mg is a combination product."
-        val result = engine.explain(
-            partialAlert(combinationNote = combinationNote),
-            syntheticMedicineA(),
-            syntheticMedicineB(),
-        )
+        val result =
+            engine.explain(
+                partialAlert(combinationNote = combinationNote),
+                syntheticMedicineA(),
+                syntheticMedicineB(),
+            )
 
         assertTrue(
             "Output must include the combination note",
@@ -113,11 +117,12 @@ class DuplicateExplainerEngineTest {
 
     @Test
     fun test_partial_match_without_combination_note_uses_fallback() {
-        val result = engine.explain(
-            partialAlert(combinationNote = null),
-            syntheticMedicineA(),
-            syntheticMedicineB(),
-        )
+        val result =
+            engine.explain(
+                partialAlert(combinationNote = null),
+                syntheticMedicineA(),
+                syntheticMedicineB(),
+            )
 
         assertTrue(
             "Output must include medicine A name in fallback",

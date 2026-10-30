@@ -81,17 +81,19 @@ fun PrivacyScreen(
     // Launch share sheet when export file is ready
     LaunchedEffect(uiState.exportFile) {
         val file = uiState.exportFile ?: return@LaunchedEffect
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file,
-        )
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/json"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "MediHistory AI — My Medical Records Export")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val uri =
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file,
+            )
+        val shareIntent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, "MediHistory AI — My Medical Records Export")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
         context.startActivity(Intent.createChooser(shareIntent, "Share my records export"))
         viewModel.onExportFileConsumed()
     }
@@ -115,24 +117,27 @@ fun PrivacyScreen(
         },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             if (uiState.isDeleting) {
                 // Overlay spinner during deletion
                 CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .semantics { contentDescription = "Deleting data" },
+                    modifier =
+                        Modifier
+                            .align(Alignment.Center)
+                            .semantics { contentDescription = "Deleting data" },
                 )
             } else {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
                 ) {
                     // ── Export section ─────────────────────────────────────────────────
                     ExportCard(
@@ -191,9 +196,10 @@ private fun ExportCard(
 ) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
@@ -207,16 +213,18 @@ private fun ExportCard(
             Button(
                 onClick = onExportClicked,
                 enabled = !isExporting,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Export my data" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Export my data" },
             ) {
                 if (isExporting) {
                     CircularProgressIndicator(
                         strokeWidth = 2.dp,
-                        modifier = Modifier
-                            .height(18.dp)
-                            .padding(end = 8.dp),
+                        modifier =
+                            Modifier
+                                .height(18.dp)
+                                .padding(end = 8.dp),
                     )
                 }
                 Text(if (isExporting) "Exporting…" else "Export my data")
@@ -229,9 +237,10 @@ private fun ExportCard(
 private fun CloudBackupCard() {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
@@ -255,9 +264,10 @@ private fun CloudBackupCard() {
 private fun ConsentCard(onManageConsent: () -> Unit) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
@@ -271,9 +281,10 @@ private fun ConsentCard(onManageConsent: () -> Unit) {
             )
             Button(
                 onClick = onManageConsent,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Manage consent" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Manage consent" },
             ) {
                 Text(text = "Manage consent")
             }
@@ -284,18 +295,20 @@ private fun ConsentCard(onManageConsent: () -> Unit) {
 @Composable
 private fun DeleteCard(onDeleteClicked: () -> Unit) {
     ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.error,
-                shape = RoundedCornerShape(12.dp),
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.error,
+                    shape = RoundedCornerShape(12.dp),
+                ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
@@ -309,12 +322,14 @@ private fun DeleteCard(onDeleteClicked: () -> Unit) {
             )
             Button(
                 onClick = onDeleteClicked,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Delete all my data" },
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Delete all my data" },
             ) {
                 Text("Delete all my data")
             }
@@ -396,9 +411,10 @@ private fun DeleteStep2Dialog(
                     label = { Text("Type DELETE") },
                     singleLine = true,
                     isError = confirmationText.isNotEmpty() && !isConfirmed,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Deletion confirmation input" },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .semantics { contentDescription = "Deletion confirmation input" },
                 )
             }
         },
@@ -406,9 +422,10 @@ private fun DeleteStep2Dialog(
             Button(
                 onClick = onConfirm,
                 enabled = isConfirmed,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
                 modifier = Modifier.semantics { contentDescription = "Delete permanently" },
             ) {
                 Text("Delete permanently")

@@ -12,7 +12,6 @@ import org.junit.Test
  * Tests cover the synonym map, casing normalisation, and unknown ingredient fallback.
  */
 class IngredientNormalizerTest {
-
     // --- normalize ---
 
     @Test

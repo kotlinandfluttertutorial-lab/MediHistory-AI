@@ -44,9 +44,10 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     @Inject lateinit var sessionManager: SessionManager
+
     @Inject lateinit var authRepository: AuthRepository
+
     @Inject lateinit var patientRepository: PatientRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,7 +78,7 @@ class MainActivity : ComponentActivity() {
                                     name = email.substringBefore('@').ifBlank { "User" },
                                     createdAt = System.currentTimeMillis(),
                                     updatedAt = System.currentTimeMillis(),
-                                )
+                                ),
                             )
                         }
                     }
@@ -95,8 +96,9 @@ class MainActivity : ComponentActivity() {
                     val currentRoute = backStackEntry?.destination?.route
                     val patientId = sessionManager.getPatientId()
 
-                    val currentDestination = NavDestination.bottomNavDestinations
-                        .firstOrNull { it.route == currentRoute }
+                    val currentDestination =
+                        NavDestination.bottomNavDestinations
+                            .firstOrNull { it.route == currentRoute }
 
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),

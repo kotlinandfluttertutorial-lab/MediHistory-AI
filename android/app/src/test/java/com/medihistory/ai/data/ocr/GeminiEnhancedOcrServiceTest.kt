@@ -31,7 +31,6 @@ import java.io.IOException
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class GeminiEnhancedOcrServiceTest {
-
     // ─────────────────────────────────────────────────────────────────────────
     // In-memory fakes
     // ─────────────────────────────────────────────────────────────────────────
@@ -41,10 +40,23 @@ class GeminiEnhancedOcrServiceTest {
         vararg initial: Pair<String, String>,
     ) : SecurePreferencesStore {
         private val map = mutableMapOf(*initial)
-        override fun putString(key: String, value: String) { map[key] = value }
-        override fun getString(key: String): String?       = map[key]
-        override fun remove(key: String)                   { map.remove(key) }
-        override fun clear()                               { map.clear() }
+
+        override fun putString(
+            key: String,
+            value: String,
+        ) {
+            map[key] = value
+        }
+
+        override fun getString(key: String): String? = map[key]
+
+        override fun remove(key: String) {
+            map.remove(key)
+        }
+
+        override fun clear() {
+            map.clear()
+        }
     }
 
     /**
@@ -53,17 +65,18 @@ class GeminiEnhancedOcrServiceTest {
      */
     private class FakeMlKitOcrService {
         var extractCallCount = 0
-        var rawTextResult    = "Dr. Synthetic\nSynthamol 500mg\nonce daily"
+        var rawTextResult = "Dr. Synthetic\nSynthamol 500mg\nonce daily"
 
         fun extract(prescriptionId: String): OcrResult {
             extractCallCount++
             return OcrResult(
-                prescriptionId    = prescriptionId,
-                fields            = listOf(
-                    ExtractedField("doctor_name",   "Dr. Synthetic",   null, 0.70f, ReviewState.PENDING_REVIEW, "mlkit:page:1"),
-                    ExtractedField("medicine_name", "Synthamol 500mg", null, 0.65f, ReviewState.PENDING_REVIEW, "mlkit:page:1"),
-                    ExtractedField("dose",          null,              null, 0.0f,  ReviewState.PENDING_REVIEW, "mlkit:page:1"),
-                ),
+                prescriptionId = prescriptionId,
+                fields =
+                    listOf(
+                        ExtractedField("doctor_name", "Dr. Synthetic", null, 0.70f, ReviewState.PENDING_REVIEW, "mlkit:page:1"),
+                        ExtractedField("medicine_name", "Synthamol 500mg", null, 0.65f, ReviewState.PENDING_REVIEW, "mlkit:page:1"),
+                        ExtractedField("dose", null, null, 0.0f, ReviewState.PENDING_REVIEW, "mlkit:page:1"),
+                    ),
                 overallConfidence = 0.68f,
             )
         }
@@ -81,19 +94,19 @@ class GeminiEnhancedOcrServiceTest {
      * [throwOnGeminiCall] simulates a network exception from the Gemini SDK.
      */
     private class TestableGeminiOcrService(
-        private val fakePrefs        : SecurePreferencesStore,
-        private val fakeMlKit        : FakeMlKitOcrService,
-        val featureFlagEnabled       : Boolean    = true,
-        val apiKey                   : String     = "synthetic-test-key-not-real",
-        var geminiJsonToReturn       : String?    =
+        private val fakePrefs: SecurePreferencesStore,
+        private val fakeMlKit: FakeMlKitOcrService,
+        val featureFlagEnabled: Boolean = true,
+        val apiKey: String = "synthetic-test-key-not-real",
+        var geminiJsonToReturn: String? =
             """{"doctor_name":"Dr. Synthetic","prescription_date":null,"medicines":[]}""",
-        var throwOnGeminiCall        : Throwable? = null,
+        var throwOnGeminiCall: Throwable? = null,
     ) {
         var geminiCallCount = 0
 
         suspend fun extract(
-            documentPath  : String,
-            mimeType      : String,
+            documentPath: String,
+            mimeType: String,
             prescriptionId: String,
         ): OcrResult {
             // Gate 1: feature flag
@@ -116,17 +129,18 @@ class GeminiEnhancedOcrServiceTest {
                 geminiCallCount++
 
                 val jsonText = geminiJsonToReturn ?: return fakeMlKit.extract(prescriptionId)
-                val fields   = GeminiEnhancedOcrService.parseGeminiJsonStatic(jsonText)
+                val fields = GeminiEnhancedOcrService.parseGeminiJsonStatic(jsonText)
                 if (fields.isEmpty()) return fakeMlKit.extract(prescriptionId)
 
-                val overallConfidence = fields
-                    .filter { it.rawValue != null }
-                    .map { it.confidence }
-                    .let { cs -> if (cs.isNotEmpty()) cs.average().toFloat() else 0f }
+                val overallConfidence =
+                    fields
+                        .filter { it.rawValue != null }
+                        .map { it.confidence }
+                        .let { cs -> if (cs.isNotEmpty()) cs.average().toFloat() else 0f }
 
                 OcrResult(
-                    prescriptionId    = prescriptionId,
-                    fields            = fields,
+                    prescriptionId = prescriptionId,
+                    fields = fields,
                     overallConfidence = overallConfidence,
                 )
             } catch (e: Exception) {
@@ -140,92 +154,113 @@ class GeminiEnhancedOcrServiceTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `should_use_mlkit_fallback_when_feature_flag_is_false`() = runTest {
-        val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
-        val fakeMlKit = FakeMlKitOcrService()
-        val service   = TestableGeminiOcrService(
-            fakePrefs = fakePrefs, fakeMlKit = fakeMlKit, featureFlagEnabled = false,
-        )
+    fun `should_use_mlkit_fallback_when_feature_flag_is_false`() =
+        runTest {
+            val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
+            val fakeMlKit = FakeMlKitOcrService()
+            val service =
+                TestableGeminiOcrService(
+                    fakePrefs = fakePrefs,
+                    fakeMlKit = fakeMlKit,
+                    featureFlagEnabled = false,
+                )
 
-        val result = service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-001")
+            val result = service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-001")
 
-        assertEquals("ML Kit must be called when feature flag is false", 1, fakeMlKit.extractCallCount)
-        assertEquals("Gemini must NOT be called",                        0, service.geminiCallCount)
-        assertEquals("synth-rx-001", result.prescriptionId)
-        assertTrue(result.fields.any { it.fieldName == "doctor_name" })
-    }
+            assertEquals("ML Kit must be called when feature flag is false", 1, fakeMlKit.extractCallCount)
+            assertEquals("Gemini must NOT be called", 0, service.geminiCallCount)
+            assertEquals("synth-rx-001", result.prescriptionId)
+            assertTrue(result.fields.any { it.fieldName == "doctor_name" })
+        }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Test 2 — blank API key → ML Kit fallback
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `should_use_mlkit_fallback_when_api_key_is_blank`() = runTest {
-        val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
-        val fakeMlKit = FakeMlKitOcrService()
-        val service   = TestableGeminiOcrService(
-            fakePrefs = fakePrefs, fakeMlKit = fakeMlKit, featureFlagEnabled = true, apiKey = "",
-        )
+    fun `should_use_mlkit_fallback_when_api_key_is_blank`() =
+        runTest {
+            val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
+            val fakeMlKit = FakeMlKitOcrService()
+            val service =
+                TestableGeminiOcrService(
+                    fakePrefs = fakePrefs,
+                    fakeMlKit = fakeMlKit,
+                    featureFlagEnabled = true,
+                    apiKey = "",
+                )
 
-        service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-002")
+            service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-002")
 
-        assertEquals("ML Kit must be called when API key is blank", 1, fakeMlKit.extractCallCount)
-        assertEquals("Gemini must NOT be called",                   0, service.geminiCallCount)
-    }
+            assertEquals("ML Kit must be called when API key is blank", 1, fakeMlKit.extractCallCount)
+            assertEquals("Gemini must NOT be called", 0, service.geminiCallCount)
+        }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Test 3 — consent unknown (key absent) → ML Kit fallback
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `should_use_mlkit_fallback_when_consent_is_unknown`() = runTest {
-        val fakePrefs = FakeSecurePreferencesStore()          // no consent key stored
-        val fakeMlKit = FakeMlKitOcrService()
-        val service   = TestableGeminiOcrService(
-            fakePrefs = fakePrefs, fakeMlKit = fakeMlKit, featureFlagEnabled = true,
-        )
+    fun `should_use_mlkit_fallback_when_consent_is_unknown`() =
+        runTest {
+            val fakePrefs = FakeSecurePreferencesStore() // no consent key stored
+            val fakeMlKit = FakeMlKitOcrService()
+            val service =
+                TestableGeminiOcrService(
+                    fakePrefs = fakePrefs,
+                    fakeMlKit = fakeMlKit,
+                    featureFlagEnabled = true,
+                )
 
-        service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-003")
+            service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-003")
 
-        assertEquals("ML Kit must be called when consent key is absent", 1, fakeMlKit.extractCallCount)
-        assertEquals("Gemini must NOT be called",                        0, service.geminiCallCount)
-    }
+            assertEquals("ML Kit must be called when consent key is absent", 1, fakeMlKit.extractCallCount)
+            assertEquals("Gemini must NOT be called", 0, service.geminiCallCount)
+        }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Test 4 — consent declined → ML Kit fallback
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `should_use_mlkit_fallback_when_consent_is_declined`() = runTest {
-        val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "false")
-        val fakeMlKit = FakeMlKitOcrService()
-        val service   = TestableGeminiOcrService(
-            fakePrefs = fakePrefs, fakeMlKit = fakeMlKit, featureFlagEnabled = true,
-        )
+    fun `should_use_mlkit_fallback_when_consent_is_declined`() =
+        runTest {
+            val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "false")
+            val fakeMlKit = FakeMlKitOcrService()
+            val service =
+                TestableGeminiOcrService(
+                    fakePrefs = fakePrefs,
+                    fakeMlKit = fakeMlKit,
+                    featureFlagEnabled = true,
+                )
 
-        service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-004")
+            service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-004")
 
-        assertEquals("ML Kit must be called when consent is 'false'", 1, fakeMlKit.extractCallCount)
-        assertEquals("Gemini must NOT be called",                     0, service.geminiCallCount)
-    }
+            assertEquals("ML Kit must be called when consent is 'false'", 1, fakeMlKit.extractCallCount)
+            assertEquals("Gemini must NOT be called", 0, service.geminiCallCount)
+        }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Test 5 — blank raw text → ML Kit fallback
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `should_use_mlkit_fallback_when_raw_text_is_blank`() = runTest {
-        val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
-        val fakeMlKit = FakeMlKitOcrService().also { it.rawTextResult = "" }
-        val service   = TestableGeminiOcrService(
-            fakePrefs = fakePrefs, fakeMlKit = fakeMlKit, featureFlagEnabled = true,
-        )
+    fun `should_use_mlkit_fallback_when_raw_text_is_blank`() =
+        runTest {
+            val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
+            val fakeMlKit = FakeMlKitOcrService().also { it.rawTextResult = "" }
+            val service =
+                TestableGeminiOcrService(
+                    fakePrefs = fakePrefs,
+                    fakeMlKit = fakeMlKit,
+                    featureFlagEnabled = true,
+                )
 
-        service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-005")
+            service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-005")
 
-        assertEquals("ML Kit must be called when extractRawText returns blank", 1, fakeMlKit.extractCallCount)
-        assertEquals("Gemini must NOT be called",                               0, service.geminiCallCount)
-    }
+            assertEquals("ML Kit must be called when extractRawText returns blank", 1, fakeMlKit.extractCallCount)
+            assertEquals("Gemini must NOT be called", 0, service.geminiCallCount)
+        }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Test 6 — parseGeminiJson: doctor_name parsed correctly
@@ -233,13 +268,13 @@ class GeminiEnhancedOcrServiceTest {
 
     @Test
     fun `should_parse_doctor_name_from_gemini_json`() {
-        val json   = """{"doctor_name":"Dr. Synthetic","prescription_date":null,"medicines":[]}"""
+        val json = """{"doctor_name":"Dr. Synthetic","prescription_date":null,"medicines":[]}"""
         val fields = GeminiEnhancedOcrService.parseGeminiJsonStatic(json)
 
         val doctorField = fields.find { it.fieldName == "doctor_name" }
-        assertEquals("doctor_name rawValue",    "Dr. Synthetic",                             doctorField?.rawValue)
-        assertEquals("doctor_name confidence",  GeminiEnhancedOcrService.GEMINI_CONFIDENCE, doctorField?.confidence)
-        assertEquals("doctor_name reviewState", ReviewState.PENDING_REVIEW,                 doctorField?.reviewState)
+        assertEquals("doctor_name rawValue", "Dr. Synthetic", doctorField?.rawValue)
+        assertEquals("doctor_name confidence", GeminiEnhancedOcrService.GEMINI_CONFIDENCE, doctorField?.confidence)
+        assertEquals("doctor_name reviewState", ReviewState.PENDING_REVIEW, doctorField?.reviewState)
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -249,7 +284,7 @@ class GeminiEnhancedOcrServiceTest {
     @Test
     fun `should_set_absent_field_to_null_when_missing_from_gemini_json`() {
         // prescription_date is explicitly null in JSON — must map to rawValue=null
-        val json   = """{"doctor_name":"Dr. Synthetic","prescription_date":null,"medicines":[]}"""
+        val json = """{"doctor_name":"Dr. Synthetic","prescription_date":null,"medicines":[]}"""
         val fields = GeminiEnhancedOcrService.parseGeminiJsonStatic(json)
 
         val dateField = fields.find { it.fieldName == "prescription_date" }
@@ -257,7 +292,7 @@ class GeminiEnhancedOcrServiceTest {
             "MEDICAL-SAFETY: absent prescription_date must have null rawValue — never fabricated",
             dateField?.rawValue,
         )
-        assertEquals("absent field confidence must be 0.0f",                0f,                     dateField?.confidence)
+        assertEquals("absent field confidence must be 0.0f", 0f, dateField?.confidence)
         assertEquals("absent field reviewState must be PENDING_REVIEW", ReviewState.PENDING_REVIEW, dateField?.reviewState)
     }
 
@@ -268,7 +303,8 @@ class GeminiEnhancedOcrServiceTest {
     @Test
     fun `should_not_exceed_max_medicines`() {
         // 6 entries — only 5 medicine_name fields should be produced
-        val json = """
+        val json =
+            """
             {
               "doctor_name": "Dr. Synthetic",
               "prescription_date": "2025-07-01",
@@ -281,9 +317,9 @@ class GeminiEnhancedOcrServiceTest {
                 {"name": "ExtraMed 20mg",     "dose": "1 tab",  "frequency": "evening"}
               ]
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val fields             = GeminiEnhancedOcrService.parseGeminiJsonStatic(json)
+        val fields = GeminiEnhancedOcrService.parseGeminiJsonStatic(json)
         val medicineNameFields = fields.filter { it.fieldName.startsWith("medicine_name") }
 
         assertTrue(
@@ -301,22 +337,24 @@ class GeminiEnhancedOcrServiceTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `should_use_mlkit_fallback_when_gemini_throws`() = runTest {
-        val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
-        val fakeMlKit = FakeMlKitOcrService()
-        val service   = TestableGeminiOcrService(
-            fakePrefs         = fakePrefs,
-            fakeMlKit         = fakeMlKit,
-            featureFlagEnabled = true,
-            throwOnGeminiCall  = IOException("Synthetic network failure — test only"),
-        )
+    fun `should_use_mlkit_fallback_when_gemini_throws`() =
+        runTest {
+            val fakePrefs = FakeSecurePreferencesStore(SecurePreferences.KEY_GEMINI_OCR_CONSENT to "true")
+            val fakeMlKit = FakeMlKitOcrService()
+            val service =
+                TestableGeminiOcrService(
+                    fakePrefs = fakePrefs,
+                    fakeMlKit = fakeMlKit,
+                    featureFlagEnabled = true,
+                    throwOnGeminiCall = IOException("Synthetic network failure — test only"),
+                )
 
-        val result = service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-009")
+            val result = service.extract("/synth/rx.jpg", "image/jpeg", "synth-rx-009")
 
-        assertEquals("ML Kit must be called when Gemini throws",            1, fakeMlKit.extractCallCount)
-        assertTrue("Result must be successful even after Gemini exception",  result.isSuccess)
-        assertEquals("synth-rx-009", result.prescriptionId)
-    }
+            assertEquals("ML Kit must be called when Gemini throws", 1, fakeMlKit.extractCallCount)
+            assertTrue("Result must be successful even after Gemini exception", result.isSuccess)
+            assertEquals("synth-rx-009", result.prescriptionId)
+        }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Extra: all present Gemini fields have PENDING_REVIEW + GEMINI_CONFIDENCE
@@ -324,7 +362,8 @@ class GeminiEnhancedOcrServiceTest {
 
     @Test
     fun `should_return_all_present_fields_as_PENDING_REVIEW_with_gemini_confidence`() {
-        val json = """
+        val json =
+            """
             {
               "doctor_name": "Dr. Synthetic",
               "prescription_date": "2025-07-01",
@@ -332,15 +371,15 @@ class GeminiEnhancedOcrServiceTest {
                 {"name": "Synthamol 500mg", "dose": "1 tab", "frequency": "once daily"}
               ]
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val fields        = GeminiEnhancedOcrService.parseGeminiJsonStatic(json)
+        val fields = GeminiEnhancedOcrService.parseGeminiJsonStatic(json)
         val presentFields = fields.filter { it.rawValue != null }
 
         assertTrue("At least one present field must be returned", presentFields.isNotEmpty())
         presentFields.forEach { field ->
-            assertEquals("'${field.fieldName}' reviewState", ReviewState.PENDING_REVIEW,                 field.reviewState)
-            assertEquals("'${field.fieldName}' confidence",  GeminiEnhancedOcrService.GEMINI_CONFIDENCE, field.confidence)
+            assertEquals("'${field.fieldName}' reviewState", ReviewState.PENDING_REVIEW, field.reviewState)
+            assertEquals("'${field.fieldName}' confidence", GeminiEnhancedOcrService.GEMINI_CONFIDENCE, field.confidence)
         }
     }
 }

@@ -31,7 +31,6 @@ import com.google.mlkit.vision.text.Text
  * Privacy: rawValue and ML Kit text content must NEVER be logged.
  */
 internal class PrescriptionFieldParser {
-
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
@@ -53,20 +52,22 @@ internal class PrescriptionFieldParser {
         imageHeight: Int = 0,
     ): List<ExtractedField> {
         var flatIdx = 0
-        val allLines: List<IndexedLine> = text.textBlocks.flatMapIndexed { blockIdx, block ->
-            block.lines.mapNotNull { line ->
-                val box = line.boundingBox ?: return@mapNotNull null
-                IndexedLine(
-                    text       = line.text.trim(),
-                    confidence = line.elements.mapNotNull { it.confidence.takeIf { c -> c > 0f } }
-                        .let { cs -> if (cs.isNotEmpty()) cs.average().toFloat() else 0f },
-                    blockIndex = blockIdx,
-                    pageIndex  = pageIndex,
-                    index      = flatIdx++,
-                    bounds     = box,
-                )
+        val allLines: List<IndexedLine> =
+            text.textBlocks.flatMapIndexed { blockIdx, block ->
+                block.lines.mapNotNull { line ->
+                    val box = line.boundingBox ?: return@mapNotNull null
+                    IndexedLine(
+                        text = line.text.trim(),
+                        confidence =
+                            line.elements.mapNotNull { it.confidence.takeIf { c -> c > 0f } }
+                                .let { cs -> if (cs.isNotEmpty()) cs.average().toFloat() else 0f },
+                        blockIndex = blockIdx,
+                        pageIndex = pageIndex,
+                        index = flatIdx++,
+                        bounds = box,
+                    )
+                }
             }
-        }
 
         // Compute the right-column cutoff: lines whose X-midpoint is beyond this
         // value are in a quantity/notes column and excluded from name extraction.
@@ -88,8 +89,8 @@ internal class PrescriptionFieldParser {
         results.addAll(extractMedicines(mergedLines, nameCutoffX))
 
         if (results.none { it.fieldName == "medicine_name" }) results.add(absentField("medicine_name"))
-        if (results.none { it.fieldName == "dose" })          results.add(absentField("dose"))
-        if (results.none { it.fieldName == "frequency" })     results.add(absentField("frequency"))
+        if (results.none { it.fieldName == "dose" }) results.add(absentField("dose"))
+        if (results.none { it.fieldName == "frequency" }) results.add(absentField("frequency"))
         return results
     }
 
@@ -132,21 +133,25 @@ internal class PrescriptionFieldParser {
 
                 if (prev.blockIndex == line.blockIndex || verticallyAdjacent) {
                     val combinedText = "${prev.text} ${line.text}".trim()
-                    val combinedConf = if (prev.confidence > 0f && line.confidence > 0f)
-                        (prev.confidence + line.confidence) / 2f
-                    else
-                        maxOf(prev.confidence, line.confidence)
-                    val combinedBounds = Rect(
-                        minOf(prev.bounds.left,   line.bounds.left),
-                        minOf(prev.bounds.top,    line.bounds.top),
-                        maxOf(prev.bounds.right,  line.bounds.right),
-                        maxOf(prev.bounds.bottom, line.bounds.bottom),
-                    )
-                    merged[merged.lastIndex] = prev.copy(
-                        text       = combinedText,
-                        confidence = combinedConf.coerceIn(0f, 1f),
-                        bounds     = combinedBounds,
-                    )
+                    val combinedConf =
+                        if (prev.confidence > 0f && line.confidence > 0f) {
+                            (prev.confidence + line.confidence) / 2f
+                        } else {
+                            maxOf(prev.confidence, line.confidence)
+                        }
+                    val combinedBounds =
+                        Rect(
+                            minOf(prev.bounds.left, line.bounds.left),
+                            minOf(prev.bounds.top, line.bounds.top),
+                            maxOf(prev.bounds.right, line.bounds.right),
+                            maxOf(prev.bounds.bottom, line.bounds.bottom),
+                        )
+                    merged[merged.lastIndex] =
+                        prev.copy(
+                            text = combinedText,
+                            confidence = combinedConf.coerceIn(0f, 1f),
+                            bounds = combinedBounds,
+                        )
                     continue
                 }
             }
@@ -209,7 +214,7 @@ internal class PrescriptionFieldParser {
         for (line in lines) {
             val labelMatch = DATE_LABEL_REGEX.find(line.text) ?: continue
             val after = line.text.substring(labelMatch.range.last + 1).trim()
-            val date  = findDate(after) ?: findDate(line.text) ?: continue
+            val date = findDate(after) ?: findDate(line.text) ?: continue
             return makeField("prescription_date", date, line, 0.90f)
         }
         for (line in lines) {
@@ -219,8 +224,7 @@ internal class PrescriptionFieldParser {
         return absentField("prescription_date")
     }
 
-    private fun findDate(text: String): String? =
-        DATE_PATTERNS.firstNotNullOfOrNull { it.find(text)?.value?.trim() }
+    private fun findDate(text: String): String? = DATE_PATTERNS.firstNotNullOfOrNull { it.find(text)?.value?.trim() }
 
     // -------------------------------------------------------------------------
     // Medicine extraction — spatially aware
@@ -239,9 +243,12 @@ internal class PrescriptionFieldParser {
      * line that follows it (or on the same line), using a consumed-index set to prevent
      * double-assignment.
      */
-    private fun extractMedicines(lines: List<IndexedLine>, nameCutoffX: Int): List<ExtractedField> {
+    private fun extractMedicines(
+        lines: List<IndexedLine>,
+        nameCutoffX: Int,
+    ): List<ExtractedField> {
         val medicines = mutableListOf<MedicineCandidate>()
-        val consumed  = mutableSetOf<Int>()
+        val consumed = mutableSetOf<Int>()
         var inMedicineSection = false
 
         // Pre-filter: lines in the name column only.
@@ -280,12 +287,15 @@ internal class PrescriptionFieldParser {
             if (isPureInstruction(line.text)) {
                 consumed.add(line.index)
                 val (dose, freq) = parseInstruction(line.text)
-                val nameLine = (pos - 1 downTo maxOf(0, pos - 3))
-                    .mapNotNull { nameColumnLines.getOrNull(it) }
-                    .firstOrNull { it.index !in consumed && isValidName(it.text) }
+                val nameLine =
+                    (pos - 1 downTo maxOf(0, pos - 3))
+                        .mapNotNull { nameColumnLines.getOrNull(it) }
+                        .firstOrNull { it.index !in consumed && isValidName(it.text) }
                 if (nameLine != null) {
                     consumed.add(nameLine.index)
-                    medicines.add(MedicineCandidate(nameLine.text.take(120), dose, freq, heuristic(nameLine.confidence, 0.75f), sourceRef(nameLine)))
+                    medicines.add(
+                        MedicineCandidate(nameLine.text.take(120), dose, freq, heuristic(nameLine.confidence, 0.75f), sourceRef(nameLine)),
+                    )
                 }
                 continue
             }
@@ -317,7 +327,7 @@ internal class PrescriptionFieldParser {
         }
 
         // Deduplicate by name, cap at 5.
-        val seen   = mutableSetOf<String>()
+        val seen = mutableSetOf<String>()
         val deduped = medicines.filter { seen.add(it.name.lowercase()) }.take(MAX_MEDICINES)
         if (deduped.isEmpty()) return emptyList()
 
@@ -325,8 +335,16 @@ internal class PrescriptionFieldParser {
         for ((i, c) in deduped.withIndex()) {
             val sfx = if (i == 0) "" else "_${i + 1}"
             fields.add(ExtractedField("medicine_name$sfx", c.name.take(120), null, c.confidence, sourceReference = c.sourceRef))
-            if (c.dose != null)      fields.add(ExtractedField("dose$sfx",      c.dose.take(60),      null, heuristic(0f, 0.75f), sourceReference = c.sourceRef))
-            if (c.frequency != null) fields.add(ExtractedField("frequency$sfx", c.frequency.take(60), null, heuristic(0f, 0.80f), sourceReference = c.sourceRef))
+            if (c.dose != null) {
+                fields.add(
+                    ExtractedField("dose$sfx", c.dose.take(60), null, heuristic(0f, 0.75f), sourceReference = c.sourceRef),
+                )
+            }
+            if (c.frequency != null) {
+                fields.add(
+                    ExtractedField("frequency$sfx", c.frequency.take(60), null, heuristic(0f, 0.80f), sourceReference = c.sourceRef),
+                )
+            }
         }
         return fields
     }
@@ -364,9 +382,15 @@ internal class PrescriptionFieldParser {
     private fun splitParts(text: String): Triple<String, String?, String?> {
         var rem = text.trim()
         var freq: String? = null
-        FREQUENCY_PATTERN.find(rem)?.let { m -> freq = m.value.trim(); rem = rem.removeRange(m.range).trim() }
+        FREQUENCY_PATTERN.find(rem)?.let { m ->
+            freq = m.value.trim()
+            rem = rem.removeRange(m.range).trim()
+        }
         var dose: String? = null
-        INDIAN_DOSE_PATTERN.find(rem)?.let { m -> dose = m.value.trim(); rem = rem.removeRange(m.range).trim() }
+        INDIAN_DOSE_PATTERN.find(rem)?.let { m ->
+            dose = m.value.trim()
+            rem = rem.removeRange(m.range).trim()
+        }
         // Strip trailing parenthesised packaging/strip-count expressions
         // e.g. "(4 MG ) (1 Strip)", "(10 ML)", "(1 Strip of 10)"
         rem = PAREN_PACKAGING_SUFFIX.replace(rem, "").trim()
@@ -383,10 +407,10 @@ internal class PrescriptionFieldParser {
     private fun isPureInstruction(text: String): Boolean {
         val t = text.trim()
         if (PURE_DOSE_LINE_REGEX.matches(t)) return true
-        val hasFreq        = FREQUENCY_PATTERN.containsMatchIn(t)
-        val hasIndianDose  = INDIAN_DOSE_PATTERN.containsMatchIn(t)
+        val hasFreq = FREQUENCY_PATTERN.containsMatchIn(t)
+        val hasIndianDose = INDIAN_DOSE_PATTERN.containsMatchIn(t)
         if (!hasFreq && !hasIndianDose) return false
-        val nameCandidate  = splitParts(t).first.trim()
+        val nameCandidate = splitParts(t).first.trim()
         if (nameCandidate.length < MIN_NAME_LEN) return true
         if (INSTRUCTION_VERB_REGEX.containsMatchIn(nameCandidate)) return true
         // If the leftover is just a dosage quantity like "2 ml", treat as instruction.
@@ -396,11 +420,17 @@ internal class PrescriptionFieldParser {
 
     /** Extracts (dose, frequency) from a line already identified as a pure instruction. */
     private fun parseInstruction(text: String): Pair<String?, String?> {
-        var rem  = text.trim()
+        var rem = text.trim()
         var freq: String? = null
-        FREQUENCY_PATTERN.find(rem)?.let { m -> freq = m.value.trim(); rem = rem.removeRange(m.range).trim() }
+        FREQUENCY_PATTERN.find(rem)?.let { m ->
+            freq = m.value.trim()
+            rem = rem.removeRange(m.range).trim()
+        }
         var dose: String? = null
-        INDIAN_DOSE_PATTERN.find(rem)?.let { m -> dose = m.value.trim(); rem = rem.removeRange(m.range).trim() }
+        INDIAN_DOSE_PATTERN.find(rem)?.let { m ->
+            dose = m.value.trim()
+            rem = rem.removeRange(m.range).trim()
+        }
         if (dose == null) DOSAGE_SUFFIX_REGEX.find(rem)?.let { m -> dose = m.value.trim() }
         if (dose == null && freq == null && rem.isNotBlank()) dose = rem.trim().take(60)
         return Pair(dose?.ifBlank { null }, freq?.ifBlank { null })
@@ -425,40 +455,44 @@ internal class PrescriptionFieldParser {
     // Small utilities
     // -------------------------------------------------------------------------
 
-    private fun makeField(name: String, value: String, line: IndexedLine, heuristicConf: Float) =
-        ExtractedField(name, value, null, heuristic(line.confidence, heuristicConf), sourceReference = sourceRef(line))
+    private fun makeField(
+        name: String,
+        value: String,
+        line: IndexedLine,
+        heuristicConf: Float,
+    ) = ExtractedField(name, value, null, heuristic(line.confidence, heuristicConf), sourceReference = sourceRef(line))
 
-    private fun heuristic(mlKit: Float, fallback: Float) =
-        (if (mlKit > 0f) mlKit else fallback).coerceIn(0f, 1f)
+    private fun heuristic(
+        mlKit: Float,
+        fallback: Float,
+    ) = (if (mlKit > 0f) mlKit else fallback).coerceIn(0f, 1f)
 
-    private fun sourceRef(line: IndexedLine) =
-        "page:${line.pageIndex + 1},block:${line.blockIndex}"
+    private fun sourceRef(line: IndexedLine) = "page:${line.pageIndex + 1},block:${line.blockIndex}"
 
-    private fun absentField(fieldName: String) =
-        ExtractedField(fieldName, null, null, 0f)
+    private fun absentField(fieldName: String) = ExtractedField(fieldName, null, null, 0f)
 
     // -------------------------------------------------------------------------
     // Internal data holders
     // -------------------------------------------------------------------------
 
     private data class IndexedLine(
-        val text       : String,
-        val confidence : Float,
-        val blockIndex : Int,
-        val pageIndex  : Int,
-        val index      : Int,
-        val bounds     : Rect,
+        val text: String,
+        val confidence: Float,
+        val blockIndex: Int,
+        val pageIndex: Int,
+        val index: Int,
+        val bounds: Rect,
     ) {
         /** Horizontal midpoint of this line's bounding box. */
         val xMid: Int get() = (bounds.left + bounds.right) / 2
     }
 
     private data class MedicineCandidate(
-        val name      : String,
-        val dose      : String?,
-        val frequency : String?,
+        val name: String,
+        val dose: String?,
+        val frequency: String?,
         val confidence: Float,
-        val sourceRef : String,
+        val sourceRef: String,
     )
 
     // -------------------------------------------------------------------------
@@ -467,7 +501,7 @@ internal class PrescriptionFieldParser {
 
     companion object {
         private const val MAX_MEDICINES = 5
-        private const val MIN_NAME_LEN  = 3
+        private const val MIN_NAME_LEN = 3
 
         /**
          * Lines whose X-midpoint exceeds this fraction of image width are considered
@@ -477,37 +511,43 @@ internal class PrescriptionFieldParser {
         private const val NAME_COLUMN_MAX_X_RATIO = 0.70
 
         /** Matches lines that are continuations of the previous line (dosage unit or bracket at start). */
-        private val CONTINUATION_START_REGEX = Regex(
-            // Starts with a dosage unit word (with optional digit prefix), or starts with ) or ]
-            """^(?:\d*\s*(?:mg|ml|mcg|g\b|iu|units?)\b|[)\]]\s*[\(\d])""",
-            RegexOption.IGNORE_CASE,
-        )
+        private val CONTINUATION_START_REGEX =
+            Regex(
+                // Starts with a dosage unit word (with optional digit prefix), or starts with ) or ]
+                """^(?:\d*\s*(?:mg|ml|mcg|g\b|iu|units?)\b|[)\]]\s*[\(\d])""",
+                RegexOption.IGNORE_CASE,
+            )
 
-        private val QUALIFICATION_REGEX = Regex(
-            """M\.?B\.?B\.?S|M\.?D\.?|M\.?S\.?|D\.?G\.?O|B\.?D\.?S|F\.?R\.?C\.?S""",
-            RegexOption.IGNORE_CASE,
-        )
-        private val REG_NO_REGEX = Regex(
-            """Reg\.?\s*No\.?:?\s*\d+|Reg\.?\s*No\.|Registration\s*No""",
-            RegexOption.IGNORE_CASE,
-        )
-        private val DATE_LABEL_REGEX = Regex(
-            """(?:Date|Dated|Date\s+of\s+[Pp]rescription)\s*:""",
-            RegexOption.IGNORE_CASE,
-        )
-        private val DATE_PATTERNS = listOf(
-            Regex("""\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}""", RegexOption.IGNORE_CASE),
-            Regex("""(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}""", RegexOption.IGNORE_CASE),
-            Regex("""\d{1,2}[/\-]\d{1,2}[/\-]\d{4}"""),
-            Regex("""\d{4}-\d{2}-\d{2}"""),
-        )
-        private val MEDICINE_SECTION_LABEL = Regex(
-            """^(?:Rx\s*:|℞\s*:|Medicines?:|Prescription:|Tabs?:|Caps?:)""",
-            RegexOption.IGNORE_CASE,
-        )
-        private val NUMBERED_LIST_PREFIX   = Regex("""^\d{1,2}[.)]\s*""")
-        private val DOSAGE_SUFFIX_REGEX    = Regex("""\d+\s*(?:mg|ml|mcg|g|IU|units?)""", RegexOption.IGNORE_CASE)
-        private val INDIAN_DOSE_PATTERN    = Regex("""\b[01]-[01]-[01]\b""")
+        private val QUALIFICATION_REGEX =
+            Regex(
+                """M\.?B\.?B\.?S|M\.?D\.?|M\.?S\.?|D\.?G\.?O|B\.?D\.?S|F\.?R\.?C\.?S""",
+                RegexOption.IGNORE_CASE,
+            )
+        private val REG_NO_REGEX =
+            Regex(
+                """Reg\.?\s*No\.?:?\s*\d+|Reg\.?\s*No\.|Registration\s*No""",
+                RegexOption.IGNORE_CASE,
+            )
+        private val DATE_LABEL_REGEX =
+            Regex(
+                """(?:Date|Dated|Date\s+of\s+[Pp]rescription)\s*:""",
+                RegexOption.IGNORE_CASE,
+            )
+        private val DATE_PATTERNS =
+            listOf(
+                Regex("""\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}""", RegexOption.IGNORE_CASE),
+                Regex("""(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}""", RegexOption.IGNORE_CASE),
+                Regex("""\d{1,2}[/\-]\d{1,2}[/\-]\d{4}"""),
+                Regex("""\d{4}-\d{2}-\d{2}"""),
+            )
+        private val MEDICINE_SECTION_LABEL =
+            Regex(
+                """^(?:Rx\s*:|℞\s*:|Medicines?:|Prescription:|Tabs?:|Caps?:)""",
+                RegexOption.IGNORE_CASE,
+            )
+        private val NUMBERED_LIST_PREFIX = Regex("""^\d{1,2}[.)]\s*""")
+        private val DOSAGE_SUFFIX_REGEX = Regex("""\d+\s*(?:mg|ml|mcg|g|IU|units?)""", RegexOption.IGNORE_CASE)
+        private val INDIAN_DOSE_PATTERN = Regex("""\b[01]-[01]-[01]\b""")
 
         /**
          * Matches trailing parenthesised packaging / strip-count expressions that
@@ -518,27 +558,34 @@ internal class PrescriptionFieldParser {
          *   "(1 Strip)"          →  stripped
          * The pattern is greedy from the first opening paren containing a digit or unit.
          */
-        private val PAREN_PACKAGING_SUFFIX = Regex(
-            """\s*\(\s*\d.*$""",
-            RegexOption.DOT_MATCHES_ALL,
-        )
-        private val FREQUENCY_PATTERN      = Regex(
-            """\b(?:OD|BD|TDS|QID|once\s+daily|twice\s+daily|three\s+times\s+(?:a\s+)?daily|thrice\s+daily|four\s+times\s+daily)\b""",
-            RegexOption.IGNORE_CASE,
-        )
-        private val INSTRUCTION_VERB_REGEX = Regex(
-            """^\s*(?:take|apply|use|instil|insert|inhale|give|administer)\b""",
-            RegexOption.IGNORE_CASE,
-        )
+        private val PAREN_PACKAGING_SUFFIX =
+            Regex(
+                """\s*\(\s*\d.*$""",
+                RegexOption.DOT_MATCHES_ALL,
+            )
+        private val FREQUENCY_PATTERN =
+            Regex(
+                """\b(?:OD|BD|TDS|QID|once\s+daily|twice\s+daily|three\s+times\s+(?:a\s+)?daily|thrice\s+daily|four\s+times\s+daily)\b""",
+                RegexOption.IGNORE_CASE,
+            )
+        private val INSTRUCTION_VERB_REGEX =
+            Regex(
+                """^\s*(?:take|apply|use|instil|insert|inhale|give|administer)\b""",
+                RegexOption.IGNORE_CASE,
+            )
+
         /** Matches a line that is entirely a dose quantity: "500mg", "10 ml", "2 tsp". */
-        private val PURE_DOSE_LINE_REGEX   = Regex(
-            """^\d+(\.\d+)?\s*(?:mg|ml|mcg|g|IU|units?|tsp|tbsp|drops?)\s*$""",
-            RegexOption.IGNORE_CASE,
-        )
+        private val PURE_DOSE_LINE_REGEX =
+            Regex(
+                """^\d+(\.\d+)?\s*(?:mg|ml|mcg|g|IU|units?|tsp|tbsp|drops?)\s*$""",
+                RegexOption.IGNORE_CASE,
+            )
+
         /** Matches a leftover string that is just a dosage quantity after stripping freq/dose tokens. */
-        private val DOSAGE_QUANTITY_ONLY_REGEX = Regex(
-            """^\d+(\.\d+)?\s*(?:mg|ml|mcg|g|IU|units?|tsp|tbsp|drops?)?$""",
-            RegexOption.IGNORE_CASE,
-        )
+        private val DOSAGE_QUANTITY_ONLY_REGEX =
+            Regex(
+                """^\d+(\.\d+)?\s*(?:mg|ml|mcg|g|IU|units?|tsp|tbsp|drops?)?$""",
+                RegexOption.IGNORE_CASE,
+            )
     }
 }

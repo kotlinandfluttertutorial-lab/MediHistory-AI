@@ -37,221 +37,231 @@ import javax.inject.Inject
  * Privacy: never log patientId, medicine names, or reminder content.
  */
 @HiltViewModel
-class ReminderViewModel @Inject constructor(
-    private val repository: ReminderRepository,
-    private val medicineRepository: MedicineRepository,
-    private val reminderAdvisorEngine: ReminderAdvisorEngine,
-) : ViewModel() {
+class ReminderViewModel
+    @Inject
+    constructor(
+        private val repository: ReminderRepository,
+        private val medicineRepository: MedicineRepository,
+        private val reminderAdvisorEngine: ReminderAdvisorEngine,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(ReminderUiState())
+        val uiState: StateFlow<ReminderUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(ReminderUiState())
-    val uiState: StateFlow<ReminderUiState> = _uiState.asStateFlow()
+        // Cached patientId — set when onMedicineSelected is called, used by onConfirmReminderTimes.
+        private var patientIdForAdvisor: String? = null
 
-    // Cached patientId — set when onMedicineSelected is called, used by onConfirmReminderTimes.
-    private var patientIdForAdvisor: String? = null
+        // -------------------------------------------------------------------------
+        // Load
+        // -------------------------------------------------------------------------
 
-    // -------------------------------------------------------------------------
-    // Load
-    // -------------------------------------------------------------------------
-
-    /**
-     * Starts observing reminders and available medicines for [patientId].
-     * Safe to call multiple times — each call replaces the previous subscription.
-     */
-    fun loadReminders(patientId: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            combine(
-                repository.observeByPatient(patientId),
-                medicineRepository.observeByPatient(patientId),
-            ) { reminders, medicines -> reminders to medicines }
-                .catch { e ->
-                    Timber.e(e, "Failed to load reminders")
-                    _uiState.update {
-                        it.copy(isLoading = false, error = "Failed to load reminders.")
+        /**
+         * Starts observing reminders and available medicines for [patientId].
+         * Safe to call multiple times — each call replaces the previous subscription.
+         */
+        fun loadReminders(patientId: String) {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, error = null) }
+                combine(
+                    repository.observeByPatient(patientId),
+                    medicineRepository.observeByPatient(patientId),
+                ) { reminders, medicines -> reminders to medicines }
+                    .catch { e ->
+                        Timber.e(e, "Failed to load reminders")
+                        _uiState.update {
+                            it.copy(isLoading = false, error = "Failed to load reminders.")
+                        }
                     }
-                }
-                .collect { (reminders, medicines) ->
-                    _uiState.update {
-                        it.copy(
-                            reminders          = reminders,
-                            availableMedicines = medicines,
-                            isLoading          = false,
-                            error              = null,
-                        )
+                    .collect { (reminders, medicines) ->
+                        _uiState.update {
+                            it.copy(
+                                reminders = reminders,
+                                availableMedicines = medicines,
+                                isLoading = false,
+                                error = null,
+                            )
+                        }
                     }
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // Medicine picker
+        // -------------------------------------------------------------------------
+
+        /** Opens the medicine-picker dialog. */
+        fun onShowMedicinePicker() {
+            _uiState.update { it.copy(showMedicinePicker = true) }
+        }
+
+        /** Dismisses the medicine-picker dialog without creating a reminder. */
+        fun onDismissMedicinePicker() {
+            _uiState.update { it.copy(showMedicinePicker = false) }
+        }
+
+        /**
+         * Called when the patient selects a medicine from the picker.
+         * Computes a reminder suggestion via [ReminderAdvisorEngine] and shows the advisor dialog.
+         *
+         * @param medicine   The medicine the patient wants to be reminded about.
+         * @param patientId  The owning patient's ID.
+         */
+        fun onMedicineSelected(
+            medicine: Medicine,
+            patientId: String,
+        ) {
+            patientIdForAdvisor = patientId
+            val suggestion = reminderAdvisorEngine.suggest(medicine.dosageInstructions)
+            _uiState.update {
+                it.copy(
+                    showMedicinePicker = false,
+                    pendingReminderMedicine = medicine,
+                    reminderSuggestion = suggestion,
+                    showReminderAdvisor = true,
+                )
+            }
+        }
+
+        /**
+         * Called when the patient confirms the suggested reminder times in the advisor dialog.
+         * Creates one reminder per time in [times], then dismisses the advisor.
+         *
+         * [prescribedInstructions] is taken from the medicine's dosageInstructions which
+         * was set from a REVIEWED OCR field — satisfying the safety contract.
+         *
+         * @param medicine   The medicine to create reminders for.
+         * @param patientId  The owning patient's ID.
+         * @param times      The list of times the patient confirmed.
+         */
+        fun onConfirmReminderTimes(
+            medicine: Medicine,
+            patientId: String,
+            times: List<LocalTime>,
+        ) {
+            times.forEach { time ->
+                createReminder(
+                    patientId = patientId,
+                    medicineId = medicine.id,
+                    medicineName = medicine.medicineName,
+                    prescribedInstructions = medicine.dosageInstructions,
+                    reminderTime = time,
+                )
+            }
+            onDismissReminderAdvisor()
+        }
+
+        /**
+         * Dismisses the reminder advisor dialog without creating any reminders.
+         */
+        fun onDismissReminderAdvisor() {
+            _uiState.update {
+                it.copy(
+                    showReminderAdvisor = false,
+                    pendingReminderMedicine = null,
+                    reminderSuggestion = null,
+                )
+            }
+            patientIdForAdvisor = null
+        }
+
+        // -------------------------------------------------------------------------
+        // Reminder CRUD
+        // -------------------------------------------------------------------------
+
+        /**
+         * Creates a new opt-in reminder and persists it.
+         *
+         * Safety: [prescribedInstructions] must originate from a REVIEWED OCR extracted field.
+         * The ViewModel accepts it as a parameter — it is the caller's responsibility to only
+         * pass reviewed data. Passing null is valid (prescribed instructions are optional).
+         */
+        fun createReminder(
+            patientId: String,
+            medicineId: String,
+            medicineName: String,
+            prescribedInstructions: String?,
+            reminderTime: LocalTime,
+        ) {
+            val reminder =
+                Reminder(
+                    id = UUID.randomUUID().toString(),
+                    patientId = patientId,
+                    medicineId = medicineId,
+                    medicineName = medicineName,
+                    prescribedInstructions = prescribedInstructions,
+                    reminderTime = reminderTime,
+                    isActive = true,
+                )
+            viewModelScope.launch {
+                try {
+                    repository.insert(reminder)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to create reminder")
+                    _uiState.update { it.copy(error = "Failed to create reminder.") }
                 }
+            }
         }
-    }
 
-    // -------------------------------------------------------------------------
-    // Medicine picker
-    // -------------------------------------------------------------------------
-
-    /** Opens the medicine-picker dialog. */
-    fun onShowMedicinePicker() {
-        _uiState.update { it.copy(showMedicinePicker = true) }
-    }
-
-    /** Dismisses the medicine-picker dialog without creating a reminder. */
-    fun onDismissMedicinePicker() {
-        _uiState.update { it.copy(showMedicinePicker = false) }
-    }
-
-    /**
-     * Called when the patient selects a medicine from the picker.
-     * Computes a reminder suggestion via [ReminderAdvisorEngine] and shows the advisor dialog.
-     *
-     * @param medicine   The medicine the patient wants to be reminded about.
-     * @param patientId  The owning patient's ID.
-     */
-    fun onMedicineSelected(medicine: Medicine, patientId: String) {
-        patientIdForAdvisor = patientId
-        val suggestion = reminderAdvisorEngine.suggest(medicine.dosageInstructions)
-        _uiState.update {
-            it.copy(
-                showMedicinePicker    = false,
-                pendingReminderMedicine = medicine,
-                reminderSuggestion    = suggestion,
-                showReminderAdvisor   = true,
-            )
+        /**
+         * Toggles the active/inactive state of a reminder.
+         * An inactive reminder no longer appears in "Today's Medicines".
+         */
+        fun toggleActive(reminder: Reminder) {
+            viewModelScope.launch {
+                try {
+                    repository.update(reminder.copy(isActive = !reminder.isActive))
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to toggle reminder active state")
+                    _uiState.update { it.copy(error = "Failed to update reminder.") }
+                }
+            }
         }
-    }
 
-    /**
-     * Called when the patient confirms the suggested reminder times in the advisor dialog.
-     * Creates one reminder per time in [times], then dismisses the advisor.
-     *
-     * [prescribedInstructions] is taken from the medicine's dosageInstructions which
-     * was set from a REVIEWED OCR field — satisfying the safety contract.
-     *
-     * @param medicine   The medicine to create reminders for.
-     * @param patientId  The owning patient's ID.
-     * @param times      The list of times the patient confirmed.
-     */
-    fun onConfirmReminderTimes(medicine: Medicine, patientId: String, times: List<LocalTime>) {
-        times.forEach { time ->
-            createReminder(
-                patientId              = patientId,
-                medicineId             = medicine.id,
-                medicineName           = medicine.medicineName,
-                prescribedInstructions = medicine.dosageInstructions,
-                reminderTime           = time,
-            )
+        /** Deletes the given reminder. Patients may cancel a reminder at any time. */
+        fun deleteReminder(reminder: Reminder) {
+            viewModelScope.launch {
+                try {
+                    repository.delete(reminder)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to delete reminder")
+                    _uiState.update { it.copy(error = "Failed to delete reminder.") }
+                }
+            }
         }
-        onDismissReminderAdvisor()
-    }
 
-    /**
-     * Dismisses the reminder advisor dialog without creating any reminders.
-     */
-    fun onDismissReminderAdvisor() {
-        _uiState.update {
-            it.copy(
-                showReminderAdvisor     = false,
-                pendingReminderMedicine = null,
-                reminderSuggestion      = null,
-            )
-        }
-        patientIdForAdvisor = null
-    }
+        // -------------------------------------------------------------------------
+        // Dose recording
+        // -------------------------------------------------------------------------
 
-    // -------------------------------------------------------------------------
-    // Reminder CRUD
-    // -------------------------------------------------------------------------
-
-    /**
-     * Creates a new opt-in reminder and persists it.
-     *
-     * Safety: [prescribedInstructions] must originate from a REVIEWED OCR extracted field.
-     * The ViewModel accepts it as a parameter — it is the caller's responsibility to only
-     * pass reviewed data. Passing null is valid (prescribed instructions are optional).
-     */
-    fun createReminder(
-        patientId: String,
-        medicineId: String,
-        medicineName: String,
-        prescribedInstructions: String?,
-        reminderTime: LocalTime,
-    ) {
-        val reminder = Reminder(
-            id                    = UUID.randomUUID().toString(),
-            patientId             = patientId,
-            medicineId            = medicineId,
-            medicineName          = medicineName,
-            prescribedInstructions = prescribedInstructions,
-            reminderTime          = reminderTime,
-            isActive              = true,
-        )
-        viewModelScope.launch {
-            try {
-                repository.insert(reminder)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to create reminder")
-                _uiState.update { it.copy(error = "Failed to create reminder.") }
+        /**
+         * Records a patient dose event (TAKEN / SKIPPED / MISSED).
+         *
+         * Safety invariant: [note] is patient-provided free text. This function NEVER
+         * reads, copies, or references [Reminder.prescribedInstructions]. The prescribed
+         * and the patient-reported data must remain strictly separate.
+         */
+        fun recordDose(
+            reminderId: String,
+            patientId: String,
+            doseRecord: DoseRecord,
+            note: String? = null,
+        ) {
+            val entity =
+                DoseRecordEntity(
+                    id = UUID.randomUUID().toString(),
+                    reminderId = reminderId,
+                    patientId = patientId,
+                    scheduledTime = System.currentTimeMillis(),
+                    recordedTime = System.currentTimeMillis(),
+                    record = doseRecord,
+                    patientNote = note,
+                )
+            viewModelScope.launch {
+                try {
+                    repository.insertDoseRecord(entity)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to record dose")
+                    _uiState.update { it.copy(error = "Failed to record dose.") }
+                }
             }
         }
     }
-
-    /**
-     * Toggles the active/inactive state of a reminder.
-     * An inactive reminder no longer appears in "Today's Medicines".
-     */
-    fun toggleActive(reminder: Reminder) {
-        viewModelScope.launch {
-            try {
-                repository.update(reminder.copy(isActive = !reminder.isActive))
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to toggle reminder active state")
-                _uiState.update { it.copy(error = "Failed to update reminder.") }
-            }
-        }
-    }
-
-    /** Deletes the given reminder. Patients may cancel a reminder at any time. */
-    fun deleteReminder(reminder: Reminder) {
-        viewModelScope.launch {
-            try {
-                repository.delete(reminder)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to delete reminder")
-                _uiState.update { it.copy(error = "Failed to delete reminder.") }
-            }
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Dose recording
-    // -------------------------------------------------------------------------
-
-    /**
-     * Records a patient dose event (TAKEN / SKIPPED / MISSED).
-     *
-     * Safety invariant: [note] is patient-provided free text. This function NEVER
-     * reads, copies, or references [Reminder.prescribedInstructions]. The prescribed
-     * and the patient-reported data must remain strictly separate.
-     */
-    fun recordDose(
-        reminderId: String,
-        patientId: String,
-        doseRecord: DoseRecord,
-        note: String? = null,
-    ) {
-        val entity = DoseRecordEntity(
-            id            = UUID.randomUUID().toString(),
-            reminderId    = reminderId,
-            patientId     = patientId,
-            scheduledTime = System.currentTimeMillis(),
-            recordedTime  = System.currentTimeMillis(),
-            record        = doseRecord,
-            patientNote   = note,
-        )
-        viewModelScope.launch {
-            try {
-                repository.insertDoseRecord(entity)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to record dose")
-                _uiState.update { it.copy(error = "Failed to record dose.") }
-            }
-        }
-    }
-}

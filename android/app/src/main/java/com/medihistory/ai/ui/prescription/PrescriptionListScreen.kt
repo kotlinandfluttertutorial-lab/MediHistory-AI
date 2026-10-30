@@ -12,9 +12,9 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -85,9 +85,10 @@ fun PrescriptionListScreen(
         when {
             uiState.isLoading -> {
                 LoadingIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                     contentDescription = "Loading prescriptions",
                 )
             }
@@ -97,9 +98,10 @@ fun PrescriptionListScreen(
                     message = uiState.error ?: "An error occurred.",
                     actionLabel = "Retry",
                     onAction = { viewModel.loadPrescriptions() },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -108,9 +110,10 @@ fun PrescriptionListScreen(
                     message = "No prescriptions yet",
                     actionLabel = "Add your first prescription",
                     onAction = onAddPrescription,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -118,8 +121,9 @@ fun PrescriptionListScreen(
                 LazyColumn(
                     contentPadding = innerPadding,
                     verticalArrangement = Arrangement.spacedBy(0.dp),
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier =
+                        Modifier
+                            .fillMaxSize(),
                 ) {
                     // Doctor-grouped layout matching Figma SCR-02-RX-LIST design
                     uiState.doctorGroups.forEach { group ->
@@ -137,9 +141,10 @@ fun PrescriptionListScreen(
                                 PrescriptionCard(
                                     prescription = prescription,
                                     onClick = { onPrescriptionClick(prescription.id) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 4.dp),
                                 )
                             }
                         }

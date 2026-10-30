@@ -25,7 +25,6 @@ import java.io.File
  *   return to the onboarding / login screen.
  */
 object DataDeletion {
-
     /**
      * Permanently deletes all data for [patientId].
      *
@@ -40,71 +39,75 @@ object DataDeletion {
      * @param patientId         The patient whose data is being erased.
      * @param database          Room database instance.
      * @param securePreferences Encrypted preference store to clear.
-     * @return                  [DeletionResult] with counts of deleted items.
+     * @return [DeletionResult] with counts of deleted items.
      */
     suspend fun deleteAllData(
         context: Context,
         patientId: String,
         database: MediHistoryDatabase,
         securePreferences: SecurePreferencesStore,
-    ): DeletionResult = withContext(Dispatchers.IO) {
-        // ── Step 1: Count records before deletion ─────────────────────────────
-        val prescriptions = database.prescriptionDao()
-            .observeByPatient(patientId)
-            .first()
-        val prescriptionCount = prescriptions.size
+    ): DeletionResult =
+        withContext(Dispatchers.IO) {
+            // ── Step 1: Count records before deletion ─────────────────────────────
+            val prescriptions =
+                database.prescriptionDao()
+                    .observeByPatient(patientId)
+                    .first()
+            val prescriptionCount = prescriptions.size
 
-        val medicineCount = database.medicineDao()
-            .observeByPatient(patientId)
-            .first()
-            .size
+            val medicineCount =
+                database.medicineDao()
+                    .observeByPatient(patientId)
+                    .first()
+                    .size
 
-        // ── Step 2: Delete Room data ─────────────────────────────────────────
-        // Delete all prescriptions for the patient — cascade deletes
-        // extracted_fields and medicines automatically via FK CASCADE.
-        for (prescription in prescriptions) {
-            database.prescriptionDao().delete(prescription)
-        }
+            // ── Step 2: Delete Room data ─────────────────────────────────────────
+            // Delete all prescriptions for the patient — cascade deletes
+            // extracted_fields and medicines automatically via FK CASCADE.
+            for (prescription in prescriptions) {
+                database.prescriptionDao().delete(prescription)
+            }
 
-        // Delete all doctors for the patient
-        val doctors = database.doctorDao()
-            .observeByPatient(patientId)
-            .first()
-        for (doctor in doctors) {
-            database.doctorDao().delete(doctor)
-        }
+            // Delete all doctors for the patient
+            val doctors =
+                database.doctorDao()
+                    .observeByPatient(patientId)
+                    .first()
+            for (doctor in doctors) {
+                database.doctorDao().delete(doctor)
+            }
 
-        // Delete all duplicate alerts for the patient
-        database.duplicateAlertDao().deleteByPatient(patientId)
+            // Delete all duplicate alerts for the patient
+            database.duplicateAlertDao().deleteByPatient(patientId)
 
-        // Delete the patient record itself
-        val patient = database.patientDao().getById(patientId)
-        if (patient != null) {
-            database.patientDao().delete(patient)
-        }
+            // Delete the patient record itself
+            val patient = database.patientDao().getById(patientId)
+            if (patient != null) {
+                database.patientDao().delete(patient)
+            }
 
-        // ── Step 3: Delete prescription document files ────────────────────────
-        val prescriptionsDir = File(context.filesDir, "prescriptions")
-        var filesDeleted = 0
-        if (prescriptionsDir.exists() && prescriptionsDir.isDirectory) {
-            val files = prescriptionsDir.listFiles() ?: emptyArray()
-            for (file in files) {
-                if (file.delete()) {
-                    filesDeleted++
+            // ── Step 3: Delete prescription document files ────────────────────────
+            val prescriptionsDir = File(context.filesDir, "prescriptions")
+            var filesDeleted = 0
+            if (prescriptionsDir.exists() && prescriptionsDir.isDirectory) {
+                val files = prescriptionsDir.listFiles() ?: emptyArray()
+                for (file in files) {
+                    if (file.delete()) {
+                        filesDeleted++
+                    }
                 }
             }
+
+            // ── Step 4: Clear encrypted preferences ──────────────────────────────
+            securePreferences.clear()
+
+            DeletionResult(
+                prescriptionsDeleted = prescriptionCount,
+                medicinesDeleted = medicineCount,
+                filesDeleted = filesDeleted,
+                preferencesCleared = true,
+            )
         }
-
-        // ── Step 4: Clear encrypted preferences ──────────────────────────────
-        securePreferences.clear()
-
-        DeletionResult(
-            prescriptionsDeleted = prescriptionCount,
-            medicinesDeleted = medicineCount,
-            filesDeleted = filesDeleted,
-            preferencesCleared = true,
-        )
-    }
 
     /**
      * Result of a [deleteAllData] call.

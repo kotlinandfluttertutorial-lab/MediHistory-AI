@@ -72,9 +72,10 @@ fun MedicineListScreen(
 
     // Apply the status filter client-side (the DAO returns all medicines for the query;
     // status filter is a lightweight in-memory step that avoids additional DB queries).
-    val displayedMedicines = uiState.medicines.let { list ->
-        if (selectedStatus == null) list else list.filter { it.status == selectedStatus }
-    }
+    val displayedMedicines =
+        uiState.medicines.let { list ->
+            if (selectedStatus == null) list else list.filter { it.status == selectedStatus }
+        }
 
     Scaffold(
         modifier = modifier,
@@ -84,9 +85,10 @@ fun MedicineListScreen(
                 actions = {
                     IconButton(
                         onClick = { isSearchActive = !isSearchActive },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Search medicines"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Search medicines"
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Search,
@@ -95,9 +97,10 @@ fun MedicineListScreen(
                     }
                     IconButton(
                         onClick = { /* Filter bottom sheet — future ticket */ },
-                        modifier = Modifier.semantics {
-                            contentDescription = "Filter medicines"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Filter medicines"
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.FilterList,
@@ -109,9 +112,10 @@ fun MedicineListScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             // Search bar — visible only when toggled
             if (isSearchActive) {
@@ -121,9 +125,10 @@ fun MedicineListScreen(
                     onSearch = { isSearchActive = false },
                     active = isSearchActive,
                     onActiveChange = { isSearchActive = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
                     placeholder = { Text(text = "Search medicines, ingredients…") },
                     leadingIcon = {
                         Icon(
@@ -137,9 +142,10 @@ fun MedicineListScreen(
             // Status filter chips — horizontally scrollable
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                modifier =
+                    Modifier
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
             ) {
                 FilterChip(
                     selected = selectedStatus == null,
@@ -154,8 +160,9 @@ fun MedicineListScreen(
                         },
                         label = {
                             Text(
-                                text = status.name.lowercase()
-                                    .replaceFirstChar { it.uppercase() },
+                                text =
+                                    status.name.lowercase()
+                                        .replaceFirstChar { it.uppercase() },
                             )
                         },
                     )
@@ -170,9 +177,10 @@ fun MedicineListScreen(
             // Results count
             Text(
                 text = "Showing ${displayedMedicines.size} medicine${if (displayedMedicines.size == 1) "" else "s"}",
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .semantics { contentDescription = "Showing ${displayedMedicines.size} medicines" },
+                modifier =
+                    Modifier
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .semantics { contentDescription = "Showing ${displayedMedicines.size} medicines" },
             )
 
             // Content area
@@ -195,11 +203,12 @@ fun MedicineListScreen(
 
                 displayedMedicines.isEmpty() -> {
                     EmptyStateView(
-                        message = if (uiState.searchQuery.isBlank() && selectedStatus == null) {
-                            "No medicines yet"
-                        } else {
-                            "No medicines match your search"
-                        },
+                        message =
+                            if (uiState.searchQuery.isBlank() && selectedStatus == null) {
+                                "No medicines yet"
+                            } else {
+                                "No medicines match your search"
+                            },
                         actionLabel = "Clear search",
                         onAction = {
                             viewModel.onSearchQueryChange("")
@@ -212,9 +221,10 @@ fun MedicineListScreen(
                 else -> {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
                     ) {
                         items(
                             items = displayedMedicines,

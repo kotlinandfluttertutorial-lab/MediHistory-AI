@@ -8,10 +8,16 @@ package com.medihistory.ai.data.auth
  */
 interface AuthRepository {
     /** Signs in an existing user with email and password. */
-    suspend fun login(email: String, password: String): Result<Unit>
+    suspend fun login(
+        email: String,
+        password: String,
+    ): Result<Unit>
 
     /** Creates a new account with email and password. */
-    suspend fun register(email: String, password: String): Result<Unit>
+    suspend fun register(
+        email: String,
+        password: String,
+    ): Result<Unit>
 
     /** Signs out the current user. */
     suspend fun logout()

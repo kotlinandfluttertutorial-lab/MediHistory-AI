@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface PrescriptionDao {
-
     /**
      * Emits the live list of prescriptions belonging to [patientId], ordered by
      * prescription date descending, then by creation time descending.
@@ -42,7 +41,10 @@ interface PrescriptionDao {
      * cross-patient data exposure.
      */
     @Query("SELECT * FROM prescriptions WHERE id = :id AND patientId = :patientId LIMIT 1")
-    suspend fun getById(id: String, patientId: String): Prescription?
+    suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Prescription?
 
     /** Inserts a new prescription record. Replaces on conflict (idempotent upsert). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)

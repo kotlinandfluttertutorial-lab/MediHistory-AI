@@ -5,5 +5,8 @@ package com.medihistory.ai.data.ocr
  * depending on Room DAOs and repositories.
  */
 interface PostReviewProcessorInterface {
-    suspend fun process(prescriptionId: String, patientId: String)
+    suspend fun process(
+        prescriptionId: String,
+        patientId: String,
+    )
 }

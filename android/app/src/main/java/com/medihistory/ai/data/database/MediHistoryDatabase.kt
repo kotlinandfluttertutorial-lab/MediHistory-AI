@@ -54,7 +54,6 @@ import com.medihistory.ai.data.model.Reminder
 )
 @TypeConverters(Converters::class)
 abstract class MediHistoryDatabase : RoomDatabase() {
-
     abstract fun doctorDao(): DoctorDao
 
     abstract fun patientDao(): PatientDao

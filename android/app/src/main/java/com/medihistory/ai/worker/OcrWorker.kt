@@ -33,93 +33,96 @@ import dagger.assisted.AssistedInject
  * Inject via [buildRequest]; do not instantiate directly.
  */
 @HiltWorker
-class OcrWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
-    private val ocrService: OcrService,
-    private val prescriptionDao: PrescriptionDao,
-    private val extractedFieldDao: ExtractedFieldDao,
-) : CoroutineWorker(context, params) {
+class OcrWorker
+    @AssistedInject
+    constructor(
+        @Assisted context: Context,
+        @Assisted params: WorkerParameters,
+        private val ocrService: OcrService,
+        private val prescriptionDao: PrescriptionDao,
+        private val extractedFieldDao: ExtractedFieldDao,
+    ) : CoroutineWorker(context, params) {
+        companion object {
+            const val KEY_PRESCRIPTION_ID = "prescription_id"
+            const val KEY_PATIENT_ID = "patient_id"
+            const val KEY_DOCUMENT_PATH = "document_path"
+            const val KEY_MIME_TYPE = "mime_type"
 
-    companion object {
-        const val KEY_PRESCRIPTION_ID = "prescription_id"
-        const val KEY_PATIENT_ID = "patient_id"
-        const val KEY_DOCUMENT_PATH = "document_path"
-        const val KEY_MIME_TYPE = "mime_type"
-
-        /**
-         * Builds a [OneTimeWorkRequest] for this worker.
-         *
-         * @param prescriptionId ID of the prescription entity to process.
-         * @param patientId ID of the patient who owns this prescription (for DAO scoping).
-         * @param documentPath Absolute path to the document in app-private storage.
-         * @param mimeType MIME type of the document file.
-         */
-        fun buildRequest(
-            prescriptionId: String,
-            patientId: String,
-            documentPath: String,
-            mimeType: String,
-        ): OneTimeWorkRequest =
-            OneTimeWorkRequestBuilder<OcrWorker>()
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setInputData(
-                    workDataOf(
-                        KEY_PRESCRIPTION_ID to prescriptionId,
-                        KEY_PATIENT_ID to patientId,
-                        KEY_DOCUMENT_PATH to documentPath,
-                        KEY_MIME_TYPE to mimeType,
-                    ),
-                )
-                .setConstraints(Constraints(requiresStorageNotLow = true))
-                .build()
-    }
-
-    override suspend fun doWork(): Result {
-        val prescriptionId = inputData.getString(KEY_PRESCRIPTION_ID) ?: return Result.failure()
-        val patientId = inputData.getString(KEY_PATIENT_ID) ?: return Result.failure()
-        val documentPath = inputData.getString(KEY_DOCUMENT_PATH) ?: return Result.failure()
-        val mimeType = inputData.getString(KEY_MIME_TYPE) ?: return Result.failure()
-
-        // Mark as processing before calling the service.
-        // NEVER log prescriptionId, documentPath, or patientId here.
-        prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.PROCESSING)
-
-        return try {
-            val result = ocrService.extract(documentPath, mimeType, prescriptionId)
-            if (result.isSuccess) {
-                val entities = result.fields.map { field ->
-                    ExtractedFieldEntity(
-                        id = "$prescriptionId-${field.fieldName}",
-                        prescriptionId = prescriptionId,
-                        fieldName = field.fieldName,
-                        rawValue = field.rawValue,
-                        patientValue = null,
-                        confidence = field.confidence,
-                        // All fields start as PENDING_REVIEW — patient must review every field.
-                        reviewState = ReviewState.PENDING_REVIEW,
-                        sourceReference = field.sourceReference,
+            /**
+             * Builds a [OneTimeWorkRequest] for this worker.
+             *
+             * @param prescriptionId ID of the prescription entity to process.
+             * @param patientId ID of the patient who owns this prescription (for DAO scoping).
+             * @param documentPath Absolute path to the document in app-private storage.
+             * @param mimeType MIME type of the document file.
+             */
+            fun buildRequest(
+                prescriptionId: String,
+                patientId: String,
+                documentPath: String,
+                mimeType: String,
+            ): OneTimeWorkRequest =
+                OneTimeWorkRequestBuilder<OcrWorker>()
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .setInputData(
+                        workDataOf(
+                            KEY_PRESCRIPTION_ID to prescriptionId,
+                            KEY_PATIENT_ID to patientId,
+                            KEY_DOCUMENT_PATH to documentPath,
+                            KEY_MIME_TYPE to mimeType,
+                        ),
                     )
-                }
-                extractedFieldDao.insertAll(entities)
+                    .setConstraints(Constraints(requiresStorageNotLow = true))
+                    .build()
+        }
 
-                val newStatus = if (result.pendingReviewCount > 0) {
-                    OcrStatus.NEEDS_REVIEW
+        override suspend fun doWork(): Result {
+            val prescriptionId = inputData.getString(KEY_PRESCRIPTION_ID) ?: return Result.failure()
+            val patientId = inputData.getString(KEY_PATIENT_ID) ?: return Result.failure()
+            val documentPath = inputData.getString(KEY_DOCUMENT_PATH) ?: return Result.failure()
+            val mimeType = inputData.getString(KEY_MIME_TYPE) ?: return Result.failure()
+
+            // Mark as processing before calling the service.
+            // NEVER log prescriptionId, documentPath, or patientId here.
+            prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.PROCESSING)
+
+            return try {
+                val result = ocrService.extract(documentPath, mimeType, prescriptionId)
+                if (result.isSuccess) {
+                    val entities =
+                        result.fields.map { field ->
+                            ExtractedFieldEntity(
+                                id = "$prescriptionId-${field.fieldName}",
+                                prescriptionId = prescriptionId,
+                                fieldName = field.fieldName,
+                                rawValue = field.rawValue,
+                                patientValue = null,
+                                confidence = field.confidence,
+                                // All fields start as PENDING_REVIEW — patient must review every field.
+                                reviewState = ReviewState.PENDING_REVIEW,
+                                sourceReference = field.sourceReference,
+                            )
+                        }
+                    extractedFieldDao.insertAll(entities)
+
+                    val newStatus =
+                        if (result.pendingReviewCount > 0) {
+                            OcrStatus.NEEDS_REVIEW
+                        } else {
+                            OcrStatus.REVIEWED
+                        }
+                    prescriptionDao.updateOcrStatus(prescriptionId, patientId, newStatus)
+                    Result.success()
                 } else {
-                    OcrStatus.REVIEWED
+                    // OCR service returned an error. Log the error type only — never field values.
+                    prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.ERROR)
+                    Result.failure()
                 }
-                prescriptionDao.updateOcrStatus(prescriptionId, patientId, newStatus)
-                Result.success()
-            } else {
-                // OCR service returned an error. Log the error type only — never field values.
+            } catch (e: Exception) {
+                // Catch-all: record the failure. NEVER log exception message if it could
+                // contain document content, medicine names, or patient identifiers.
                 prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.ERROR)
                 Result.failure()
             }
-        } catch (e: Exception) {
-            // Catch-all: record the failure. NEVER log exception message if it could
-            // contain document content, medicine names, or patient identifiers.
-            prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.ERROR)
-            Result.failure()
         }
     }
-}

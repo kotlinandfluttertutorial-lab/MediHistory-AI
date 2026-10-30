@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
  * record belonging to a different patient.
  */
 interface PatientRepository {
-
     /**
      * Returns the patient with [patientId], or null.
      * Returns null (not an error) when no record with that id exists.

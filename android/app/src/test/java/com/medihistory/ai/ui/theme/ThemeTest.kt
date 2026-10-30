@@ -12,7 +12,6 @@ import org.junit.Test
  * No Android runtime, Robolectric, or Compose instrumentation required.
  */
 class ThemeTest {
-
     @Test
     fun should_have_correct_light_primary_color() {
         // LightColorScheme.primary maps to MhPrimary = #006874
@@ -51,8 +50,11 @@ class ThemeTest {
             c.statusCurrent, c.statusPast, c.statusUnknown,
             c.ocrReview, c.ocrFailed, c.confidenceHigh, c.onConfidenceHigh,
         ).forEachIndexed { i, color ->
-            assertNotEquals("Extended light colour field $i must not be Color.Unspecified",
-                Color.Unspecified, color)
+            assertNotEquals(
+                "Extended light colour field $i must not be Color.Unspecified",
+                Color.Unspecified,
+                color,
+            )
         }
     }
 
@@ -64,8 +66,11 @@ class ThemeTest {
             c.statusCurrent, c.statusPast, c.statusUnknown,
             c.ocrReview, c.ocrFailed, c.confidenceHigh, c.onConfidenceHigh,
         ).forEachIndexed { i, color ->
-            assertNotEquals("Extended dark colour field $i must not be Color.Unspecified",
-                Color.Unspecified, color)
+            assertNotEquals(
+                "Extended dark colour field $i must not be Color.Unspecified",
+                Color.Unspecified,
+                color,
+            )
         }
     }
 }

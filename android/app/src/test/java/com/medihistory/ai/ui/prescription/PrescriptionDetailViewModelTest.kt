@@ -46,7 +46,6 @@ import java.time.LocalDate
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
 class PrescriptionDetailViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakePrescriptionRepository
     private lateinit var workManager: WorkManager
@@ -59,11 +58,12 @@ class PrescriptionDetailViewModelTest {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
         workManager = WorkManager.getInstance(context)
-        viewModel = PrescriptionDetailViewModel(
-            repository = fakeRepository,
-            doctorRepository = FakeDetailDoctorRepository(),
-            workManager = workManager,
-        )
+        viewModel =
+            PrescriptionDetailViewModel(
+                repository = fakeRepository,
+                doctorRepository = FakeDetailDoctorRepository(),
+                workManager = workManager,
+            )
     }
 
     @After
@@ -109,34 +109,36 @@ class PrescriptionDetailViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `given existing prescription when load called then state has prescription`() = runTest {
-        val prescription = syntheticPrescription()
-        fakeRepository.add(prescription)
+    fun `given existing prescription when load called then state has prescription`() =
+        runTest {
+            val prescription = syntheticPrescription()
+            fakeRepository.add(prescription)
 
-        viewModel.load(prescription.id, prescription.patientId)
-        advanceUntilIdle()
+            viewModel.load(prescription.id, prescription.patientId)
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertFalse("isLoading must be false after load", state.isLoading)
-        assertNull("error must be null when prescription is found", state.error)
-        assertNotNull("prescription must not be null", state.prescription)
-        assertEquals("prescription id must match", prescription.id, state.prescription!!.id)
-    }
+            val state = viewModel.uiState.value
+            assertFalse("isLoading must be false after load", state.isLoading)
+            assertNull("error must be null when prescription is found", state.error)
+            assertNotNull("prescription must not be null", state.prescription)
+            assertEquals("prescription id must match", prescription.id, state.prescription!!.id)
+        }
 
     // -------------------------------------------------------------------------
     // Load — not found
     // -------------------------------------------------------------------------
 
     @Test
-    fun `given unknown prescription id when load called then state has error`() = runTest {
-        viewModel.load("rx-unknown-999", "test-patient-001")
-        advanceUntilIdle()
+    fun `given unknown prescription id when load called then state has error`() =
+        runTest {
+            viewModel.load("rx-unknown-999", "test-patient-001")
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertFalse("isLoading must be false after failed load", state.isLoading)
-        assertNotNull("error must not be null when prescription is not found", state.error)
-        assertNull("prescription must be null when not found", state.prescription)
-    }
+            val state = viewModel.uiState.value
+            assertFalse("isLoading must be false after failed load", state.isLoading)
+            assertNotNull("error must not be null when prescription is not found", state.error)
+            assertNull("prescription must be null when not found", state.prescription)
+        }
 
     // -------------------------------------------------------------------------
     // Load — patientId scoping
@@ -165,18 +167,18 @@ class PrescriptionDetailViewModelTest {
 // ---------------------------------------------------------------------------
 
 private class FakePrescriptionRepository : PrescriptionRepository {
-
     private val _prescriptions = MutableStateFlow<List<Prescription>>(emptyList())
 
     fun add(prescription: Prescription) {
         _prescriptions.update { current -> current + prescription }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Prescription>> =
-        MutableStateFlow(_prescriptions.value.filter { it.patientId == patientId })
+    override fun observeByPatient(patientId: String): Flow<List<Prescription>> = MutableStateFlow(_prescriptions.value.filter { it.patientId == patientId })
 
-    override suspend fun getById(id: String, patientId: String): Prescription? =
-        _prescriptions.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Prescription? = _prescriptions.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insert(prescription: Prescription) {
         _prescriptions.update { current -> current + prescription }
@@ -215,11 +217,12 @@ private class FakePrescriptionRepository : PrescriptionRepository {
 // ---------------------------------------------------------------------------
 
 private class FakeDetailDoctorRepository : DoctorRepository {
+    override fun observeByPatient(patientId: String): Flow<List<Doctor>> = MutableStateFlow(emptyList())
 
-    override fun observeByPatient(patientId: String): Flow<List<Doctor>> =
-        MutableStateFlow(emptyList())
-
-    override suspend fun getById(doctorId: String, patientId: String): Doctor? = null
+    override suspend fun getById(
+        doctorId: String,
+        patientId: String,
+    ): Doctor? = null
 
     override suspend fun insert(doctor: Doctor) = Unit
 

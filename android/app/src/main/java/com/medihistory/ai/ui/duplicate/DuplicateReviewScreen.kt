@@ -12,12 +12,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -82,9 +82,10 @@ fun DuplicateReviewScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Navigate back"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Navigate back"
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.ArrowBack,
@@ -96,23 +97,26 @@ fun DuplicateReviewScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             // ---- Top summary banner ----
             if (uiState.unreviewedCount > 0) {
                 OutlinedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .semantics {
-                            contentDescription =
-                                "${uiState.unreviewedCount} alert(s) need your review"
-                        },
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.extendedColors.warningContainer,
-                    ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .semantics {
+                                contentDescription =
+                                    "${uiState.unreviewedCount} alert(s) need your review"
+                            },
+                    colors =
+                        CardDefaults.outlinedCardColors(
+                            containerColor = MaterialTheme.extendedColors.warningContainer,
+                        ),
                 ) {
                     Row(
                         modifier = Modifier.padding(12.dp),
@@ -135,21 +139,24 @@ fun DuplicateReviewScreen(
 
             // ---- Show-reviewed filter row ----
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(
                     onClick = viewModel::onToggleShowReviewed,
-                    modifier = Modifier.semantics {
-                        contentDescription = if (uiState.showReviewedAlerts) {
-                            "Hide reviewed alerts"
-                        } else {
-                            "Show reviewed alerts"
-                        }
-                    },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription =
+                                if (uiState.showReviewedAlerts) {
+                                    "Hide reviewed alerts"
+                                } else {
+                                    "Show reviewed alerts"
+                                }
+                        },
                 ) {
                     if (uiState.showReviewedAlerts) {
                         Icon(
@@ -196,9 +203,10 @@ fun DuplicateReviewScreen(
                 else -> {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
                     ) {
                         items(
                             items = uiState.alerts,

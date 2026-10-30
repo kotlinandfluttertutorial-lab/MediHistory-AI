@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface DoctorDao {
-
     /**
      * Emits the full list of doctors belonging to [patientId], updated reactively.
      * Results are ordered by name for stable list presentation.
@@ -33,7 +32,10 @@ interface DoctorDao {
      * leaking the existence of records owned by another patient.
      */
     @Query("SELECT * FROM doctors WHERE id = :doctorId AND patientId = :patientId LIMIT 1")
-    suspend fun getById(doctorId: String, patientId: String): Doctor?
+    suspend fun getById(
+        doctorId: String,
+        patientId: String,
+    ): Doctor?
 
     /** Inserts a new doctor record. Replaces on conflict (idempotent upsert). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)

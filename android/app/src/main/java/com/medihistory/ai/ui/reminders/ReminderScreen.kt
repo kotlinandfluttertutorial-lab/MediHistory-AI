@@ -12,17 +12,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import com.medihistory.ai.ui.theme.extendedColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -50,6 +49,7 @@ import com.medihistory.ai.ui.components.EmptyStateView
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.components.PrimaryButton
 import com.medihistory.ai.ui.components.SecondaryButton
+import com.medihistory.ai.ui.theme.extendedColors
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -100,7 +100,7 @@ fun ReminderScreen(
                     IconButton(onClick = { /* Options */ }) {
                         Icon(Icons.Outlined.MoreVert, contentDescription = "More options")
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
@@ -119,9 +119,10 @@ fun ReminderScreen(
         when {
             uiState.isLoading -> {
                 LoadingIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                     contentDescription = "Loading reminders",
                 )
             }
@@ -131,9 +132,10 @@ fun ReminderScreen(
                     message = uiState.error ?: "An error occurred.",
                     actionLabel = "Retry",
                     onAction = { viewModel.loadReminders(patientId) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -143,9 +145,10 @@ fun ReminderScreen(
                     actionLabel = "Add reminders from the medicine detail screen.",
                     onAction = { /* Navigation to medicine detail is triggered by the caller */ },
                     icon = Icons.Outlined.NotificationsOff,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -154,9 +157,10 @@ fun ReminderScreen(
                     reminders = uiState.reminders,
                     patientId = patientId,
                     viewModel = viewModel,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
         }
@@ -176,16 +180,16 @@ fun ReminderScreen(
     val pendingMedicine = uiState.pendingReminderMedicine
     if (uiState.showReminderAdvisor && pendingMedicine != null) {
         ReminderAdvisorDialog(
-            medicine   = pendingMedicine,
+            medicine = pendingMedicine,
             suggestion = uiState.reminderSuggestion,
-            onConfirm  = { times ->
+            onConfirm = { times ->
                 viewModel.onConfirmReminderTimes(
-                    medicine  = pendingMedicine,
+                    medicine = pendingMedicine,
                     patientId = patientId,
-                    times     = times,
+                    times = times,
                 )
             },
-            onDismiss  = viewModel::onDismissReminderAdvisor,
+            onDismiss = viewModel::onDismissReminderAdvisor,
         )
     }
 }
@@ -222,11 +226,12 @@ private fun MedicinePickerDialog(
                     items(items = medicines, key = { it.id }) { medicine ->
                         TextButton(
                             onClick = { onMedicineSelected(medicine) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .semantics {
-                                    contentDescription = "Set reminder for ${medicine.medicineName}"
-                                },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .semantics {
+                                        contentDescription = "Set reminder for ${medicine.medicineName}"
+                                    },
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -292,13 +297,13 @@ private fun ReminderAdvisorDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text  = "Medicine: ${medicine.medicineName}",
+                    text = "Medicine: ${medicine.medicineName}",
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 if (!medicine.dosageInstructions.isNullOrBlank()) {
                     Text(
-                        text  = "Prescribed: ${medicine.dosageInstructions}",
+                        text = "Prescribed: ${medicine.dosageInstructions}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -308,25 +313,26 @@ private fun ReminderAdvisorDialog(
 
                 if (suggestion != null) {
                     Text(
-                        text  = "Suggested times:",
+                        text = "Suggested times:",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     times.forEach { time ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors   = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            ),
+                            colors =
+                                CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                ),
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text  = time.format(formatter),
+                                    text = time.format(formatter),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 )
                                 Text(
-                                    text  = "Tap to change time (coming soon)",
+                                    text = "Tap to change time (coming soon)",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 )
@@ -335,7 +341,7 @@ private fun ReminderAdvisorDialog(
                     }
                 } else {
                     Text(
-                        text  = "No automatic suggestion available for these instructions. Please set a time manually.",
+                        text = "No automatic suggestion available for these instructions. Please set a time manually.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -345,7 +351,7 @@ private fun ReminderAdvisorDialog(
 
                 // Always-visible disclaimer
                 Text(
-                    text  = "AI-generated — always verify timing with your doctor or pharmacist.",
+                    text = "AI-generated — always verify timing with your doctor or pharmacist.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -354,9 +360,10 @@ private fun ReminderAdvisorDialog(
         confirmButton = {
             TextButton(
                 onClick = { onConfirm(times) },
-                modifier = Modifier.semantics {
-                    contentDescription = "Set reminders for ${medicine.medicineName}"
-                },
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "Set reminders for ${medicine.medicineName}"
+                    },
             ) {
                 Text("Set reminders")
             }
@@ -392,9 +399,10 @@ private fun ReminderContent(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.extendedColors.warningContainer
-                )
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.extendedColors.warningContainer,
+                    ),
             ) {
                 Text(
                     text = "Reminders are based on your prescription instructions. Always verify timing with your doctor or pharmacist.",
@@ -469,7 +477,10 @@ private fun ReminderContent(
 }
 
 @Composable
-private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
+private fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier) {
         Text(
             text = title,
@@ -539,20 +550,22 @@ private fun TodayDoseCard(
                 PrimaryButton(
                     text = "Taken",
                     onClick = { onRecordDose(DoseRecord.TAKEN) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics {
-                            contentDescription = "Mark dose as taken for ${reminder.medicineName}"
-                        },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .semantics {
+                                contentDescription = "Mark dose as taken for ${reminder.medicineName}"
+                            },
                 )
                 SecondaryButton(
                     text = "Skipped",
                     onClick = { onRecordDose(DoseRecord.SKIPPED) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics {
-                            contentDescription = "Mark dose as skipped for ${reminder.medicineName}"
-                        },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .semantics {
+                                contentDescription = "Mark dose as skipped for ${reminder.medicineName}"
+                            },
                 )
             }
         }
@@ -586,7 +599,6 @@ fun ReminderCard(
 ) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(16.dp)) {
-
             // Header row: medicine name + active toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -601,11 +613,15 @@ fun ReminderCard(
                 Switch(
                     checked = reminder.isActive,
                     onCheckedChange = onToggleActive,
-                    modifier = Modifier.semantics {
-                        contentDescription =
-                            if (reminder.isActive) "Reminder active for ${reminder.medicineName}"
-                            else "Reminder inactive for ${reminder.medicineName}"
-                    },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription =
+                                if (reminder.isActive) {
+                                    "Reminder active for ${reminder.medicineName}"
+                                } else {
+                                    "Reminder inactive for ${reminder.medicineName}"
+                                }
+                        },
                 )
             }
 
@@ -643,21 +659,23 @@ fun ReminderCard(
                 PrimaryButton(
                     text = "Taken",
                     onClick = { onRecordDose(DoseRecord.TAKEN) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics {
-                            contentDescription = "Mark dose as taken for ${reminder.medicineName}"
-                        },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .semantics {
+                                contentDescription = "Mark dose as taken for ${reminder.medicineName}"
+                            },
                 )
                 SecondaryButton(
                     text = "Skipped",
                     onClick = { onRecordDose(DoseRecord.SKIPPED) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics {
-                            contentDescription =
-                                "Mark dose as skipped for ${reminder.medicineName}"
-                        },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .semantics {
+                                contentDescription =
+                                    "Mark dose as skipped for ${reminder.medicineName}"
+                            },
                 )
             }
 
@@ -667,11 +685,12 @@ fun ReminderCard(
             SecondaryButton(
                 text = "Cancel reminder",
                 onClick = onDelete,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics {
-                        contentDescription = "Cancel reminder for ${reminder.medicineName}"
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics {
+                            contentDescription = "Cancel reminder for ${reminder.medicineName}"
+                        },
             )
         }
     }

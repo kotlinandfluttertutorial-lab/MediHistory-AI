@@ -36,7 +36,8 @@ data class OcrResult(
      * Fields with null rawValue are absent — there is nothing for the patient to review.
      */
     val pendingReviewCount: Int
-        get() = fields.count {
-            it.reviewState == ReviewState.PENDING_REVIEW && it.rawValue != null
-        }
+        get() =
+            fields.count {
+                it.reviewState == ReviewState.PENDING_REVIEW && it.rawValue != null
+            }
 }

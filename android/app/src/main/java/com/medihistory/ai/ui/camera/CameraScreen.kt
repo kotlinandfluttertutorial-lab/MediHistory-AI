@@ -18,7 +18,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 fun CameraScreen(
     onImageConfirmed: (filePath: String, sha256: String) -> Unit,
     onDismiss: () -> Unit,
-    viewModel: CameraViewModel = hiltViewModel()
+    viewModel: CameraViewModel = hiltViewModel(),
 ) {
     val captureState by viewModel.captureState.collectAsStateWithLifecycle()
     val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
@@ -33,7 +33,7 @@ fun CameraScreen(
         !cameraPermissionState.status.isGranted -> {
             PermissionDeniedContent(
                 isPermanentlyDenied = !cameraPermissionState.status.shouldShowRationale,
-                onDismiss = onDismiss
+                onDismiss = onDismiss,
             )
         }
         captureState is CaptureState.Preview -> {
@@ -44,7 +44,7 @@ fun CameraScreen(
                     val result = viewModel.onConfirm()
                     if (result != null) onImageConfirmed(result.first, result.second)
                 },
-                onRetake = { viewModel.onRetake() }
+                onRetake = { viewModel.onRetake() },
             )
         }
         captureState is CaptureState.Error -> {
@@ -58,7 +58,7 @@ fun CameraScreen(
         }
         else -> {
             CameraPreviewContent(
-                onImageCaptured = { path -> viewModel.onImageCaptured(path) }
+                onImageCaptured = { path -> viewModel.onImageCaptured(path) },
             )
         }
     }

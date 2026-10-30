@@ -26,7 +26,6 @@ import org.junit.Test
  * Synthetic fixtures only — no real medicine brand names or patient data.
  */
 class DuplicateAlertCardTest {
-
     // -------------------------------------------------------------------------
     // Fixtures — synthetic data only
     // -------------------------------------------------------------------------
@@ -40,18 +39,19 @@ class DuplicateAlertCardTest {
         isReviewed: Boolean = false,
         combinationNote: String? = null,
     ) = DuplicateAlertItem(
-        alert = DuplicateAlert(
-            id = alertId,
-            patientId = "test-patient-alpha",
-            medicineAId = "med-001",
-            medicineBId = "med-002",
-            matchingIngredient = matchingIngredient,
-            matchType = matchType,
-            confidence = 0.95f,
-            isReviewed = isReviewed,
-            combinationNote = combinationNote,
-            createdAt = 1_700_000_000_000L,
-        ),
+        alert =
+            DuplicateAlert(
+                id = alertId,
+                patientId = "test-patient-alpha",
+                medicineAId = "med-001",
+                medicineBId = "med-002",
+                matchingIngredient = matchingIngredient,
+                matchType = matchType,
+                confidence = 0.95f,
+                isReviewed = isReviewed,
+                combinationNote = combinationNote,
+                createdAt = 1_700_000_000_000L,
+            ),
         medicineAName = medicineAName,
         medicineBName = medicineBName,
         prescriptionAId = "rx-001",
@@ -89,10 +89,11 @@ class DuplicateAlertCardTest {
 
     @Test
     fun should_include_medicine_names_in_contentDescription() {
-        val item = syntheticAlertItem(
-            medicineAName = "Synthamol 500mg",
-            medicineBName = "Testocillin 250mg",
-        )
+        val item =
+            syntheticAlertItem(
+                medicineAName = "Synthamol 500mg",
+                medicineBName = "Testocillin 250mg",
+            )
 
         val desc = buildCardContentDescription(item)
 
@@ -268,10 +269,11 @@ class DuplicateAlertCardTest {
             "Status: $statusLabel."
     }
 
-    private fun matchTypeLabel(matchType: MatchType): String = when (matchType) {
-        MatchType.EXACT   -> "Exact match"
-        MatchType.PARTIAL -> "Partial match"
-    }
+    private fun matchTypeLabel(matchType: MatchType): String =
+        when (matchType) {
+            MatchType.EXACT -> "Exact match"
+            MatchType.PARTIAL -> "Partial match"
+        }
 
     // -------------------------------------------------------------------------
     // String constants (mirrors constants implicitly used in DuplicateAlertCard.kt)

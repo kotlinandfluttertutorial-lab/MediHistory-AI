@@ -38,38 +38,40 @@ data class MediHistoryExtendedColors(
     val onConfidenceHigh: Color,
 )
 
-val LightExtendedColors = MediHistoryExtendedColors(
-    warning            = MhWarning,
-    onWarning          = MhOnWarning,
-    warningContainer   = MhWarningContainer,
-    onWarningContainer = MhOnWarningContainer,
-    statusCurrent      = MhPrimary,
-    onStatusCurrent    = Color(0xFFFFFFFF), // white on primary teal
-    statusPast         = MhSecondary,
-    onStatusPast       = Color(0xFFFFFFFF), // white on secondary
-    statusUnknown      = MhOutline,
-    onStatusUnknown    = Color(0xFFFFFFFF), // white on outline grey
-    ocrReview          = MhWarning,
-    ocrFailed          = MhError,
-    confidenceHigh     = MhTertiaryContainer,
-    onConfidenceHigh   = MhOnTertiaryContainer,
-)
+val LightExtendedColors =
+    MediHistoryExtendedColors(
+        warning = MhWarning,
+        onWarning = MhOnWarning,
+        warningContainer = MhWarningContainer,
+        onWarningContainer = MhOnWarningContainer,
+        statusCurrent = MhPrimary,
+        onStatusCurrent = Color(0xFFFFFFFF), // white on primary teal
+        statusPast = MhSecondary,
+        onStatusPast = Color(0xFFFFFFFF), // white on secondary
+        statusUnknown = MhOutline,
+        onStatusUnknown = Color(0xFFFFFFFF), // white on outline grey
+        ocrReview = MhWarning,
+        ocrFailed = MhError,
+        confidenceHigh = MhTertiaryContainer,
+        onConfidenceHigh = MhOnTertiaryContainer,
+    )
 
-val DarkExtendedColors = MediHistoryExtendedColors(
-    warning            = MhDarkWarning,
-    onWarning          = MhDarkOnWarning,
-    warningContainer   = MhDarkWarningContainer,
-    onWarningContainer = MhDarkOnWarningContainer,
-    statusCurrent      = MhDarkPrimary,
-    onStatusCurrent    = Color(0xFF00363D), // onPrimary dark
-    statusPast         = MhDarkSecondary,
-    onStatusPast       = Color(0xFF1B3439), // onSecondary dark
-    statusUnknown      = MhDarkOutline,
-    onStatusUnknown    = Color(0xFF171D1E), // onSurface dark
-    ocrReview          = MhDarkWarning,
-    ocrFailed          = MhDarkError,
-    confidenceHigh     = MhDarkTertiaryContainer,
-    onConfidenceHigh   = MhDarkOnTertiaryContainer,
-)
+val DarkExtendedColors =
+    MediHistoryExtendedColors(
+        warning = MhDarkWarning,
+        onWarning = MhDarkOnWarning,
+        warningContainer = MhDarkWarningContainer,
+        onWarningContainer = MhDarkOnWarningContainer,
+        statusCurrent = MhDarkPrimary,
+        onStatusCurrent = Color(0xFF00363D), // onPrimary dark
+        statusPast = MhDarkSecondary,
+        onStatusPast = Color(0xFF1B3439), // onSecondary dark
+        statusUnknown = MhDarkOutline,
+        onStatusUnknown = Color(0xFF171D1E), // onSurface dark
+        ocrReview = MhDarkWarning,
+        ocrFailed = MhDarkError,
+        confidenceHigh = MhDarkTertiaryContainer,
+        onConfidenceHigh = MhDarkOnTertiaryContainer,
+    )
 
 val LocalMediHistoryColors = staticCompositionLocalOf { LightExtendedColors }

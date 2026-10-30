@@ -81,16 +81,18 @@ fun DoctorListScreen(
     ) { paddingValues ->
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             when {
                 uiState.isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .semantics { contentDescription = "Loading doctors" },
+                        modifier =
+                            Modifier
+                                .align(Alignment.Center)
+                                .semantics { contentDescription = "Loading doctors" },
                     )
                 }
 
@@ -99,9 +101,10 @@ fun DoctorListScreen(
                         text = "No doctors added yet. Tap + to add one.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(horizontal = 32.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.Center)
+                                .padding(horizontal = 32.dp),
                     )
                 }
 
@@ -124,9 +127,10 @@ fun DoctorListScreen(
                     text = uiState.error!!,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp),
                 )
             }
         }
@@ -151,21 +155,23 @@ private fun DoctorListItem(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(
-                onClickLabel = "Edit ${doctor.name}",
-                onClick = onClick,
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(
+                    onClickLabel = "Edit ${doctor.name}",
+                    onClick = onClick,
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Icon(
             imageVector = Icons.Default.Person,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .size(40.dp)
-                .padding(end = 8.dp),
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .padding(end = 8.dp),
         )
         Column(
             modifier = Modifier.weight(1f),
@@ -191,9 +197,10 @@ private fun DoctorListItem(
         Spacer(modifier = Modifier.size(8.dp))
         IconButton(
             onClick = onDeleteClick,
-            modifier = Modifier
-                .size(48.dp)
-                .semantics { contentDescription = "Delete ${doctor.name}" },
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .semantics { contentDescription = "Delete ${doctor.name}" },
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,

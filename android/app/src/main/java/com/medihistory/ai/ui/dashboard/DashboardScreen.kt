@@ -40,8 +40,6 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -73,10 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.medihistory.ai.ui.components.OcrStatus
-import com.medihistory.ai.ui.components.StatusBadge
 import com.medihistory.ai.ui.prescription.PrescriptionCard
-import com.medihistory.ai.ui.prescription.PrescriptionSummary
 import com.medihistory.ai.ui.theme.extendedColors
 
 /**
@@ -148,10 +143,11 @@ fun DashboardScreen(
             uiState.error != null -> {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(24.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(24.dp),
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -172,9 +168,10 @@ fun DashboardScreen(
                 DashboardEmptyState(
                     patientName = uiState.patientName.ifBlank { "there" },
                     onAddPrescription = onAddPrescription,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -183,9 +180,10 @@ fun DashboardScreen(
                     state = listState,
                     contentPadding = innerPadding,
                     verticalArrangement = Arrangement.spacedBy(24.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
                 ) {
                     // ── 1. Stats grid ──────────────────────────────────────────
                     item {
@@ -299,9 +297,12 @@ private fun DashboardTopBar(
             }
         },
         actions = {
-            val alertDesc = if (pendingAlertCount > 0)
-                "Notifications. $pendingAlertCount unread alerts."
-            else "Notifications. No unread alerts."
+            val alertDesc =
+                if (pendingAlertCount > 0) {
+                    "Notifications. $pendingAlertCount unread alerts."
+                } else {
+                    "Notifications. No unread alerts."
+                }
 
             IconButton(
                 onClick = onViewDuplicates,
@@ -312,19 +313,20 @@ private fun DashboardTopBar(
                         if (pendingAlertCount > 0) {
                             Badge { Text(pendingAlertCount.toString()) }
                         }
-                    }
+                    },
                 ) {
                     Icon(Icons.Outlined.NotificationsActive, contentDescription = null)
                 }
             }
             // Profile avatar circle
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .clickable(onClickLabel = "View profile") { onViewProfile() }
-                    .semantics { contentDescription = "Profile. Tap to view your profile." },
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clickable(onClickLabel = "View profile") { onViewProfile() }
+                        .semantics { contentDescription = "Profile. Tap to view your profile." },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -336,10 +338,11 @@ private fun DashboardTopBar(
             Spacer(Modifier.width(8.dp))
         },
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.largeTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            TopAppBarDefaults.largeTopAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                scrolledContainerColor = MaterialTheme.colorScheme.surface,
+            ),
     )
 }
 
@@ -400,10 +403,12 @@ private fun StatsGrid(
                 icon = Icons.Outlined.WarningAmber,
                 count = uiState.pendingAlertCount,
                 label = "Pending alerts",
-                countColor = if (uiState.pendingAlertCount > 0)
-                    MaterialTheme.colorScheme.error
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
+                countColor =
+                    if (uiState.pendingAlertCount > 0) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 onClick = onViewDuplicates,
                 contentDesc = "${uiState.pendingAlertCount} pending duplicate alerts. Tap to review.",
                 modifier = Modifier.weight(1f),
@@ -427,9 +432,10 @@ private fun StatTile(
         modifier = modifier.semantics { contentDescription = contentDesc },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
@@ -466,9 +472,10 @@ private fun QuickActionsRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         QuickActionTile(
@@ -507,15 +514,17 @@ private fun QuickActionTile(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = Modifier
-            .size(80.dp)
-            .semantics { contentDescription = contentDesc },
+        modifier =
+            Modifier
+                .size(80.dp)
+                .semantics { contentDescription = contentDesc },
         shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -553,9 +562,10 @@ private fun AttentionCard(
     val hasActions = pendingOcrCount > 0 || pendingAlertCount > 0
 
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "Needs your attention" },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "Needs your attention" },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Header row
@@ -564,19 +574,31 @@ private fun AttentionCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
-                    imageVector = if (hasActions) Icons.Outlined.NotificationsActive
-                    else Icons.Outlined.CheckCircle,
+                    imageVector =
+                        if (hasActions) {
+                            Icons.Outlined.NotificationsActive
+                        } else {
+                            Icons.Outlined.CheckCircle
+                        },
                     contentDescription = null,
-                    tint = if (hasActions) MaterialTheme.extendedColors.warning
-                    else MaterialTheme.colorScheme.tertiary,
+                    tint =
+                        if (hasActions) {
+                            MaterialTheme.extendedColors.warning
+                        } else {
+                            MaterialTheme.colorScheme.tertiary
+                        },
                     modifier = Modifier.size(20.dp),
                 )
                 Text(
                     text = if (hasActions) "Needs your attention" else "All caught up ✓",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (hasActions) MaterialTheme.extendedColors.onWarningContainer
-                    else MaterialTheme.colorScheme.tertiary,
+                    color =
+                        if (hasActions) {
+                            MaterialTheme.extendedColors.onWarningContainer
+                        } else {
+                            MaterialTheme.colorScheme.tertiary
+                        },
                 )
             }
 
@@ -702,10 +724,11 @@ private fun DashboardSkeleton(modifier: Modifier = Modifier) {
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(900),
-            repeatMode = RepeatMode.Reverse,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(900),
+                repeatMode = RepeatMode.Reverse,
+            ),
         label = "shimmer_alpha",
     )
     val shimmerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
@@ -717,19 +740,21 @@ private fun DashboardSkeleton(modifier: Modifier = Modifier) {
         modifier: Modifier = Modifier,
     ) {
         Box(
-            modifier = modifier
-                .width(width)
-                .height(height)
-                .clip(RoundedCornerShape(4.dp))
-                .background(shimmerColor),
+            modifier =
+                modifier
+                    .width(width)
+                    .height(height)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(shimmerColor),
         )
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 24.dp)
-            .semantics { contentDescription = "Loading" },
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .semantics { contentDescription = "Loading" },
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         // Greeting shimmer
@@ -744,22 +769,24 @@ private fun DashboardSkeleton(modifier: Modifier = Modifier) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 repeat(2) {
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(90.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(shimmerColor),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .height(90.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(shimmerColor),
                     )
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 repeat(2) {
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(90.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(shimmerColor),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .height(90.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(shimmerColor),
                     )
                 }
             }
@@ -769,32 +796,35 @@ private fun DashboardSkeleton(modifier: Modifier = Modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             repeat(4) {
                 Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(shimmerColor),
+                    modifier =
+                        Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(shimmerColor),
                 )
             }
         }
 
         // Attention card shimmer
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(shimmerColor),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(shimmerColor),
         )
 
         // Recent activity shimmer
         ShimmerBox(width = 140.dp, height = 18.dp)
         repeat(3) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(shimmerColor),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(shimmerColor),
             ) {}
         }
     }

@@ -13,7 +13,6 @@ import org.junit.Test
  * Naming convention: `should_[outcome]_when_[condition]`
  */
 class FileTypeValidatorTest {
-
     // -------------------------------------------------------------------------
     // isAllowed — accepted MIME types
     // -------------------------------------------------------------------------
@@ -115,10 +114,11 @@ class FileTypeValidatorTest {
 
     @Test
     fun `should not include internal path in error message`() {
-        val message = FileTypeValidator.userFriendlyError(
-            "application/msword",
-            "/data/user/0/com.medihistory.ai/files/prescriptions/some_file.docx",
-        )
+        val message =
+            FileTypeValidator.userFriendlyError(
+                "application/msword",
+                "/data/user/0/com.medihistory.ai/files/prescriptions/some_file.docx",
+            )
         assertFalse(
             "Error message must not contain a slash (internal path leaked)",
             message.contains("/"),

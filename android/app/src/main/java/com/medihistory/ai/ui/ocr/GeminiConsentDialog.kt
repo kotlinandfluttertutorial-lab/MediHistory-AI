@@ -31,36 +31,39 @@ fun GeminiConsentDialog(
         onDismissRequest = onDecline,
         title = {
             Text(
-                text  = "Improve prescription reading?",
+                text = "Improve prescription reading?",
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Text(
-                text = "To better read medicine names (especially handwritten prescriptions), " +
-                    "text from your prescription is sent to Google Gemini AI.\n\n" +
-                    "No images or personal details are sent. Google does not store this data " +
-                    "after processing.\n\n" +
-                    "You can change this in More \u2192 Privacy.",
+                text =
+                    "To better read medicine names (especially handwritten prescriptions), " +
+                        "text from your prescription is sent to Google Gemini AI.\n\n" +
+                        "No images or personal details are sent. Google does not store this data " +
+                        "after processing.\n\n" +
+                        "You can change this in More \u2192 Privacy.",
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
         confirmButton = {
             Button(
-                onClick  = onAccept,
-                modifier = Modifier.semantics {
-                    contentDescription = "Allow Gemini AI to improve prescription reading"
-                },
+                onClick = onAccept,
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "Allow Gemini AI to improve prescription reading"
+                    },
             ) {
                 Text("Allow")
             }
         },
         dismissButton = {
             OutlinedButton(
-                onClick  = onDecline,
-                modifier = Modifier.semantics {
-                    contentDescription = "Decline Gemini AI, use on-device reading only"
-                },
+                onClick = onDecline,
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "Decline Gemini AI, use on-device reading only"
+                    },
             ) {
                 Text("Not now")
             }

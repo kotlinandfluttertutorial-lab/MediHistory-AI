@@ -9,7 +9,6 @@ import org.junit.Test
  * correct defaults. Uses synthetic/build-time values only.
  */
 class EnvironmentConfigTest {
-
     @Test
     fun `BACKEND_BASE_URL BuildConfig field is not null`() {
         // BuildConfig.BACKEND_BASE_URL is generated at compile time.
@@ -22,7 +21,7 @@ class EnvironmentConfigTest {
     fun `ENABLE_CLOUD_BACKUP defaults to false`() {
         assertFalse(
             "ENABLE_CLOUD_BACKUP must default to false — cloud backup is opt-in",
-            BuildConfig.ENABLE_CLOUD_BACKUP
+            BuildConfig.ENABLE_CLOUD_BACKUP,
         )
     }
 
@@ -30,7 +29,7 @@ class EnvironmentConfigTest {
     fun `ENABLE_INTERACTION_CHECK defaults to false`() {
         assertFalse(
             "ENABLE_INTERACTION_CHECK must default to false — interaction check is optional in MVP",
-            BuildConfig.ENABLE_INTERACTION_CHECK
+            BuildConfig.ENABLE_INTERACTION_CHECK,
         )
     }
 }

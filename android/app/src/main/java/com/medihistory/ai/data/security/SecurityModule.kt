@@ -20,7 +20,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SecurityModule {
-
     @Provides
     @Singleton
     fun provideSecurePreferences(
@@ -29,7 +28,5 @@ object SecurityModule {
 
     @Provides
     @Singleton
-    fun provideSecurePreferencesStore(
-        securePreferences: SecurePreferences,
-    ): SecurePreferencesStore = securePreferences
+    fun provideSecurePreferencesStore(securePreferences: SecurePreferences): SecurePreferencesStore = securePreferences
 }

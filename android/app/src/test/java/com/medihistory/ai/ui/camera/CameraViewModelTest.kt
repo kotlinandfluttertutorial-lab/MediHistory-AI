@@ -1,7 +1,6 @@
 package com.medihistory.ai.ui.camera
 
 import androidx.test.core.app.ApplicationProvider
-import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

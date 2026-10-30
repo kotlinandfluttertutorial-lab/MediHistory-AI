@@ -75,10 +75,11 @@ fun DoctorEditScreen(
         },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -91,9 +92,10 @@ fun DoctorEditScreen(
                     label = { Text("Doctor name *") },
                     singleLine = true,
                     isError = uiState.error?.contains("name", ignoreCase = true) == true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Doctor name" },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .semantics { contentDescription = "Doctor name" },
                 )
 
                 // Specialty dropdown
@@ -111,9 +113,10 @@ fun DoctorEditScreen(
                         label = { Text("Describe specialty *") },
                         singleLine = true,
                         isError = uiState.error?.contains("specialty", ignoreCase = true) == true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics { contentDescription = "Describe specialty" },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .semantics { contentDescription = "Describe specialty" },
                     )
                 }
 
@@ -123,9 +126,10 @@ fun DoctorEditScreen(
                     onValueChange = viewModel::onClinicNameChange,
                     label = { Text("Clinic / Hospital name") },
                     singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Clinic name" },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .semantics { contentDescription = "Clinic name" },
                 )
 
                 // Validation error
@@ -142,9 +146,10 @@ fun DoctorEditScreen(
                     text = "Save",
                     onClick = { viewModel.onSaveClicked(patientId) },
                     enabled = !uiState.isLoading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterHorizontally),
                 )
             }
         }
@@ -180,10 +185,11 @@ private fun SpecialtyDropdown(
                     contentDescription = if (expanded) "Collapse specialty menu" else "Expand specialty menu",
                 )
             },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-                .semantics { contentDescription = "Specialty selector" },
+            modifier =
+                Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Specialty selector" },
         )
         ExposedDropdownMenu(
             expanded = expanded,
@@ -202,5 +208,4 @@ private fun SpecialtyDropdown(
     }
 }
 
-private fun DoctorSpecialty.displayName(): String =
-    name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
+private fun DoctorSpecialty.displayName(): String = name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }

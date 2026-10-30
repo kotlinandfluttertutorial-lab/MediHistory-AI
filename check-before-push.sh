@@ -233,8 +233,15 @@ else
         check_result "android-lint" "FAIL" ":app:lintDebug exited $ANDROID_LINT_EXIT -- see android/app/build/reports/lint-results-debug.html"
     fi
 
-    # 1.3 -- ktlint (not configured)
-    check_result "android-ktlint" "SKIP" "ktlint not configured (no ktlint plugin in android/build.gradle.kts)"
+    # 1.3 -- ktlint
+    print_info "Running :app:ktlintCheck..."
+    (cd "$ANDROID_DIR" && ./gradlew :app:ktlintCheck --no-daemon -PskipGoogleServices=true)
+    ANDROID_KTLINT_EXIT=$?
+    if [ $ANDROID_KTLINT_EXIT -eq 0 ]; then
+        check_result "android-ktlint" "PASS"
+    else
+        check_result "android-ktlint" "FAIL" ":app:ktlintCheck exited $ANDROID_KTLINT_EXIT -- run :app:ktlintFormat to apply formatting"
+    fi
 
     # 1.4 -- Unit tests
     print_info "Running :app:testDebugUnitTest..."

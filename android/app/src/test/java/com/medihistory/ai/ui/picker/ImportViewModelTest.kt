@@ -50,7 +50,6 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
 class ImportViewModelTest {
-
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var context: Application
     private lateinit var fakePrescriptionRepository: FakePrescriptionRepository
@@ -94,92 +93,96 @@ class ImportViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should set Error state when onFileSelected receives unsupported MIME type`() = runTest {
-        // A file:// URI referencing a synthetic .docx exercises the extension fallback path.
-        // FileTypeValidator rejects .docx synchronously; no IO coroutine is launched.
-        val syntheticDocx = File(context.cacheDir, "synthetic_test_import.docx")
-        syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticDocx)
+    fun `should set Error state when onFileSelected receives unsupported MIME type`() =
+        runTest {
+            // A file:// URI referencing a synthetic .docx exercises the extension fallback path.
+            // FileTypeValidator rejects .docx synchronously; no IO coroutine is launched.
+            val syntheticDocx = File(context.cacheDir, "synthetic_test_import.docx")
+            syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticDocx)
 
-        viewModel.onFileSelected(fileUri)
-        advanceUntilIdle()
+            viewModel.onFileSelected(fileUri)
+            advanceUntilIdle()
 
-        val state = viewModel.importState.value
-        assertTrue(
-            "State should be Error for an unsupported file type, but was: $state",
-            state is ImportState.Error,
-        )
-        syntheticDocx.delete()
-    }
+            val state = viewModel.importState.value
+            assertTrue(
+                "State should be Error for an unsupported file type, but was: $state",
+                state is ImportState.Error,
+            )
+            syntheticDocx.delete()
+        }
 
     @Test
-    fun `should set Error state when onImageSelected receives unsupported MIME type`() = runTest {
-        val syntheticDocx = File(context.cacheDir, "synthetic_test_image_import.docx")
-        syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticDocx)
+    fun `should set Error state when onImageSelected receives unsupported MIME type`() =
+        runTest {
+            val syntheticDocx = File(context.cacheDir, "synthetic_test_image_import.docx")
+            syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticDocx)
 
-        viewModel.onImageSelected(fileUri)
-        advanceUntilIdle()
+            viewModel.onImageSelected(fileUri)
+            advanceUntilIdle()
 
-        val state = viewModel.importState.value
-        assertTrue(
-            "State should be Error for an unsupported file type, but was: $state",
-            state is ImportState.Error,
-        )
-        syntheticDocx.delete()
-    }
+            val state = viewModel.importState.value
+            assertTrue(
+                "State should be Error for an unsupported file type, but was: $state",
+                state is ImportState.Error,
+            )
+            syntheticDocx.delete()
+        }
 
     // -------------------------------------------------------------------------
     // Error message must not expose internal paths
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should not expose internal path in error message`() = runTest {
-        val syntheticDocx = File(context.cacheDir, "synthetic_path_test.docx")
-        syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticDocx)
+    fun `should not expose internal path in error message`() =
+        runTest {
+            val syntheticDocx = File(context.cacheDir, "synthetic_path_test.docx")
+            syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticDocx)
 
-        viewModel.onFileSelected(fileUri)
-        advanceUntilIdle()
+            viewModel.onFileSelected(fileUri)
+            advanceUntilIdle()
 
-        val state = viewModel.importState.value
-        assertTrue("State should be Error", state is ImportState.Error)
-        val message = (state as ImportState.Error).message
+            val state = viewModel.importState.value
+            assertTrue("State should be Error", state is ImportState.Error)
+            val message = (state as ImportState.Error).message
 
-        assertFalse(
-            "Error message must not contain a slash (internal path leaked): \"$message\"",
-            message.contains("/"),
-        )
-        syntheticDocx.delete()
-    }
+            assertFalse(
+                "Error message must not contain a slash (internal path leaked): \"$message\"",
+                message.contains("/"),
+            )
+            syntheticDocx.delete()
+        }
 
     // -------------------------------------------------------------------------
     // reset() → back to Idle
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should return to Idle when reset is called after Error`() = runTest {
-        val syntheticDocx = File(context.cacheDir, "synthetic_reset_test.docx")
-        syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticDocx)
+    fun `should return to Idle when reset is called after Error`() =
+        runTest {
+            val syntheticDocx = File(context.cacheDir, "synthetic_reset_test.docx")
+            syntheticDocx.writeBytes(ByteArray(64) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticDocx)
 
-        viewModel.onFileSelected(fileUri)
-        advanceUntilIdle()
+            viewModel.onFileSelected(fileUri)
+            advanceUntilIdle()
 
-        assertTrue(
-            "Precondition: state should be Error before reset",
-            viewModel.importState.value is ImportState.Error,
-        )
+            assertTrue(
+                "Precondition: state should be Error before reset",
+                viewModel.importState.value is ImportState.Error,
+            )
 
-        viewModel.reset()
+            viewModel.reset()
 
-        assertEquals(
-            "After reset(), importState must be Idle",
-            ImportState.Idle,
-            viewModel.importState.value,
-        )
-        syntheticDocx.delete()
-    }
+            assertEquals(
+                "After reset(), importState must be Idle",
+                ImportState.Idle,
+                viewModel.importState.value,
+            )
+            syntheticDocx.delete()
+        }
 
     @Test
     fun `should remain Idle when reset is called on Idle state`() {
@@ -202,94 +205,98 @@ class ImportViewModelTest {
     @Test
     fun `should produce Success with non-blank filePath when importing a valid jpg`() {
         runBlocking {
-        val syntheticJpg = File(context.cacheDir, "synthetic_prescription_test.jpg")
-        syntheticJpg.writeBytes(ByteArray(1024) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticJpg)
+            val syntheticJpg = File(context.cacheDir, "synthetic_prescription_test.jpg")
+            syntheticJpg.writeBytes(ByteArray(1024) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticJpg)
 
-        viewModel.onImageSelected(fileUri)
+            viewModel.onImageSelected(fileUri)
 
-        // Wait up to 10 s for the IO coroutine to emit Success or Error.
-        val finalState = withTimeout(10_000) {
-            viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
-        }
+            // Wait up to 10 s for the IO coroutine to emit Success or Error.
+            val finalState =
+                withTimeout(10_000) {
+                    viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
+                }
 
-        assertTrue(
-            "State should be Success for a valid jpg, but was: $finalState",
-            finalState is ImportState.Success,
-        )
-        val success = finalState as ImportState.Success
-        assertTrue("filePath must not be blank", success.filePath.isNotBlank())
-        syntheticJpg.delete()
+            assertTrue(
+                "State should be Success for a valid jpg, but was: $finalState",
+                finalState is ImportState.Success,
+            )
+            val success = finalState as ImportState.Success
+            assertTrue("filePath must not be blank", success.filePath.isNotBlank())
+            syntheticJpg.delete()
         }
     }
 
     @Test
     fun `should produce Success with 64-char hex sha256 when importing a valid jpg`() {
         runBlocking {
-        val syntheticJpg = File(context.cacheDir, "synthetic_sha256_test.jpg")
-        syntheticJpg.writeBytes(ByteArray(1024) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticJpg)
+            val syntheticJpg = File(context.cacheDir, "synthetic_sha256_test.jpg")
+            syntheticJpg.writeBytes(ByteArray(1024) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticJpg)
 
-        viewModel.onImageSelected(fileUri)
+            viewModel.onImageSelected(fileUri)
 
-        val finalState = withTimeout(10_000) {
-            viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
-        }
+            val finalState =
+                withTimeout(10_000) {
+                    viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
+                }
 
-        assertTrue("State should be Success", finalState is ImportState.Success)
-        val sha256 = (finalState as ImportState.Success).sha256
-        assertTrue(
-            "SHA-256 must be exactly 64 lowercase hex characters, but was: \"$sha256\"",
-            sha256.matches(Regex("[0-9a-f]{64}")),
-        )
-        syntheticJpg.delete()
+            assertTrue("State should be Success", finalState is ImportState.Success)
+            val sha256 = (finalState as ImportState.Success).sha256
+            assertTrue(
+                "SHA-256 must be exactly 64 lowercase hex characters, but was: \"$sha256\"",
+                sha256.matches(Regex("[0-9a-f]{64}")),
+            )
+            syntheticJpg.delete()
         }
     }
 
     @Test
     fun `should produce Success with correct mimeType when importing a valid jpg`() {
         runBlocking {
-        val syntheticJpg = File(context.cacheDir, "synthetic_mime_test.jpg")
-        syntheticJpg.writeBytes(ByteArray(512) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticJpg)
+            val syntheticJpg = File(context.cacheDir, "synthetic_mime_test.jpg")
+            syntheticJpg.writeBytes(ByteArray(512) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticJpg)
 
-        viewModel.onImageSelected(fileUri)
+            viewModel.onImageSelected(fileUri)
 
-        val finalState = withTimeout(10_000) {
-            viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
-        }
+            val finalState =
+                withTimeout(10_000) {
+                    viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
+                }
 
-        assertTrue("State should be Success", finalState is ImportState.Success)
-        assertEquals(
-            "MIME type must be image/jpeg for a .jpg file",
-            "image/jpeg",
-            (finalState as ImportState.Success).mimeType,
-        )
-        syntheticJpg.delete()
+            assertTrue("State should be Success", finalState is ImportState.Success)
+            assertEquals(
+                "MIME type must be image/jpeg for a .jpg file",
+                "image/jpeg",
+                (finalState as ImportState.Success).mimeType,
+            )
+            syntheticJpg.delete()
         }
     }
 
     @Test
     fun `should store imported file inside filesDir prescriptions directory`() {
         runBlocking {
-        val syntheticJpg = File(context.cacheDir, "synthetic_storage_test.jpg")
-        syntheticJpg.writeBytes(ByteArray(512) { it.toByte() })
-        val fileUri = Uri.fromFile(syntheticJpg)
+            val syntheticJpg = File(context.cacheDir, "synthetic_storage_test.jpg")
+            syntheticJpg.writeBytes(ByteArray(512) { it.toByte() })
+            val fileUri = Uri.fromFile(syntheticJpg)
 
-        viewModel.onImageSelected(fileUri)
+            viewModel.onImageSelected(fileUri)
 
-        val finalState = withTimeout(10_000) {
-            viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
-        }
+            val finalState =
+                withTimeout(10_000) {
+                    viewModel.importState.first { it is ImportState.Success || it is ImportState.Error }
+                }
 
-        assertTrue("State should be Success", finalState is ImportState.Success)
-        val finalPath = (finalState as ImportState.Success).filePath
-        val expectedDir = File(context.filesDir, "prescriptions").absolutePath
-        assertTrue(
-            "Imported file ($finalPath) must be inside $expectedDir",
-            finalPath.startsWith(expectedDir),
-        )
-        syntheticJpg.delete()
+            assertTrue("State should be Success", finalState is ImportState.Success)
+            val finalPath = (finalState as ImportState.Success).filePath
+            val expectedDir = File(context.filesDir, "prescriptions").absolutePath
+            assertTrue(
+                "Imported file ($finalPath) must be inside $expectedDir",
+                finalPath.startsWith(expectedDir),
+            )
+            syntheticJpg.delete()
         }
     }
 }
@@ -299,14 +306,14 @@ class ImportViewModelTest {
 // -------------------------------------------------------------------------
 
 private class FakePrescriptionRepository : PrescriptionRepository {
-
     private val _prescriptions = MutableStateFlow<List<Prescription>>(emptyList())
 
-    override fun observeByPatient(patientId: String): Flow<List<Prescription>> =
-        _prescriptions.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Prescription>> = _prescriptions.map { list -> list.filter { it.patientId == patientId } }
 
-    override suspend fun getById(id: String, patientId: String): Prescription? =
-        _prescriptions.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Prescription? = _prescriptions.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insert(prescription: Prescription) {
         _prescriptions.update { it + prescription }
@@ -330,22 +337,38 @@ private class FakePrescriptionRepository : PrescriptionRepository {
     ) {
         _prescriptions.update { list ->
             list.map { p ->
-                if (p.id == id && p.patientId == patientId)
+                if (p.id == id && p.patientId == patientId) {
                     p.copy(ocrStatus = status, updatedAt = updatedAt)
-                else p
+                } else {
+                    p
+                }
             }
         }
     }
 }
 
 private class FakeSessionManager(patientId: String) : SessionManager(
-    securePreferences = object : SecurePreferencesStore {
-        private val store = mutableMapOf("patient_id" to patientId)
-        override fun getString(key: String): String? = store[key]
-        override fun putString(key: String, value: String) { store[key] = value }
-        override fun remove(key: String) { store.remove(key) }
-        override fun clear() { store.clear() }
-    }
+    securePreferences =
+        object : SecurePreferencesStore {
+            private val store = mutableMapOf("patient_id" to patientId)
+
+            override fun getString(key: String): String? = store[key]
+
+            override fun putString(
+                key: String,
+                value: String,
+            ) {
+                store[key] = value
+            }
+
+            override fun remove(key: String) {
+                store.remove(key)
+            }
+
+            override fun clear() {
+                store.clear()
+            }
+        },
 )
 
 private class FakePatientRepositoryForImport : PatientRepository {
@@ -353,12 +376,17 @@ private class FakePatientRepositoryForImport : PatientRepository {
 
     override suspend fun getById(patientId: String): Patient? = patients[patientId]
 
-    override suspend fun insert(patient: Patient) { patients[patient.id] = patient }
+    override suspend fun insert(patient: Patient) {
+        patients[patient.id] = patient
+    }
 
-    override suspend fun update(patient: Patient) { patients[patient.id] = patient }
+    override suspend fun update(patient: Patient) {
+        patients[patient.id] = patient
+    }
 
-    override suspend fun delete(patient: Patient) { patients.remove(patient.id) }
+    override suspend fun delete(patient: Patient) {
+        patients.remove(patient.id)
+    }
 
-    override fun observeAll(): kotlinx.coroutines.flow.Flow<List<Patient>> =
-        kotlinx.coroutines.flow.flowOf(patients.values.toList())
+    override fun observeAll(): kotlinx.coroutines.flow.Flow<List<Patient>> = kotlinx.coroutines.flow.flowOf(patients.values.toList())
 }

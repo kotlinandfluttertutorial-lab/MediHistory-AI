@@ -13,7 +13,6 @@ package com.medihistory.ai.ui.safety
  * - The word "safe" must never appear in any UI text produced by these states.
  */
 sealed class InteractionCheckStatus {
-
     /**
      * No verified medicine reference source has been configured.
      * Interaction checking is unavailable.
