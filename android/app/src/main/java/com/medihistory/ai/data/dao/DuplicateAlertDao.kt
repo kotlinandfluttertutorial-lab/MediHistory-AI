@@ -98,4 +98,20 @@ interface DuplicateAlertDao {
         """,
     )
     fun observeUnreviewedCount(patientId: String): Flow<Int>
+
+    /**
+     * Stores the engine-generated explanation for alert [id].
+     *
+     * Security: scoped to [patientId].
+     * Medical safety: [explanation] must originate from [DuplicateExplainerEngine] —
+     * it must never contain clinical advice.
+     */
+    @Query(
+        """
+        UPDATE duplicate_alerts
+        SET explanation = :explanation
+        WHERE id = :id AND patientId = :patientId
+        """,
+    )
+    suspend fun updateExplanation(id: String, patientId: String, explanation: String)
 }

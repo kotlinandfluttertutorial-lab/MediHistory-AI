@@ -21,7 +21,7 @@ import com.medihistory.ai.data.model.Prescription
 import com.medihistory.ai.data.model.Reminder
 
 /**
- * MediHistory Room database — version 7.
+ * MediHistory Room database — version 8.
  *
  * Version history:
  *  1 → initial placeholder schema
@@ -31,6 +31,7 @@ import com.medihistory.ai.data.model.Reminder
  *  5 → added extracted_fields and medicines tables (MA-35, MA-33)
  *  6 → added duplicate_alerts table (MA-37, DuplicateAlertDao)
  *  7 → added reminders and dose_records tables (MA-41, ReminderDao, DoseRecordDao)
+ *  8 → added explanation column to duplicate_alerts (F13, DuplicateExplainerEngine)
  *
  * Schema exports are written to android/app/schemas/ and committed to VCS.
  *
@@ -48,7 +49,7 @@ import com.medihistory.ai.data.model.Reminder
         Reminder::class,
         DoseRecordEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

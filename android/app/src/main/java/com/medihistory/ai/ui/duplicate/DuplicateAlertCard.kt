@@ -81,6 +81,7 @@ fun DuplicateAlertCard(
     modifier: Modifier = Modifier,
 ) {
     var showDisclaimerDialog by rememberSaveable { mutableStateOf(false) }
+    var showExplanation by rememberSaveable { mutableStateOf(false) }
 
     val statusLabel = if (item.alert.isReviewed) "reviewed" else "unreviewed"
     val cardContentDescription =
@@ -257,9 +258,65 @@ fun DuplicateAlertCard(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // ── Explain this alert (F13) ───────────────────────────────────────
+                    if (item.alert.explanation != null) {
+                        TextButton(
+                            onClick = { showExplanation = !showExplanation },
+                            modifier = Modifier
+                                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                                .semantics {
+                                    contentDescription =
+                                        if (showExplanation) "Hide explanation for this alert"
+                                        else "Explain this alert"
+                                },
+                        ) {
+                            Text(text = if (showExplanation) "Hide explanation" else "Explain this alert")
+                        }
+
+                        AnimatedVisibility(
+                            visible = showExplanation,
+                            enter = expandVertically(),
+                            exit = shrinkVertically(),
+                        ) {
+                            Column(modifier = Modifier.padding(top = 4.dp)) {
+                                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                    Text(
+                                        text = item.alert.explanation,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(12.dp),
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                SuggestionChip(
+                                    onClick = {},
+                                    label = {
+                                        Text(
+                                            text = "AI-generated — always verify with your doctor or pharmacist",
+                                            style = MaterialTheme.typography.labelSmall,
+                                        )
+                                    },
+                                    colors = SuggestionChipDefaults.suggestionChipColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .sizeIn(minHeight = 48.dp)
+                                        .semantics {
+                                            contentDescription =
+                                                "AI-generated — always verify with your doctor or pharmacist"
+                                        },
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
                     // Mark as Reviewed / already reviewed
-                    if (!item.alert.isReviewed) {
-                        Button(
+                    if (!item.alert.isReviewed) {                        Button(
                             onClick = { showDisclaimerDialog = true },
                             modifier = Modifier
                                 .fillMaxWidth()

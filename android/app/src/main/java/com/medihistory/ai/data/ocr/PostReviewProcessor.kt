@@ -2,6 +2,7 @@ package com.medihistory.ai.data.ocr
 
 import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.PrescriptionDao
+import com.medihistory.ai.data.duplicate.DuplicateExplainerEngine
 import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.DoctorSpecialty
 import com.medihistory.ai.data.model.DuplicateAlert
@@ -41,6 +42,7 @@ class PostReviewProcessor @Inject constructor(
     private val doctorRepository: DoctorRepository,
     private val medicineRepository: MedicineRepository,
     private val duplicateAlertRepository: DuplicateAlertRepository,
+    private val duplicateExplainerEngine: DuplicateExplainerEngine,
 ) : PostReviewProcessorInterface {
 
     /**
@@ -157,8 +159,16 @@ class PostReviewProcessor @Inject constructor(
                     createdAt = System.currentTimeMillis(),
                 )
                 duplicateAlertRepository.insert(alert)
-            }
-        }
+
+                // Generate and persist the plain-language explanation (F13).
+                // Look up the two Medicine entities by their IDs (already in allMedicines).
+                val medA = allMedicines.find { it.id == candidate.medicineAId }
+                val medB = allMedicines.find { it.id == candidate.medicineBId }
+                if (medA != null && medB != null) {
+                    val explanation = duplicateExplainerEngine.explain(alert, medA, medB)
+                    duplicateAlertRepository.updateExplanation(alert.id, patientId, explanation)
+                }
+            }        }
     }
 
     // -------------------------------------------------------------------------

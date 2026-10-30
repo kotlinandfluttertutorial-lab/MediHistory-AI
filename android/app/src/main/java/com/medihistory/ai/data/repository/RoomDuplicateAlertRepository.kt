@@ -32,4 +32,7 @@ class RoomDuplicateAlertRepository @Inject constructor(
 
     override suspend fun getById(id: String, patientId: String): DuplicateAlert? =
         duplicateAlertDao.getById(id, patientId)
+
+    override suspend fun updateExplanation(id: String, patientId: String, explanation: String) =
+        duplicateAlertDao.updateExplanation(id, patientId, explanation)
 }

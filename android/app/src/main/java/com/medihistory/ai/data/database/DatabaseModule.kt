@@ -218,6 +218,15 @@ internal val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+/** Migration from v7 (reminders/dose_records) to v8 (adds explanation column to duplicate_alerts — F13). */
+internal val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            "ALTER TABLE duplicate_alerts ADD COLUMN explanation TEXT",
+        )
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -239,6 +248,7 @@ object DatabaseModule {
                 MIGRATION_4_5,
                 MIGRATION_5_6,
                 MIGRATION_6_7,
+                MIGRATION_7_8,
             )
             .build()
     // fallbackToDestructiveMigration() intentionally omitted — migrations are always explicit

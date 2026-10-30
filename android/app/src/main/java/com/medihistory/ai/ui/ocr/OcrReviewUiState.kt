@@ -55,6 +55,12 @@ data class OcrReviewUiState(
     val allReviewed: Boolean = false,
     /** True once the patient has confirmed, edited, or rejected at least one field. */
     val hasUserInteracted: Boolean = false,
+    /**
+     * Map of fieldId → suggested corrected value from [OcrCorrectionEngine].
+     * Only populated for PENDING_REVIEW fields with confidence < 0.70.
+     * The patient must confirm every suggestion — nothing is applied automatically.
+     */
+    val suggestedValues: Map<String, String> = emptyMap(),
 ) {
     /**
      * Number of fields that are still [ReviewState.PENDING_REVIEW] and have a

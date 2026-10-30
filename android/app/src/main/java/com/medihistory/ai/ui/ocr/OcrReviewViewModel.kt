@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.ocr.OcrCorrectionEngine
 import com.medihistory.ai.data.ocr.PostReviewProcessorInterface
 import com.medihistory.ai.data.ocr.ReviewState
+import com.medihistory.ai.data.repository.DoctorRepository
 import com.medihistory.ai.data.security.SecurePreferences
 import com.medihistory.ai.data.security.SecurePreferencesStore
 import com.medihistory.ai.data.session.SessionManager
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
