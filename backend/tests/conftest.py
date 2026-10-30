@@ -38,6 +38,7 @@ import app.models.refresh_token  # noqa: F401
 import app.models.reminder  # noqa: F401
 from app.core.database import Base, create_all_tables, get_db
 from app.main import app
+from app.middleware.rate_limit import reset_rate_limit_state
 
 # Create DB tables at module load time so TestClient-based tests (test_auth.py,
 # test_security.py) can find them. This is safe to call multiple times.
@@ -114,6 +115,8 @@ async def async_client(async_engine):
     Return an httpx.AsyncClient that uses the in-memory database.
 
     The app's get_db dependency is overridden to use the test session factory.
+    The module-level rate limiter state is reset before each test so that
+    accumulated request counts from earlier tests do not trigger 429 responses.
     """
     factory = async_sessionmaker(
         bind=async_engine,
@@ -133,6 +136,9 @@ async def async_client(async_engine):
                 raise
 
     app.dependency_overrides[get_db] = override_get_db
+
+    # Reset the shared rate limiter state so each test starts with a clean slate.
+    reset_rate_limit_state()
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

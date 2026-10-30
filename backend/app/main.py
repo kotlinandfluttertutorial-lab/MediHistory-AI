@@ -47,6 +47,10 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 # Simple in-process rate limiter: 100 requests per 60 seconds per client IP.
 # Replace with a Redis-backed limiter (e.g. slowapi) before production scale-out.
+#
+# app.state.rate_limiter is set when the middleware_stack is built (on first
+# request). Tests access it via a shared sentinel stored in app.state so they
+# can call reset() between test functions without walking the compiled stack.
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
 # ---------------------------------------------------------------------------
