@@ -97,8 +97,8 @@ class OcrCorrectionEngineTest {
 
     @Test
     fun test_doctor_name_ocr_artefacts_cleaned() {
-        // "Dr. Synth3tic" has a digit OCR artefact — should be cleaned to "Dr. Synthetic"
-        val result = engine.suggest("doctor_name", "Dr. Synth3tic")
+        // "Dr. Synthe3tic" has a digit OCR artefact — removing it yields "Dr. Synthetic"
+        val result = engine.suggest("doctor_name", "Dr. Synthe3tic")
         assertEquals(
             "Doctor name OCR digit artefact should be stripped",
             "Dr. Synthetic",

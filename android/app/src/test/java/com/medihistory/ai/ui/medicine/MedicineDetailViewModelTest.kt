@@ -222,6 +222,18 @@ private class FakeDetailDuplicateAlertDao : DuplicateAlertDao {
 
     override suspend fun getById(id: String, patientId: String): DuplicateAlert? =
         alerts.value.find { it.id == id && it.patientId == patientId }
+
+    override suspend fun updateExplanation(id: String, patientId: String, explanation: String) {
+        alerts.update { current ->
+            current.map { alert ->
+                if (alert.id == id && alert.patientId == patientId) {
+                    alert.copy(explanation = explanation)
+                } else {
+                    alert
+                }
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

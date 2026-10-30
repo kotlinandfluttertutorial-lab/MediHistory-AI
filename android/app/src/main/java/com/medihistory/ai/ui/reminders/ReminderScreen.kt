@@ -173,13 +173,14 @@ fun ReminderScreen(
     }
 
     // ── Reminder advisor dialog (F16) ─────────────────────────────────────
-    if (uiState.showReminderAdvisor && uiState.pendingReminderMedicine != null) {
+    val pendingMedicine = uiState.pendingReminderMedicine
+    if (uiState.showReminderAdvisor && pendingMedicine != null) {
         ReminderAdvisorDialog(
-            medicine   = uiState.pendingReminderMedicine,
+            medicine   = pendingMedicine,
             suggestion = uiState.reminderSuggestion,
             onConfirm  = { times ->
                 viewModel.onConfirmReminderTimes(
-                    medicine  = uiState.pendingReminderMedicine,
+                    medicine  = pendingMedicine,
                     patientId = patientId,
                     times     = times,
                 )
