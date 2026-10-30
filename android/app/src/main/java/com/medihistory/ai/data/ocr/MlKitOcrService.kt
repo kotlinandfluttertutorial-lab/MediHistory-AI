@@ -98,8 +98,13 @@ internal class MlKitOcrService @Inject constructor(
             return listOf(absentAllFields())
         }
         val inputImage = InputImage.fromFilePath(context, Uri.fromFile(file))
-        val mlKitText = runMlKit(inputImage)
-        return parser.parse(mlKitText, pageIndex = 0)
+        val mlKitText  = runMlKit(inputImage)
+        return parser.parse(
+            text        = mlKitText,
+            pageIndex   = 0,
+            imageWidth  = inputImage.width,
+            imageHeight = inputImage.height,
+        )
     }
 
     // -------------------------------------------------------------------------
@@ -133,7 +138,14 @@ internal class MlKitOcrService @Inject constructor(
 
                         val inputImage = InputImage.fromBitmap(bitmap, 0)
                         val mlKitText  = runMlKit(inputImage)
-                        allPageFields.add(parser.parse(mlKitText, pageIndex = pageIndex))
+                        allPageFields.add(
+                            parser.parse(
+                                text        = mlKitText,
+                                pageIndex   = pageIndex,
+                                imageWidth  = bitmapWidth,
+                                imageHeight = bitmapHeight,
+                            )
+                        )
 
                         bitmap.recycle()
                     }
