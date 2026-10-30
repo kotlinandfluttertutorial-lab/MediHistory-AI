@@ -2,7 +2,9 @@ package com.medihistory.ai.ui.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.medihistory.ai.data.ai.MedicineHistoryNarratorAgent
 import com.medihistory.ai.data.history.HistoryCompiler
+import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.repository.DoctorRepository
 import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
@@ -36,6 +38,7 @@ class MedicalHistoryViewModel
         private val prescriptionRepository: PrescriptionRepository,
         private val medicineRepository: MedicineRepository,
         private val doctorRepository: DoctorRepository,
+        private val narratorAgent: MedicineHistoryNarratorAgent,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MedicalHistoryUiState())
         val uiState: StateFlow<MedicalHistoryUiState> = _uiState.asStateFlow()
@@ -69,7 +72,32 @@ class MedicalHistoryViewModel
                     val doctors = doctorRepository.observeByPatient(patientId).first()
                     _uiState.update { it.copy(generationProgress = 1f) }
 
-                    val sections = HistoryCompiler.compile(prescriptions, medicines, doctors)
+                    // Build the deterministic sections first (medicines, doctors, timeline).
+                    val deterministicSections =
+                        HistoryCompiler.compile(
+                            prescriptions,
+                            medicines,
+                            doctors,
+                        ).filter { it.type != com.medihistory.ai.data.history.SectionType.AI_SUMMARY }
+
+                    // Generate the real AI narrative (F15) and append it.
+                    val reviewed = prescriptions.filter { it.ocrStatus == OcrStatus.REVIEWED }
+                    val reviewedMedicines =
+                        medicines.filter { m ->
+                            reviewed.any { it.id == m.prescriptionId }
+                        }
+                    val reviewedDoctors =
+                        doctors.filter { d ->
+                            reviewed.any { it.doctorId == d.id }
+                        }
+                    val aiSection =
+                        narratorAgent.generateSummary(
+                            reviewed = reviewed,
+                            medicines = reviewedMedicines,
+                            doctors = reviewedDoctors,
+                        )
+
+                    val sections = deterministicSections + aiSection
 
                     _uiState.update {
                         it.copy(

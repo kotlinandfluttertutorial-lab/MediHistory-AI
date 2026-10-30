@@ -25,7 +25,7 @@ import javax.inject.Singleton
  * not any exception message that could contain patient content.
  */
 @Singleton
-class GeminiService
+open class GeminiService
     @Inject
     constructor() {
         private val model: GenerativeModel? by lazy {
@@ -58,7 +58,7 @@ class GeminiService
          *
          * Failures are silent — never propagated as exceptions, never logged with content.
          */
-        suspend fun generate(prompt: String): String? {
+        open suspend fun generate(prompt: String): String? {
             val m = model ?: return null
             return try {
                 val response = m.generateContent(prompt)

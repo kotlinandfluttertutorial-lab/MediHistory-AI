@@ -1,5 +1,7 @@
 package com.medihistory.ai.ui.history
 
+import com.medihistory.ai.data.ai.GeminiService
+import com.medihistory.ai.data.ai.MedicineHistoryNarratorAgent
 import com.medihistory.ai.data.history.ContentType
 import com.medihistory.ai.data.history.SectionType
 import com.medihistory.ai.data.model.Doctor
@@ -57,6 +59,12 @@ class MedicalHistoryViewModelTest {
                 prescriptionRepository = fakePrescriptionRepository,
                 medicineRepository = fakeMedicineRepository,
                 doctorRepository = fakeDoctorRepository,
+                narratorAgent =
+                    MedicineHistoryNarratorAgent(
+                        object : GeminiService() {
+                            override suspend fun generate(prompt: String): String? = null
+                        },
+                    ),
             )
     }
 
