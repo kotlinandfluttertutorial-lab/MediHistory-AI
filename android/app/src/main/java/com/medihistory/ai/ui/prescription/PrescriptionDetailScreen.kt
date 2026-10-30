@@ -33,9 +33,14 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -47,6 +52,7 @@ import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.components.StatusBadge
 import com.medihistory.ai.ui.theme.extendedColors
+import kotlinx.coroutines.launch
 import java.util.Locale
 import com.medihistory.ai.ui.components.OcrStatus as UiOcrStatus
 
@@ -74,6 +80,9 @@ fun PrescriptionDetailScreen(
     viewModel: PrescriptionDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showUnderstandingSheet by rememberSaveable { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(prescriptionId, patientId) {
         viewModel.load(prescriptionId, patientId)
@@ -353,6 +362,24 @@ fun PrescriptionDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(text = "Extract text")
+                        }
+                    }
+
+                    // "Understand this prescription" — visible only after OCR is REVIEWED (F11)
+                    if (prescription.ocrStatus == OcrStatus.REVIEWED) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                viewModel.generateUnderstanding(prescriptionId, patientId)
+                                coroutineScope.launch { sheetState.show() }
+                                showUnderstandingSheet = true
+                            },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .semantics { contentDescription = "Understand this prescription" },
+                        ) {
+                            Text(text = "✨ Understand this prescription")
                         }
                     }
                 }

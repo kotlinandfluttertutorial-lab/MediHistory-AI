@@ -3,10 +3,17 @@ package com.medihistory.ai.ui.prescription
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.medihistory.ai.data.ai.GeminiService
+import com.medihistory.ai.data.ai.PrescriptionUnderstandingAgent
+import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.model.Doctor
+import com.medihistory.ai.data.model.ExtractedFieldEntity
+import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.model.Prescription
+import com.medihistory.ai.data.ocr.ReviewState
 import com.medihistory.ai.data.repository.DoctorRepository
+import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -62,7 +69,10 @@ class PrescriptionDetailViewModelTest {
             PrescriptionDetailViewModel(
                 repository = fakeRepository,
                 doctorRepository = FakeDetailDoctorRepository(),
+                medicineRepository = FakeDetailMedicineRepository(),
+                extractedFieldDao = FakeDetailExtractedFieldDao(),
                 workManager = workManager,
+                prescriptionUnderstandingAgent = PrescriptionUnderstandingAgent(GeminiService()),
             )
     }
 
@@ -229,4 +239,41 @@ private class FakeDetailDoctorRepository : DoctorRepository {
     override suspend fun update(doctor: Doctor) = Unit
 
     override suspend fun delete(doctor: Doctor) = Unit
+}
+
+private class FakeDetailMedicineRepository : MedicineRepository {
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = MutableStateFlow(emptyList())
+
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> = MutableStateFlow(emptyList())
+
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? = null
+
+    override suspend fun insertAll(medicines: List<Medicine>) = Unit
+
+    override suspend fun update(medicine: Medicine) = Unit
+
+    override suspend fun delete(medicine: Medicine) = Unit
+
+    override fun observeActiveIngredients(patientId: String): Flow<List<String>> = MutableStateFlow(emptyList())
+}
+
+private class FakeDetailExtractedFieldDao : ExtractedFieldDao {
+    override fun observeByPrescription(prescriptionId: String): Flow<List<ExtractedFieldEntity>> = MutableStateFlow(emptyList())
+
+    override suspend fun insertAll(fields: List<ExtractedFieldEntity>) = Unit
+
+    override suspend fun updateReview(
+        id: String,
+        state: ReviewState,
+        patientValue: String?,
+        ts: Long,
+    ) = Unit
+
+    override suspend fun deleteByPrescription(prescriptionId: String) = Unit
 }

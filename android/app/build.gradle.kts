@@ -224,6 +224,7 @@ dependencies {
     implementation(libs.mlkit.text.recognition)
 
     // Gemini — generative AI SDK for prescription OCR (Gemini 1.5 Flash)
+    implementation(libs.generativeai)
     implementation(libs.google.genai.kotlin)
 
     // Firebase — BOM manages all Firebase library versions
