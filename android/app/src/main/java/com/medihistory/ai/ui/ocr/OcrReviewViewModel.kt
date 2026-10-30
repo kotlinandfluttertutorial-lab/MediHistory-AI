@@ -50,11 +50,16 @@ class OcrReviewViewModel @Inject constructor(
     // Cached patientId for updateOcrStatus; set once during load().
     private var cachedPatientId: String? = null
 
+    // Set to true the first time the patient confirms, edits, or rejects any field.
+    // Auto-navigation only fires once the patient has actually interacted.
+    private var hasUserInteracted = false
+
     /**
      * Loads and observes the extracted fields for [prescriptionId].
      * Safe to call multiple times; each call cancels the previous observation.
      */
     fun load(prescriptionId: String) {
+        hasUserInteracted = false
         _uiState.update { it.copy(prescriptionId = prescriptionId, isLoading = true, error = null) }
 
         // Resolve the patientId for later OcrStatus update — no content exposed.
@@ -82,21 +87,26 @@ class OcrReviewViewModel @Inject constructor(
                         editText     = entity.patientValue ?: entity.rawValue ?: "",
                     )
                 }
-                val allReviewed = fieldStates
-                    .filter { it.rawValue != null }
-                    .all { it.reviewState != ReviewState.PENDING_REVIEW }
+                val allReviewed = fieldStates.isNotEmpty() &&
+                    fieldStates.filter { it.rawValue != null }.let { reviewable ->
+                        reviewable.isNotEmpty() &&
+                            reviewable.all { it.reviewState != ReviewState.PENDING_REVIEW }
+                    }
 
                 _uiState.update {
                     it.copy(
-                        fields      = fieldStates,
-                        isLoading   = false,
-                        error       = null,
-                        allReviewed = allReviewed,
+                        fields              = fieldStates,
+                        isLoading           = false,
+                        error               = null,
+                        allReviewed         = allReviewed,
+                        hasUserInteracted   = hasUserInteracted,
                     )
                 }
 
                 // Advance OcrStatus once every extractable field has been reviewed/rejected.
-                if (allReviewed && fieldStates.isNotEmpty()) {
+                // Only fire PostReviewProcessor if the patient has actually interacted —
+                // prevents auto-processing when the worker finishes before the screen opens.
+                if (allReviewed && fieldStates.isNotEmpty() && hasUserInteracted) {
                     val pid = cachedPatientId ?: return@onEach
                     prescriptionDao.updateOcrStatus(
                         id        = prescriptionId,
@@ -122,15 +132,14 @@ class OcrReviewViewModel @Inject constructor(
      */
     fun onConfirmField(fieldId: String) {
         val field = findField(fieldId) ?: return
-        if (field.rawValue == null) return              // nothing to confirm
+        if (field.rawValue == null) return
         if (field.reviewState != ReviewState.PENDING_REVIEW) return
-
+        hasUserInteracted = true
         viewModelScope.launch {
-            // rawValue is not passed to updateReview — only patientValue changes.
             extractedFieldDao.updateReview(
                 id           = fieldId,
                 state        = ReviewState.REVIEWED,
-                patientValue = field.rawValue,             // set patientValue = rawValue
+                patientValue = field.rawValue,
             )
         }
     }
@@ -191,16 +200,14 @@ class OcrReviewViewModel @Inject constructor(
     fun onSaveEdit(fieldId: String) {
         val field = findField(fieldId) ?: return
         if (field.reviewState != ReviewState.PENDING_REVIEW) return
-
+        hasUserInteracted = true
         viewModelScope.launch {
-            // rawValue is NOT touched — only patientValue is written.
             extractedFieldDao.updateReview(
                 id           = fieldId,
                 state        = ReviewState.REVIEWED,
-                patientValue = field.editText,            // patient override, not rawValue
+                patientValue = field.editText,
             )
         }
-        // Close the edit UI immediately (optimistic).
         _uiState.update { state ->
             state.copy(
                 fields = state.fields.map { f ->
@@ -217,7 +224,7 @@ class OcrReviewViewModel @Inject constructor(
     fun onRejectField(fieldId: String) {
         val field = findField(fieldId) ?: return
         if (field.reviewState != ReviewState.PENDING_REVIEW) return
-
+        hasUserInteracted = true
         viewModelScope.launch {
             extractedFieldDao.updateReview(
                 id           = fieldId,

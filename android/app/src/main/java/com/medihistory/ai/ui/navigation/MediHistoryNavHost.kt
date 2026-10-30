@@ -52,6 +52,7 @@ fun MediHistoryNavHost(
                 onViewHistory = { navController.navigate(Routes.MEDICAL_HISTORY) },
                 onNewDoctorMode = { navController.navigate(Routes.NEW_DOCTOR_MODE) },
                 onViewPrescriptions = { navController.navigate(Routes.PRESCRIPTIONS) },
+                onViewMedicines = { navController.navigate(Routes.MEDICINE_EXPLORER) },
             )
         }
 

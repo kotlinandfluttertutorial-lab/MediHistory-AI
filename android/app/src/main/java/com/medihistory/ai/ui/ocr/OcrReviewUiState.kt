@@ -53,6 +53,8 @@ data class OcrReviewUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val allReviewed: Boolean = false,
+    /** True once the patient has confirmed, edited, or rejected at least one field. */
+    val hasUserInteracted: Boolean = false,
 ) {
     /**
      * Number of fields that are still [ReviewState.PENDING_REVIEW] and have a

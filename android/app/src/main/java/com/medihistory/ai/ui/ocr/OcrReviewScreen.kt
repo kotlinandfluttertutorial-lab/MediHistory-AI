@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.medihistory.ai.data.ocr.ReviewState
@@ -81,9 +82,12 @@ fun OcrReviewScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    // Navigate away once all fields are done and the processor has written doctor/medicines.
-    LaunchedEffect(uiState.allReviewed) {
-        if (uiState.allReviewed && uiState.fields.isNotEmpty()) {
+    // Auto-navigate only after the patient has actually interacted and reviewed all fields.
+    // Guarding with hasUserInteracted prevents navigating away when:
+    //  - the OCR worker finishes before the screen opens (empty list → allReviewed = false now)
+    //  - the screen recomposes before fields load
+    LaunchedEffect(uiState.allReviewed, uiState.hasUserInteracted) {
+        if (uiState.allReviewed && uiState.hasUserInteracted && uiState.fields.isNotEmpty()) {
             onAllReviewed()
         }
     }
@@ -173,47 +177,78 @@ fun OcrReviewScreen(
                         )
                     }
 
-                    // ── Pending / all-reviewed banners ────────────────────────
-                    item {
-                        StatusBanner(
-                            pendingCount = uiState.pendingCount,
-                            allReviewed  = uiState.allReviewed,
-                            modifier     = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                        )
-                    }
+                    // ── OCR still processing — no fields yet ──────────────────
+                    if (uiState.fields.isEmpty()) {
+                        item {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    androidx.compose.material3.CircularProgressIndicator()
+                                    Text(
+                                        text = "Extracting fields from your prescription…",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    )
+                                    Text(
+                                        text = "This usually takes a few seconds.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // ── Pending / all-reviewed banners ────────────────────
+                        item {
+                            StatusBanner(
+                                pendingCount = uiState.pendingCount,
+                                allReviewed  = uiState.allReviewed,
+                                modifier     = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                            )
+                        }
 
-                    // ── Section header ────────────────────────────────────────
-                    item {
-                        Text(
-                            text     = "EXTRACTED FIELDS",
-                            style    = MaterialTheme.typography.labelSmall,
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
-                    }
+                        // ── Section header ────────────────────────────────────
+                        item {
+                            Text(
+                                text     = "EXTRACTED FIELDS",
+                                style    = MaterialTheme.typography.labelSmall,
+                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                        }
 
-                    // ── Field cards ───────────────────────────────────────────
-                    itemsIndexed(
-                        items = uiState.fields,
-                        key   = { _, field -> field.fieldId },
-                    ) { _, field ->
-                        ExtractedFieldCard(
-                            field            = field,
-                            onConfirm        = { viewModel.onConfirmField(field.fieldId) },
-                            onEdit           = { viewModel.onEditField(field.fieldId) },
-                            onReject         = { viewModel.onRejectField(field.fieldId) },
-                            onUnreview       = { viewModel.onUnreviewField(field.fieldId) },
-                            onEditTextChange = { text -> viewModel.onEditTextChange(field.fieldId, text) },
-                            onSaveEdit       = { viewModel.onSaveEdit(field.fieldId) },
-                            onCancelEdit     = { viewModel.onCancelEdit(field.fieldId) },
-                            modifier         = Modifier.padding(horizontal = 16.dp),
-                        )
-                    }
+                        // ── Field cards ───────────────────────────────────────
+                        itemsIndexed(
+                            items = uiState.fields,
+                            key   = { _, field -> field.fieldId },
+                        ) { _, field ->
+                            ExtractedFieldCard(
+                                field            = field,
+                                onConfirm        = { viewModel.onConfirmField(field.fieldId) },
+                                onEdit           = { viewModel.onEditField(field.fieldId) },
+                                onReject         = { viewModel.onRejectField(field.fieldId) },
+                                onUnreview       = { viewModel.onUnreviewField(field.fieldId) },
+                                onEditTextChange = { text -> viewModel.onEditTextChange(field.fieldId, text) },
+                                onSaveEdit       = { viewModel.onSaveEdit(field.fieldId) },
+                                onCancelEdit     = { viewModel.onCancelEdit(field.fieldId) },
+                                modifier         = Modifier.padding(horizontal = 16.dp),
+                            )
+                        }
 
-                    // Trailing spacer so last card isn't hidden behind bottom bar.
-                    item { Spacer(Modifier.height(16.dp)) }
+                        // Trailing spacer
+                        item { Spacer(Modifier.height(16.dp)) }
+                    }
                 }
             }
         }

@@ -9,7 +9,8 @@ plugins {
     jacoco
 }
 
-if (file("google-services.json").isFile) {
+val skipGoogleServices = providers.gradleProperty("skipGoogleServices").orNull.toBoolean()
+if (file("google-services.json").isFile && !skipGoogleServices) {
     pluginManager.apply("com.google.gms.google-services")
 } else {
     logger.lifecycle(

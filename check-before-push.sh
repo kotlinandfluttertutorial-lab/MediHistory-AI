@@ -215,7 +215,7 @@ else
 
     # 1.1 -- Compile
     print_info "Running :app:compileDebugKotlin (not in CI -- local gate adds this check)..."
-    (cd "$ANDROID_DIR" && ./gradlew :app:compileDebugKotlin --no-daemon)
+    (cd "$ANDROID_DIR" && ./gradlew :app:compileDebugKotlin --no-daemon -PskipGoogleServices=true)
     ANDROID_COMPILE_EXIT=$?
     if [ $ANDROID_COMPILE_EXIT -eq 0 ]; then
         check_result "android-compile" "PASS" "(:app:compileDebugKotlin -- note: not in CI)"
@@ -225,7 +225,7 @@ else
 
     # 1.2 -- Lint
     print_info "Running :app:lintDebug..."
-    (cd "$ANDROID_DIR" && ./gradlew :app:lintDebug --no-daemon)
+    (cd "$ANDROID_DIR" && ./gradlew :app:lintDebug --no-daemon -PskipGoogleServices=true)
     ANDROID_LINT_EXIT=$?
     if [ $ANDROID_LINT_EXIT -eq 0 ]; then
         check_result "android-lint" "PASS"
@@ -238,7 +238,7 @@ else
 
     # 1.4 -- Unit tests
     print_info "Running :app:testDebugUnitTest..."
-    (cd "$ANDROID_DIR" && ./gradlew :app:testDebugUnitTest --no-daemon)
+    (cd "$ANDROID_DIR" && ./gradlew :app:testDebugUnitTest --no-daemon -PskipGoogleServices=true)
     ANDROID_TEST_EXIT=$?
     if [ $ANDROID_TEST_EXIT -eq 0 ]; then
         check_result "android-unit-tests" "PASS"

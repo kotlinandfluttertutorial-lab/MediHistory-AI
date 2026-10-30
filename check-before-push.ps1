@@ -256,7 +256,7 @@ if (-not (Test-Path $GRADLEW_BAT)) {
     # 1.1 -- Compile
     Write-Info "Running :app:compileDebugKotlin (not in CI -- local gate adds this check)..."
     Set-Location $ANDROID_DIR
-    & ".\gradlew.bat" ":app:compileDebugKotlin" "--no-daemon"
+    & ".\gradlew.bat" ":app:compileDebugKotlin" "--no-daemon" "-PskipGoogleServices=true"
     $exitCode = $LASTEXITCODE
     Set-Location $REPO_ROOT
     if ($exitCode -eq 0) {
@@ -268,7 +268,7 @@ if (-not (Test-Path $GRADLEW_BAT)) {
     # 1.2 -- Lint
     Write-Info "Running :app:lintDebug..."
     Set-Location $ANDROID_DIR
-    & ".\gradlew.bat" ":app:lintDebug" "--no-daemon"
+    & ".\gradlew.bat" ":app:lintDebug" "--no-daemon" "-PskipGoogleServices=true"
     $exitCode = $LASTEXITCODE
     Set-Location $REPO_ROOT
     if ($exitCode -eq 0) {
@@ -283,7 +283,7 @@ if (-not (Test-Path $GRADLEW_BAT)) {
     # 1.4 -- Unit tests
     Write-Info "Running :app:testDebugUnitTest..."
     Set-Location $ANDROID_DIR
-    & ".\gradlew.bat" ":app:testDebugUnitTest" "--no-daemon"
+    & ".\gradlew.bat" ":app:testDebugUnitTest" "--no-daemon" "-PskipGoogleServices=true"
     $exitCode = $LASTEXITCODE
     Set-Location $REPO_ROOT
     if ($exitCode -eq 0) {
