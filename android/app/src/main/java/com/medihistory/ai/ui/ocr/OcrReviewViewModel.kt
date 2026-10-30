@@ -58,6 +58,8 @@ class OcrReviewViewModel @Inject constructor(
     private val postReviewProcessor: PostReviewProcessorInterface,
     private val sessionManager: SessionManager,
     private val securePrefs: SecurePreferencesStore,
+    private val ocrCorrectionEngine: OcrCorrectionEngine,
+    private val doctorRepository: DoctorRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OcrReviewUiState(isLoading = true))
@@ -120,6 +122,29 @@ class OcrReviewViewModel @Inject constructor(
                         allReviewed         = allReviewed,
                         hasUserInteracted   = hasUserInteracted,
                     )
+                }
+
+                // Compute correction suggestions for low-confidence PENDING fields (F14).
+                val patientIdForSuggestions = cachedPatientId ?: sessionManager.getPatientId()
+                if (patientIdForSuggestions != null) {
+                    val doctors = doctorRepository.observeByPatient(patientIdForSuggestions).first()
+                    val suggestions = entities
+                        .filter { entity ->
+                            entity.reviewState == ReviewState.PENDING_REVIEW &&
+                                entity.confidence < 0.70f &&
+                                entity.rawValue != null
+                        }
+                        .mapNotNull { entity ->
+                            val suggestion = ocrCorrectionEngine.suggest(
+                                fieldName    = entity.fieldName,
+                                rawValue     = entity.rawValue!!,
+                                allFields    = entities,
+                                knownDoctors = doctors,
+                            )
+                            if (suggestion != null) entity.id to suggestion else null
+                        }
+                        .toMap()
+                    _uiState.update { it.copy(suggestedValues = suggestions) }
                 }
 
                 // Advance OcrStatus once every extractable field has been reviewed/rejected.
@@ -266,6 +291,27 @@ class OcrReviewViewModel @Inject constructor(
                 id           = fieldId,
                 state        = ReviewState.PENDING_REVIEW,
                 patientValue = null,
+            )
+        }
+    }
+
+    /**
+     * Applies an [OcrCorrectionEngine] suggestion to [fieldId].
+     *
+     * Transition: PENDING_REVIEW → REVIEWED with patientValue = [suggestion].
+     * [rawValue] is NEVER changed — the suggestion is stored as [patientValue].
+     *
+     * Medical safety: only called after the patient explicitly confirms the suggestion dialog.
+     */
+    fun onApplySuggestion(fieldId: String, suggestion: String) {
+        val field = findField(fieldId) ?: return
+        if (field.reviewState != ReviewState.PENDING_REVIEW) return
+        hasUserInteracted = true
+        viewModelScope.launch {
+            extractedFieldDao.updateReview(
+                id           = fieldId,
+                state        = ReviewState.REVIEWED,
+                patientValue = suggestion,
             )
         }
     }

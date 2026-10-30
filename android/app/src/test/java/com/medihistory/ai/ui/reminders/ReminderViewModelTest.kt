@@ -5,6 +5,7 @@ import com.medihistory.ai.data.model.DoseRecordEntity
 import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.Reminder
+import com.medihistory.ai.data.reminders.ReminderAdvisorEngine
 import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.ReminderRepository
 import kotlinx.coroutines.Dispatchers
@@ -50,7 +51,7 @@ class ReminderViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakeReminderRepository()
         fakeMedicineRepository = FakeMedicineRepositoryForReminders()
-        viewModel = ReminderViewModel(fakeRepository, fakeMedicineRepository)
+        viewModel = ReminderViewModel(fakeRepository, fakeMedicineRepository, ReminderAdvisorEngine())
     }
 
     @After

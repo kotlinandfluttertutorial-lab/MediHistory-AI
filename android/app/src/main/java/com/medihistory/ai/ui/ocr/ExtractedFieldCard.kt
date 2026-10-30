@@ -13,16 +13,23 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -57,6 +64,8 @@ private const val LOW_CONFIDENCE_THRESHOLD = 0.70f
  * @param onUnreview        Called when the patient taps "Un-review" (REVIEWED/REJECTED → PENDING).
  * @param onEditTextChange  Called on every keystroke while editing.
  * @param onSaveEdit        Called when the patient taps "Save" in edit mode.
+ * @param suggestion        Suggested correction from [OcrCorrectionEngine], or null.
+ * @param onApplySuggestion Called when the patient confirms applying the suggestion.
  */
 @Composable
 fun ExtractedFieldCard(
@@ -68,6 +77,8 @@ fun ExtractedFieldCard(
     onEditTextChange: (String) -> Unit,
     onSaveEdit: () -> Unit,
     onCancelEdit: () -> Unit = {},
+    suggestion: String? = null,
+    onApplySuggestion: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val isLowConfidencePending =
@@ -78,6 +89,8 @@ fun ExtractedFieldCard(
         append("Confidence ${(field.confidence * 100).roundToInt()}%. ")
         append("Status: ${field.reviewState.name.replace('_', ' ')}")
     }
+
+    var showSuggestionDialog by rememberSaveable { mutableStateOf(false) }
 
     ElevatedCard(
         modifier = modifier
@@ -217,6 +230,21 @@ fun ExtractedFieldCard(
                         modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                     ) { Text("Reject") }
                 }
+
+                // ── Suggestion chip (F14) ─────────────────────────────────────
+                if (suggestion != null) {
+                    Spacer(Modifier.height(4.dp))
+                    SuggestionChip(
+                        onClick = { showSuggestionDialog = true },
+                        label = { Text("\uD83D\uDCA1 Suggestion: $suggestion") },
+                        modifier = Modifier
+                            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                            .semantics {
+                                contentDescription =
+                                    "Suggestion for ${field.fieldName}: $suggestion. Tap to review."
+                            },
+                    )
+                }
             }
 
             // ── REVIEWED un-review action ─────────────────────────────────────
@@ -249,6 +277,68 @@ fun ExtractedFieldCard(
                 }
             }
         }
+    }
+
+    // ── Suggestion confirmation dialog (F14) ─────────────────────────────────
+    if (showSuggestionDialog && suggestion != null) {
+        AlertDialog(
+            onDismissRequest = { showSuggestionDialog = false },
+            title = { Text("Apply suggestion?") },
+            text = {
+                Column {
+                    Text(
+                        text  = "Current value:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text  = field.rawValue ?: "(empty)",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text  = "Suggestion:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text  = suggestion,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onApplySuggestion(suggestion)
+                        showSuggestionDialog = false
+                    },
+                    modifier = Modifier.sizeIn(minHeight = 48.dp),
+                ) {
+                    Text("Use suggestion")
+                }
+            },
+            dismissButton = {
+                Row {
+                    OutlinedButton(
+                        onClick = {
+                            onEdit()
+                            showSuggestionDialog = false
+                        },
+                        modifier = Modifier.sizeIn(minHeight = 48.dp),
+                    ) {
+                        Text("Edit manually")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        onClick = { showSuggestionDialog = false },
+                        modifier = Modifier.sizeIn(minHeight = 48.dp),
+                    ) {
+                        Text("Dismiss")
+                    }
+                }
+            },
+        )
     }
 }
 

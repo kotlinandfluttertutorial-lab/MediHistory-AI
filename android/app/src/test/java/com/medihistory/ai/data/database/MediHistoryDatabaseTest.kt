@@ -45,8 +45,8 @@ class MediHistoryDatabaseTest {
             .build()
         val version = db!!.openHelper.readableDatabase.version
         assertEquals(
-            "Schema version must be 7 (reminders and dose records added)",
-            7,
+            "Schema version must be 8 (explanation column added to duplicate_alerts)",
+            8,
             version,
         )
     }

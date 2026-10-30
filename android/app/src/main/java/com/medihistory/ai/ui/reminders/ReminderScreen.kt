@@ -32,6 +32,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -42,10 +45,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medihistory.ai.data.model.DoseRecord
 import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.Reminder
+import com.medihistory.ai.data.reminders.ReminderSuggestion
 import com.medihistory.ai.ui.components.EmptyStateView
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.components.PrimaryButton
 import com.medihistory.ai.ui.components.SecondaryButton
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Reminders screen — top-level destination for feature F08 (Reminders and adherence tracking).
@@ -165,6 +171,22 @@ fun ReminderScreen(
             onDismiss = viewModel::onDismissMedicinePicker,
         )
     }
+
+    // ── Reminder advisor dialog (F16) ─────────────────────────────────────
+    if (uiState.showReminderAdvisor && uiState.pendingReminderMedicine != null) {
+        ReminderAdvisorDialog(
+            medicine   = uiState.pendingReminderMedicine,
+            suggestion = uiState.reminderSuggestion,
+            onConfirm  = { times ->
+                viewModel.onConfirmReminderTimes(
+                    medicine  = uiState.pendingReminderMedicine,
+                    patientId = patientId,
+                    times     = times,
+                )
+            },
+            onDismiss  = viewModel::onDismissReminderAdvisor,
+        )
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -234,9 +256,121 @@ private fun MedicinePickerDialog(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3-section content layout
+// Reminder advisor dialog (F16)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Dialog that shows AI-suggested reminder times based on the medicine's dosage instructions.
+ *
+ * Medical safety:
+ * - The suggested times are advisory only — clearly labelled as suggestions.
+ * - The patient must tap "Set reminders" to confirm. Nothing is created automatically.
+ * - A disclaimer is always shown at the bottom.
+ *
+ * @param medicine   The medicine the patient is setting a reminder for.
+ * @param suggestion The suggested times from [ReminderAdvisorEngine], or null if none match.
+ * @param onConfirm  Called with the patient-confirmed list of [LocalTime] values.
+ * @param onDismiss  Called when the patient cancels or dismisses the dialog.
+ */
+@Composable
+private fun ReminderAdvisorDialog(
+    medicine: Medicine,
+    suggestion: ReminderSuggestion?,
+    onConfirm: (List<LocalTime>) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val initialTimes = suggestion?.times ?: listOf(LocalTime.of(8, 0))
+    // For MVP: times are displayed read-only. Full time-picker is future work.
+    var times by rememberSaveable { mutableStateOf(initialTimes) }
+
+    val formatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Suggested reminder times") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text  = "Medicine: ${medicine.medicineName}",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+
+                if (!medicine.dosageInstructions.isNullOrBlank()) {
+                    Text(
+                        text  = "Prescribed: ${medicine.dosageInstructions}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                if (suggestion != null) {
+                    Text(
+                        text  = "Suggested times:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    times.forEach { time ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors   = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            ),
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text  = time.format(formatter),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                                Text(
+                                    text  = "Tap to change time (coming soon)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Text(
+                        text  = "No automatic suggestion available for these instructions. Please set a time manually.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Spacer(Modifier.height(4.dp))
+
+                // Always-visible disclaimer
+                Text(
+                    text  = "AI-generated — always verify timing with your doctor or pharmacist.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(times) },
+                modifier = Modifier.semantics {
+                    contentDescription = "Set reminders for ${medicine.medicineName}"
+                },
+            ) {
+                Text("Set reminders")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3-section content layout
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun ReminderContent(
     reminders: List<Reminder>,

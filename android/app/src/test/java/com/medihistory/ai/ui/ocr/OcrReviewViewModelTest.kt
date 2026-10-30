@@ -4,8 +4,10 @@ import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.ExtractedFieldEntity
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.ocr.OcrCorrectionEngine
 import com.medihistory.ai.data.ocr.PostReviewProcessorInterface
 import com.medihistory.ai.data.ocr.ReviewState
+import com.medihistory.ai.data.repository.DoctorRepository
 import com.medihistory.ai.data.security.SecurePreferencesStore
 import com.medihistory.ai.data.session.SessionManager
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +63,8 @@ class OcrReviewViewModelTest {
             postReviewProcessor = NoOpPostReviewProcessor(),
             sessionManager = FakeSessionManager(),
             securePrefs = FakeSecurePrefsStore(),
+            ocrCorrectionEngine = OcrCorrectionEngine(),
+            doctorRepository = FakeDoctorRepository(),
         )
     }
 
@@ -360,6 +364,8 @@ class OcrReviewViewModelTest {
             postReviewProcessor  = NoOpPostReviewProcessor(),
             sessionManager       = FakeSessionManager(),
             securePrefs          = prefs,
+            ocrCorrectionEngine  = OcrCorrectionEngine(),
+            doctorRepository     = FakeDoctorRepository(),
         )
 
         assertEquals(
@@ -379,6 +385,8 @@ class OcrReviewViewModelTest {
             postReviewProcessor  = NoOpPostReviewProcessor(),
             sessionManager       = FakeSessionManager(),
             securePrefs          = prefs,
+            ocrCorrectionEngine  = OcrCorrectionEngine(),
+            doctorRepository     = FakeDoctorRepository(),
         )
 
         assertEquals(
@@ -398,6 +406,8 @@ class OcrReviewViewModelTest {
             postReviewProcessor  = NoOpPostReviewProcessor(),
             sessionManager       = FakeSessionManager(),
             securePrefs          = prefs,
+            ocrCorrectionEngine  = OcrCorrectionEngine(),
+            doctorRepository     = FakeDoctorRepository(),
         )
 
         assertEquals(
@@ -416,6 +426,8 @@ class OcrReviewViewModelTest {
             postReviewProcessor  = NoOpPostReviewProcessor(),
             sessionManager       = FakeSessionManager(),
             securePrefs          = prefs,
+            ocrCorrectionEngine  = OcrCorrectionEngine(),
+            doctorRepository     = FakeDoctorRepository(),
         )
         assertEquals("Initial state must be UNKNOWN", GeminiConsentState.UNKNOWN, vm.geminiConsentState.value)
 
@@ -442,6 +454,8 @@ class OcrReviewViewModelTest {
             postReviewProcessor  = NoOpPostReviewProcessor(),
             sessionManager       = FakeSessionManager(),
             securePrefs          = prefs,
+            ocrCorrectionEngine  = OcrCorrectionEngine(),
+            doctorRepository     = FakeDoctorRepository(),
         )
         assertEquals("Initial state must be UNKNOWN", GeminiConsentState.UNKNOWN, vm.geminiConsentState.value)
 
@@ -595,3 +609,12 @@ private class FakeSessionManager : SessionManager(
         override fun clear() { map.clear() }
     }
 )
+
+private class FakeDoctorRepository : DoctorRepository {
+    override fun observeByPatient(patientId: String): kotlinx.coroutines.flow.Flow<List<com.medihistory.ai.data.model.Doctor>> =
+        MutableStateFlow(emptyList())
+    override suspend fun getById(doctorId: String, patientId: String): com.medihistory.ai.data.model.Doctor? = null
+    override suspend fun insert(doctor: com.medihistory.ai.data.model.Doctor) {}
+    override suspend fun update(doctor: com.medihistory.ai.data.model.Doctor) {}
+    override suspend fun delete(doctor: com.medihistory.ai.data.model.Doctor) {}
+}

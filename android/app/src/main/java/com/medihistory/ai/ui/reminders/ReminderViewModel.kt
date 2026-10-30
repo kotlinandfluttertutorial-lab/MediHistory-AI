@@ -6,6 +6,7 @@ import com.medihistory.ai.data.model.DoseRecord
 import com.medihistory.ai.data.model.DoseRecordEntity
 import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.Reminder
+import com.medihistory.ai.data.reminders.ReminderAdvisorEngine
 import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.ReminderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,10 +40,14 @@ import javax.inject.Inject
 class ReminderViewModel @Inject constructor(
     private val repository: ReminderRepository,
     private val medicineRepository: MedicineRepository,
+    private val reminderAdvisorEngine: ReminderAdvisorEngine,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReminderUiState())
     val uiState: StateFlow<ReminderUiState> = _uiState.asStateFlow()
+
+    // Cached patientId — set when onMedicineSelected is called, used by onConfirmReminderTimes.
+    private var patientIdForAdvisor: String? = null
 
     // -------------------------------------------------------------------------
     // Load
@@ -93,24 +98,61 @@ class ReminderViewModel @Inject constructor(
     }
 
     /**
-     * Creates a new reminder for [medicine] with a default time of 08:00.
-     *
-     * [prescribedInstructions] is taken directly from [Medicine.dosageInstructions]
-     * which was set from a REVIEWED OCR field — this satisfies the safety contract.
+     * Called when the patient selects a medicine from the picker.
+     * Computes a reminder suggestion via [ReminderAdvisorEngine] and shows the advisor dialog.
      *
      * @param medicine   The medicine the patient wants to be reminded about.
      * @param patientId  The owning patient's ID.
      */
     fun onMedicineSelected(medicine: Medicine, patientId: String) {
-        _uiState.update { it.copy(showMedicinePicker = false) }
-        createReminder(
-            patientId             = patientId,
-            medicineId            = medicine.id,
-            medicineName          = medicine.medicineName,
-            // dosageInstructions was set from a REVIEWED OCR field (PostReviewProcessor).
-            prescribedInstructions = medicine.dosageInstructions,
-            reminderTime          = LocalTime.of(8, 0), // default 08:00; patient can edit later
-        )
+        patientIdForAdvisor = patientId
+        val suggestion = reminderAdvisorEngine.suggest(medicine.dosageInstructions)
+        _uiState.update {
+            it.copy(
+                showMedicinePicker    = false,
+                pendingReminderMedicine = medicine,
+                reminderSuggestion    = suggestion,
+                showReminderAdvisor   = true,
+            )
+        }
+    }
+
+    /**
+     * Called when the patient confirms the suggested reminder times in the advisor dialog.
+     * Creates one reminder per time in [times], then dismisses the advisor.
+     *
+     * [prescribedInstructions] is taken from the medicine's dosageInstructions which
+     * was set from a REVIEWED OCR field — satisfying the safety contract.
+     *
+     * @param medicine   The medicine to create reminders for.
+     * @param patientId  The owning patient's ID.
+     * @param times      The list of times the patient confirmed.
+     */
+    fun onConfirmReminderTimes(medicine: Medicine, patientId: String, times: List<LocalTime>) {
+        times.forEach { time ->
+            createReminder(
+                patientId              = patientId,
+                medicineId             = medicine.id,
+                medicineName           = medicine.medicineName,
+                prescribedInstructions = medicine.dosageInstructions,
+                reminderTime           = time,
+            )
+        }
+        onDismissReminderAdvisor()
+    }
+
+    /**
+     * Dismisses the reminder advisor dialog without creating any reminders.
+     */
+    fun onDismissReminderAdvisor() {
+        _uiState.update {
+            it.copy(
+                showReminderAdvisor     = false,
+                pendingReminderMedicine = null,
+                reminderSuggestion      = null,
+            )
+        }
+        patientIdForAdvisor = null
     }
 
     // -------------------------------------------------------------------------

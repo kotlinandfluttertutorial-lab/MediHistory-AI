@@ -258,6 +258,10 @@ fun OcrReviewScreen(
                                 onEditTextChange = { text -> viewModel.onEditTextChange(field.fieldId, text) },
                                 onSaveEdit       = { viewModel.onSaveEdit(field.fieldId) },
                                 onCancelEdit     = { viewModel.onCancelEdit(field.fieldId) },
+                                suggestion       = uiState.suggestedValues[field.fieldId],
+                                onApplySuggestion = { suggestion ->
+                                    viewModel.onApplySuggestion(field.fieldId, suggestion)
+                                },
                                 modifier         = Modifier.padding(horizontal = 16.dp),
                             )
                         }
