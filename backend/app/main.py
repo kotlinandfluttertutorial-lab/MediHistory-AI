@@ -11,7 +11,7 @@ Security:
 from fastapi import FastAPI
 
 from app.middleware.rate_limit import RateLimitMiddleware
-from app.routers import auth, doctors, patients
+from app.routers import auth, doctors, medicines, patients, prescriptions
 
 app = FastAPI(
     title="MediHistory AI API",
@@ -21,6 +21,8 @@ app = FastAPI(
         {"name": "auth", "description": "Authentication operations"},
         {"name": "patients", "description": "Patient profile operations"},
         {"name": "doctors", "description": "Doctor record operations"},
+        {"name": "prescriptions", "description": "Prescription document operations"},
+        {"name": "medicines", "description": "Medicine list and update operations"},
     ],
 )
 
@@ -37,3 +39,5 @@ app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(patients.router, prefix="/api/v1")
 app.include_router(doctors.router, prefix="/api/v1")
+app.include_router(prescriptions.router, prefix="/api/v1")
+app.include_router(medicines.router, prefix="/api/v1")
