@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Add GeminiConsentDialog, GeminiConsentState enum, and consent StateFlow to OcrReviewViewModel and OcrReviewScreen. This is the UI consent layer. Depends on FEAT-001 (KEY_GEMINI_OCR_CONSENT constant must exist). Independent of FEAT-002 (consent UI does not call Gemini directly — it only stores the patient's decision in SecurePreferences so that GeminiEnhancedOcrService can read it).",
+  "status": "completed",
+  "steps": [
+    "Create android/app/src/main/java/com/medihistory/ai/ui/ocr/GeminiConsentDialog.kt as a @Composable function GeminiConsentDialog(onAccept: () -> Unit, onDecline: () -> Unit). Use AlertDialog with Material3. Title: 'Improve prescription reading?'. Body text explains: only OCR text (not the image) is sent to Google's Gemini AI; optional; can disable in settings. confirmButton: Button labeled 'Allow' with contentDescription 'Allow Gemini AI to improve prescription reading'. dismissButton: OutlinedButton labeled 'No thanks' with contentDescription 'Decline Gemini AI, use on-device reading only'. onDismissRequest = onDecline. Both buttons are ≥48dp touch targets (Material3 default satisfies this).",
+    "In android/app/src/main/java/com/medihistory/ai/ui/ocr/OcrReviewViewModel.kt, add enum class GeminiConsentState { UNKNOWN, GRANTED, DECLINED } before the OcrReviewViewModel class declaration in the same file. Add SecurePreferencesStore parameter to @Inject constructor (add import com.medihistory.ai.data.security.SecurePreferences and import com.medihistory.ai.data.security.SecurePreferencesStore). Add private MutableStateFlow<GeminiConsentState> _geminiConsentState = MutableStateFlow(readConsentState()) and public val geminiConsentState: StateFlow<GeminiConsentState> = _geminiConsentState.asStateFlow() after the existing _uiState. Add private fun readConsentState(): GeminiConsentState that reads securePrefs.getString(SecurePreferences.KEY_GEMINI_OCR_CONSENT) and returns GRANTED for 'true', DECLINED for 'false', UNKNOWN otherwise. Add fun onGeminiConsentGranted() that writes 'true' to securePrefs and sets _geminiConsentState.value = GeminiConsentState.GRANTED. Add fun onGeminiConsentDeclined() that writes 'false' and sets DECLINED.",
+    "In android/app/src/main/java/com/medihistory/ai/ui/ocr/OcrReviewScreen.kt, add imports for BuildConfig (import com.medihistory.ai.BuildConfig) and GeminiConsentState. Inside OcrReviewScreen composable, after the uiState collectAsState line, add: val geminiConsentState by viewModel.geminiConsentState.collectAsState(). Show GeminiConsentDialog when BuildConfig.ENABLE_GEMINI_OCR is true AND geminiConsentState == GeminiConsentState.UNKNOWN, calling viewModel.onGeminiConsentGranted() on accept and viewModel.onGeminiConsentDeclined() on decline. Replace the existing LaunchedEffect(prescriptionId) { viewModel.load(prescriptionId) } with: val consentResolved = !BuildConfig.ENABLE_GEMINI_OCR || geminiConsentState != GeminiConsentState.UNKNOWN; LaunchedEffect(prescriptionId, consentResolved) { if (consentResolved) viewModel.load(prescriptionId) }.",
+    "Commit with message: feat: add Gemini consent dialog and OcrReviewViewModel consent state"
+  ],
+  "acceptance_criteria": [
+    "GeminiConsentDialog.kt exists and compiles",
+    "GeminiConsentState enum has UNKNOWN, GRANTED, DECLINED values",
+    "OcrReviewViewModel has geminiConsentState StateFlow, onGeminiConsentGranted(), onGeminiConsentDeclined()",
+    "OcrReviewScreen shows GeminiConsentDialog when ENABLE_GEMINI_OCR=true and state=UNKNOWN",
+    "OcrReviewScreen gates load() on consentResolved so OCR does not run before patient decides",
+    "cd android && .\\gradlew :app:compileDebugKotlin returns BUILD SUCCESSFUL with no errors"
+  ],
+  "verification": [
+    "cd android && .\\gradlew :app:compileDebugKotlin 2>&1 | Select-String 'error|BUILD'",
+    "cd android && .\\gradlew :app:testDebugUnitTest 2>&1 | Select-String 'BUILD|FAIL'"
+  ],
+  "blocked_reason": null,
+  "findings": "All three steps implemented and verified. GeminiConsentDialog.kt created with AlertDialog (title: 'Improve prescription reading?', confirm: 'Allow', dismiss: 'Not now', onDismissRequest=onDecline). GeminiConsentState enum (UNKNOWN/GRANTED/DECLINED) and SecurePreferencesStore injection added to OcrReviewViewModel. geminiConsentState StateFlow, readConsentState(), onGeminiConsentGranted(), onGeminiConsentDeclined() all implemented. OcrReviewScreen updated to observe geminiConsentState, show dialog when ENABLE_GEMINI_OCR=true and state=UNKNOWN, and gate load() via consentResolved flag. OcrReviewViewModelTest updated to pass FakeSecurePrefsStore to constructor. compileDebugKotlin: BUILD SUCCESSFUL. testDebugUnitTest: BUILD SUCCESSFUL (all existing tests pass)."
+}

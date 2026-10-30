@@ -7,6 +7,8 @@ import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.ocr.PostReviewProcessorInterface
 import com.medihistory.ai.data.ocr.ReviewState
+import com.medihistory.ai.data.security.SecurePreferences
+import com.medihistory.ai.data.security.SecurePreferencesStore
 import com.medihistory.ai.data.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +20,16 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/** State of the patient's consent to use Gemini for OCR field extraction. */
+enum class GeminiConsentState {
+    /** Consent has not been recorded yet — dialog should be shown. */
+    UNKNOWN,
+    /** Patient has explicitly granted consent. */
+    GRANTED,
+    /** Patient has explicitly declined — use ML Kit fallback silently. */
+    DECLINED,
+}
 
 /**
  * ViewModel for [OcrReviewScreen].
@@ -42,10 +54,14 @@ class OcrReviewViewModel @Inject constructor(
     private val prescriptionDao: PrescriptionDao,
     private val postReviewProcessor: PostReviewProcessorInterface,
     private val sessionManager: SessionManager,
+    private val securePrefs: SecurePreferencesStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OcrReviewUiState(isLoading = true))
     val uiState: StateFlow<OcrReviewUiState> = _uiState.asStateFlow()
+
+    private val _geminiConsentState = MutableStateFlow(readConsentState())
+    val geminiConsentState: StateFlow<GeminiConsentState> = _geminiConsentState.asStateFlow()
 
     // Cached patientId for updateOcrStatus; set once during load().
     private var cachedPatientId: String? = null
@@ -267,4 +283,35 @@ class OcrReviewViewModel @Inject constructor(
             .joinToString(" ") { word ->
                 word.replaceFirstChar { it.uppercaseChar() }
             }
+
+    // -------------------------------------------------------------------------
+    // Gemini consent
+    // -------------------------------------------------------------------------
+
+    /** Reads the persisted consent state from EncryptedSharedPreferences. */
+    private fun readConsentState(): GeminiConsentState =
+        when (securePrefs.getString(SecurePreferences.KEY_GEMINI_OCR_CONSENT)) {
+            "true"  -> GeminiConsentState.GRANTED
+            "false" -> GeminiConsentState.DECLINED
+            else    -> GeminiConsentState.UNKNOWN
+        }
+
+    /**
+     * Called when the patient taps "Allow" in [GeminiConsentDialog].
+     * Persists consent and updates the StateFlow so the screen re-composes.
+     */
+    fun onGeminiConsentGranted() {
+        securePrefs.putString(SecurePreferences.KEY_GEMINI_OCR_CONSENT, "true")
+        _geminiConsentState.value = GeminiConsentState.GRANTED
+    }
+
+    /**
+     * Called when the patient taps "Not now" in [GeminiConsentDialog].
+     * Persists the decline so the dialog is not shown again.
+     * The OCR pipeline will use the ML Kit fallback silently.
+     */
+    fun onGeminiConsentDeclined() {
+        securePrefs.putString(SecurePreferences.KEY_GEMINI_OCR_CONSENT, "false")
+        _geminiConsentState.value = GeminiConsentState.DECLINED
+    }
 }

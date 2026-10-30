@@ -60,6 +60,7 @@ class OcrReviewViewModelTest {
             prescriptionDao = fakePrescriptionDao,
             postReviewProcessor = NoOpPostReviewProcessor(),
             sessionManager = FakeSessionManager(),
+            securePrefs = FakeSecurePrefsStore(),
         )
     }
 
@@ -461,6 +462,14 @@ private class FakePrescriptionDao : PrescriptionDao {
 /** No-op processor — tests verify ViewModel behaviour, not downstream DB writes. */
 private class NoOpPostReviewProcessor : PostReviewProcessorInterface {
     override suspend fun process(prescriptionId: String, patientId: String) = Unit
+}
+
+private class FakeSecurePrefsStore : SecurePreferencesStore {
+    private val map = mutableMapOf<String, String>()
+    override fun getString(key: String): String? = map[key]
+    override fun putString(key: String, value: String) { map[key] = value }
+    override fun remove(key: String) { map.remove(key) }
+    override fun clear() { map.clear() }
 }
 
 private class FakeSessionManager : SessionManager(

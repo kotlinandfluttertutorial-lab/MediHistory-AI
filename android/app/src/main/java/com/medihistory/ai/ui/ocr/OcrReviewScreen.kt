@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.medihistory.ai.BuildConfig
 import com.medihistory.ai.data.ocr.ReviewState
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.theme.extendedColors
@@ -76,11 +77,26 @@ fun OcrReviewScreen(
     onAllReviewed: () -> Unit = {},
     viewModel: OcrReviewViewModel = hiltViewModel(),
 ) {
-    LaunchedEffect(prescriptionId) {
-        viewModel.load(prescriptionId)
+    val uiState by viewModel.uiState.collectAsState()
+    val geminiConsentState by viewModel.geminiConsentState.collectAsState()
+
+    // Show consent dialog when feature is enabled and consent is not yet recorded.
+    // After the patient responds, the consentResolved flag flips and load() fires.
+    if (BuildConfig.ENABLE_GEMINI_OCR && geminiConsentState == GeminiConsentState.UNKNOWN) {
+        GeminiConsentDialog(
+            onAccept  = { viewModel.onGeminiConsentGranted() },
+            onDecline = { viewModel.onGeminiConsentDeclined() },
+        )
     }
 
-    val uiState by viewModel.uiState.collectAsState()
+    // Load only after consent is known (or when the feature flag is off).
+    val consentResolved = !BuildConfig.ENABLE_GEMINI_OCR ||
+        geminiConsentState != GeminiConsentState.UNKNOWN
+    LaunchedEffect(prescriptionId, consentResolved) {
+        if (consentResolved) {
+            viewModel.load(prescriptionId)
+        }
+    }
 
     // Auto-navigate only after the patient has actually interacted and reviewed all fields.
     // Guarding with hasUserInteracted prevents navigating away when:
