@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -79,6 +80,7 @@ class MedicalHistoryViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
+                Timber.e(e, "Failed to compile medical history")
                 _uiState.update {
                     it.copy(
                         isGenerating = false,

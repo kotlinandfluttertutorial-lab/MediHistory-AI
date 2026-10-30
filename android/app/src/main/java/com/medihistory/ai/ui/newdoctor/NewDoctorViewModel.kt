@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -85,6 +86,7 @@ class NewDoctorViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
+                Timber.e(e, "Failed to load doctor summary records")
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -167,6 +169,7 @@ class NewDoctorViewModel @Inject constructor(
                 )
                 onPdfReady(uri)
             } catch (e: Exception) {
+                Timber.e(e, "Failed to generate summary PDF")
                 _uiState.update {
                     it.copy(error = "Failed to generate summary. Please try again.")
                 }

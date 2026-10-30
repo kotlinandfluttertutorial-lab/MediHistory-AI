@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.ocr.PostReviewProcessorInterface
 import com.medihistory.ai.data.ocr.ReviewState
+import com.medihistory.ai.data.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +40,8 @@ import javax.inject.Inject
 class OcrReviewViewModel @Inject constructor(
     private val extractedFieldDao: ExtractedFieldDao,
     private val prescriptionDao: PrescriptionDao,
+    private val postReviewProcessor: PostReviewProcessorInterface,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OcrReviewUiState(isLoading = true))
@@ -56,6 +60,7 @@ class OcrReviewViewModel @Inject constructor(
         // Resolve the patientId for later OcrStatus update — no content exposed.
         viewModelScope.launch {
             cachedPatientId = prescriptionDao.getPatientId(prescriptionId)
+                ?: sessionManager.getPatientId()
         }
 
         extractedFieldDao
@@ -98,6 +103,8 @@ class OcrReviewViewModel @Inject constructor(
                         patientId = pid,
                         status    = OcrStatus.REVIEWED,
                     )
+                    // Apply confirmed field values to Doctor, Prescription, and Medicine tables.
+                    postReviewProcessor.process(prescriptionId, pid)
                 }
             }
             .catch { _ ->

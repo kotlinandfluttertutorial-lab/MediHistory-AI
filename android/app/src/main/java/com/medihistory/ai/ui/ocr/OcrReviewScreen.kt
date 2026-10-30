@@ -63,7 +63,8 @@ import kotlinx.coroutines.launch
  * - Review state transitions follow the enforced state machine.
  *
  * @param prescriptionId  The prescription whose extracted fields are reviewed.
- * @param onBack          Called when the patient navigates back.
+ * @param onBack          Called when the patient navigates back before completing review.
+ * @param onAllReviewed   Called when every field has been confirmed/rejected — navigate away.
  * @param viewModel       Hilt-provided [OcrReviewViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,6 +72,7 @@ import kotlinx.coroutines.launch
 fun OcrReviewScreen(
     prescriptionId: String,
     onBack: () -> Unit,
+    onAllReviewed: () -> Unit = {},
     viewModel: OcrReviewViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(prescriptionId) {
@@ -78,6 +80,13 @@ fun OcrReviewScreen(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+
+    // Navigate away once all fields are done and the processor has written doctor/medicines.
+    LaunchedEffect(uiState.allReviewed) {
+        if (uiState.allReviewed && uiState.fields.isNotEmpty()) {
+            onAllReviewed()
+        }
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()

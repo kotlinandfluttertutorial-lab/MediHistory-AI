@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import timber.log.Timber
 import java.io.File
 import java.util.concurrent.Executor
 
@@ -73,7 +74,7 @@ internal fun CameraPreviewContent(
                                     imageCapture,
                                 )
                             } catch (e: Exception) {
-                                // Camera binding failure — surface will remain blank
+                                Timber.e(e, "Camera binding failure — surface will remain blank")
                             }
                         },
                         executor,
@@ -121,7 +122,7 @@ private fun captureImage(
             }
 
             override fun onError(exception: ImageCaptureException) {
-                // Silently discard — CameraScreen handles CaptureState.Idle (no preview shown)
+                Timber.e(exception, "Image capture failed")
             }
         },
     )

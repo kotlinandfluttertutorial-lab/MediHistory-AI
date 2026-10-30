@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -61,6 +62,7 @@ class MedicineDetailViewModel @Inject constructor(
                         )
                     }
                 } else {
+                    Timber.w("Medicine record not found or inaccessible")
                     _uiState.update {
                         it.copy(
                             medicine = null,
@@ -70,6 +72,7 @@ class MedicineDetailViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
+                Timber.e(e, "Failed to load medicine record")
                 _uiState.update {
                     it.copy(
                         medicine = null,

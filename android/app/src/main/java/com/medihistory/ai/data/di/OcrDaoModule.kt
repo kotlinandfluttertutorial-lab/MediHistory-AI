@@ -2,19 +2,28 @@ package com.medihistory.ai.data.di
 
 import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.database.MediHistoryDatabase
+import com.medihistory.ai.data.ocr.PostReviewProcessor
+import com.medihistory.ai.data.ocr.PostReviewProcessorInterface
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/** Provides Room DAOs consumed by the OCR worker. */
+/** Provides Room DAOs and use-cases consumed by the OCR worker and review flow. */
 @Module
 @InstallIn(SingletonComponent::class)
-object OcrDaoModule {
+abstract class OcrDaoModule {
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideExtractedFieldDao(database: MediHistoryDatabase): ExtractedFieldDao =
-        database.extractedFieldDao()
+    abstract fun bindPostReviewProcessor(impl: PostReviewProcessor): PostReviewProcessorInterface
+
+    companion object {
+        @Provides
+        @Singleton
+        fun provideExtractedFieldDao(database: MediHistoryDatabase): ExtractedFieldDao =
+            database.extractedFieldDao()
+    }
 }

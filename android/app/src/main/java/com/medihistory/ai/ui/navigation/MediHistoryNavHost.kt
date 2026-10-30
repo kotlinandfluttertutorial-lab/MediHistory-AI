@@ -124,6 +124,13 @@ fun MediHistoryNavHost(
             OcrReviewScreen(
                 prescriptionId = id,
                 onBack = { navController.navigateUp() },
+                onAllReviewed = {
+                    // All fields confirmed — go to the prescriptions list so the
+                    // patient can see the updated card (doctor, date, medicines).
+                    navController.navigate(Routes.PRESCRIPTIONS) {
+                        popUpTo(Routes.PRESCRIPTIONS) { inclusive = true }
+                    }
+                },
             )
         }
 
@@ -146,8 +153,16 @@ fun MediHistoryNavHost(
         // ── Import (file/photo picker) ────────────────────────────────────────
         composable(Routes.IMPORT) {
             ImportScreen(
-                onFileImported = { _, _, _ -> navController.navigateUp() },
+                onFileImported = { prescriptionId ->
+                    // OCR worker is already enqueued by ImportViewModel.
+                    // Navigate directly to the review screen so the patient can
+                    // confirm/edit the extracted fields as soon as they appear.
+                    navController.navigate(Routes.ocrReview(prescriptionId)) {
+                        popUpTo(Routes.IMPORT) { inclusive = true }
+                    }
+                },
                 onDismiss = { navController.navigateUp() },
+                onOpenCamera = { navController.navigate(Routes.CAMERA) },
             )
         }
 

@@ -1,6 +1,6 @@
 package com.medihistory.ai.data.session
 
-import com.medihistory.ai.data.security.SecurePreferences
+import com.medihistory.ai.data.security.SecurePreferencesStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,6 +13,6 @@ object SessionModule {
 
     @Provides
     @Singleton
-    fun provideSessionManager(securePreferences: SecurePreferences): SessionManager =
+    fun provideSessionManager(securePreferences: SecurePreferencesStore): SessionManager =
         SessionManager(securePreferences)
 }

@@ -3,9 +3,22 @@ package com.medihistory.ai.ui.picker
 import android.app.Application
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.WorkManager
+import androidx.work.testing.WorkManagerTestInitHelper
+import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.model.Patient
+import com.medihistory.ai.data.model.Prescription
+import com.medihistory.ai.data.repository.PatientRepository
+import com.medihistory.ai.data.repository.PrescriptionRepository
+import com.medihistory.ai.data.security.SecurePreferencesStore
+import com.medihistory.ai.data.session.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -40,13 +53,23 @@ class ImportViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var context: Application
+    private lateinit var fakePrescriptionRepository: FakePrescriptionRepository
+    private lateinit var fakePatientRepository: FakePatientRepositoryForImport
+    private lateinit var fakeSessionManager: FakeSessionManager
+    private lateinit var workManager: WorkManager
     private lateinit var viewModel: ImportViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
-        viewModel = ImportViewModel(context)
+        // Initialize WorkManager for testing — uses a no-op executor that doesn't actually run workers.
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        workManager = WorkManager.getInstance(context)
+        fakePrescriptionRepository = FakePrescriptionRepository()
+        fakePatientRepository = FakePatientRepositoryForImport()
+        fakeSessionManager = FakeSessionManager("patient-test-import")
+        viewModel = ImportViewModel(context, fakePrescriptionRepository, fakePatientRepository, fakeSessionManager, workManager)
     }
 
     @After
@@ -269,4 +292,73 @@ class ImportViewModelTest {
         syntheticJpg.delete()
         }
     }
+}
+
+// -------------------------------------------------------------------------
+// Fake implementations — in-memory, no I/O, synthetic data only
+// -------------------------------------------------------------------------
+
+private class FakePrescriptionRepository : PrescriptionRepository {
+
+    private val _prescriptions = MutableStateFlow<List<Prescription>>(emptyList())
+
+    override fun observeByPatient(patientId: String): Flow<List<Prescription>> =
+        _prescriptions.map { list -> list.filter { it.patientId == patientId } }
+
+    override suspend fun getById(id: String, patientId: String): Prescription? =
+        _prescriptions.value.find { it.id == id && it.patientId == patientId }
+
+    override suspend fun insert(prescription: Prescription) {
+        _prescriptions.update { it + prescription }
+    }
+
+    override suspend fun update(prescription: Prescription) {
+        _prescriptions.update { list ->
+            list.map { if (it.id == prescription.id) prescription else it }
+        }
+    }
+
+    override suspend fun delete(prescription: Prescription) {
+        _prescriptions.update { it.filter { p -> p.id != prescription.id } }
+    }
+
+    override suspend fun updateOcrStatus(
+        id: String,
+        patientId: String,
+        status: OcrStatus,
+        updatedAt: Long,
+    ) {
+        _prescriptions.update { list ->
+            list.map { p ->
+                if (p.id == id && p.patientId == patientId)
+                    p.copy(ocrStatus = status, updatedAt = updatedAt)
+                else p
+            }
+        }
+    }
+}
+
+private class FakeSessionManager(patientId: String) : SessionManager(
+    securePreferences = object : SecurePreferencesStore {
+        private val store = mutableMapOf("patient_id" to patientId)
+        override fun getString(key: String): String? = store[key]
+        override fun putString(key: String, value: String) { store[key] = value }
+        override fun remove(key: String) { store.remove(key) }
+        override fun clear() { store.clear() }
+    }
+)
+
+private class FakePatientRepositoryForImport : PatientRepository {
+    private val patients = mutableMapOf<String, Patient>()
+
+    override suspend fun getById(patientId: String): Patient? = patients[patientId]
+
+    override suspend fun insert(patient: Patient) { patients[patient.id] = patient }
+
+    override suspend fun update(patient: Patient) { patients[patient.id] = patient }
+
+    override suspend fun delete(patient: Patient) { patients.remove(patient.id) }
+
+    override fun observeAll(): kotlinx.coroutines.flow.Flow<List<Patient>> =
+        kotlinx.coroutines.flow.flowOf(patients.values.toList())
 }

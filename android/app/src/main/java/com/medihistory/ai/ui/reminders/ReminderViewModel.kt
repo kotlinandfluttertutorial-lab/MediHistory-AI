@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.util.UUID
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -49,6 +50,8 @@ class ReminderViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             repository.observeByPatient(patientId)
                 .catch { e ->
+                    Timber.e(e, "Failed to load reminders")
+                    e.cause?.let { Timber.e(it, "Caused by: ${it.message}") }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -103,6 +106,8 @@ class ReminderViewModel @Inject constructor(
             try {
                 repository.insert(reminder)
             } catch (e: Exception) {
+                Timber.e(e, "Failed to create reminder")
+                e.cause?.let { Timber.e(it, "Caused by: ${it.message}") }
                 _uiState.update { it.copy(error = e.message ?: "Failed to create reminder.") }
             }
         }
@@ -117,6 +122,8 @@ class ReminderViewModel @Inject constructor(
             try {
                 repository.delete(reminder)
             } catch (e: Exception) {
+                Timber.e(e, "Failed to delete reminder")
+                e.cause?.let { Timber.e(it, "Caused by: ${it.message}") }
                 _uiState.update { it.copy(error = e.message ?: "Failed to delete reminder.") }
             }
         }
@@ -153,6 +160,8 @@ class ReminderViewModel @Inject constructor(
             try {
                 repository.insertDoseRecord(entity)
             } catch (e: Exception) {
+                Timber.e(e, "Failed to record dose")
+                e.cause?.let { Timber.e(it, "Caused by: ${it.message}") }
                 _uiState.update { it.copy(error = e.message ?: "Failed to record dose.") }
             }
         }

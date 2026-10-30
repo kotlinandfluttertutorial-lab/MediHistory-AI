@@ -192,7 +192,7 @@ if ($statusLines) {
     Write-CheckResult "working-tree-clean" "PASS" "Working tree is clean"
 }
 
-$conflictResult = Invoke-External -Arguments @("git","diff","--name-only","--diff-filter=U") -CaptureOutput
+$conflictResult = Invoke-External -Arguments @("git","-c","core.autocrlf=false","diff","--name-only","--diff-filter=U") -CaptureOutput
 $conflictFiles = ($conflictResult.Output | Out-String).Trim()
 if ($conflictFiles) {
     Write-CheckResult "no-merge-conflicts" "FAIL" "Unresolved merge conflicts in: $conflictFiles"

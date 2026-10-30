@@ -5,7 +5,17 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services) apply false
     jacoco
+}
+
+if (file("google-services.json").isFile) {
+    pluginManager.apply("com.google.gms.google-services")
+} else {
+    logger.lifecycle(
+        "google-services.json not found; skipping Google Services plugin. " +
+            "Firebase-dependent runtime features require this file."
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -155,6 +165,9 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // Logging
+    implementation(libs.timber)
+
     // Security — EncryptedSharedPreferences
     implementation(libs.androidx.security.crypto)
 
@@ -172,6 +185,10 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+
+    // Firebase — BOM manages all Firebase library versions
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 
     // Unit tests
     testImplementation(libs.junit)

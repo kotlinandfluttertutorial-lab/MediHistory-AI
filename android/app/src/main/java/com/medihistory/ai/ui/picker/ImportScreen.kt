@@ -37,16 +37,16 @@ import com.medihistory.ai.ui.components.LoadingIndicator
  * Bottom-sheet style screen that offers three import paths for a prescription document:
  * 1. Android Photo Picker (gallery image)
  * 2. System file picker (PDF)
- * 3. Camera (delegates to the camera screen via [onDismiss])
+ * 3. Camera (navigates to CameraScreen via [onOpenCamera])
  *
- * On a successful import, [onFileImported] is called with the app-private file path,
- * its SHA-256 digest, and the resolved MIME type.  The caller is responsible for
- * navigating away.
+ * On successful import the OCR worker is enqueued and [onFileImported] is called with
+ * the new prescription ID so the caller navigates directly to the OCR review screen.
  */
 @Composable
 fun ImportScreen(
-    onFileImported: (filePath: String, sha256: String, mimeType: String) -> Unit,
+    onFileImported: (prescriptionId: String) -> Unit,
     onDismiss: () -> Unit,
+    onOpenCamera: (() -> Unit)? = null,
     viewModel: ImportViewModel = hiltViewModel(),
 ) {
     val importState by viewModel.importState.collectAsStateWithLifecycle()
@@ -69,7 +69,11 @@ fun ImportScreen(
     // React to terminal states
     LaunchedEffect(importState) {
         when (val s = importState) {
-            is ImportState.Success -> onFileImported(s.filePath, s.sha256, s.mimeType)
+            is ImportState.Success -> {
+                if (s.prescriptionId.isNotEmpty()) {
+                    onFileImported(s.prescriptionId)
+                }
+            }
             is ImportState.Error -> snackbarHostState.showSnackbar(s.message)
             else -> Unit
         }
@@ -108,13 +112,13 @@ fun ImportScreen(
                 filePickerLauncher.launch("application/pdf")
             }
 
-            // Option 3: Camera — navigation handled by caller
+            // Option 3: Camera — navigate to CameraScreen
             ImportOptionCard(
                 icon = Icons.Outlined.CameraAlt,
                 title = "Take a photo",
                 description = "Capture a new photo of your prescription",
             ) {
-                onDismiss()
+                onOpenCamera?.invoke() ?: onDismiss()
             }
 
             if (importState is ImportState.Processing) {

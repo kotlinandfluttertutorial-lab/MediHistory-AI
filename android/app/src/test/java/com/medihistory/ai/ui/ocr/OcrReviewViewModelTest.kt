@@ -4,7 +4,10 @@ import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.ExtractedFieldEntity
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.ocr.PostReviewProcessorInterface
 import com.medihistory.ai.data.ocr.ReviewState
+import com.medihistory.ai.data.security.SecurePreferencesStore
+import com.medihistory.ai.data.session.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +55,12 @@ class OcrReviewViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeFieldDao = FakeExtractedFieldDao()
         fakePrescriptionDao = FakePrescriptionDao()
-        viewModel = OcrReviewViewModel(fakeFieldDao, fakePrescriptionDao)
+        viewModel = OcrReviewViewModel(
+            extractedFieldDao = fakeFieldDao,
+            prescriptionDao = fakePrescriptionDao,
+            postReviewProcessor = NoOpPostReviewProcessor(),
+            sessionManager = FakeSessionManager(),
+        )
     }
 
     @After
@@ -449,3 +457,18 @@ private class FakePrescriptionDao : PrescriptionDao {
         updatedAt: Long,
     ) {}
 }
+
+/** No-op processor — tests verify ViewModel behaviour, not downstream DB writes. */
+private class NoOpPostReviewProcessor : PostReviewProcessorInterface {
+    override suspend fun process(prescriptionId: String, patientId: String) = Unit
+}
+
+private class FakeSessionManager : SessionManager(
+    securePreferences = object : SecurePreferencesStore {
+        private val map = mutableMapOf("patient_id" to "test-patient-ocr")
+        override fun getString(key: String): String? = map[key]
+        override fun putString(key: String, value: String) { map[key] = value }
+        override fun remove(key: String) { map.remove(key) }
+        override fun clear() { map.clear() }
+    }
+)
