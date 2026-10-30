@@ -124,6 +124,13 @@ fun MediHistoryNavHost(
             OcrReviewScreen(
                 prescriptionId = id,
                 onBack = { navController.navigateUp() },
+                onAllReviewed = {
+                    // All fields confirmed — go to the prescriptions list so the
+                    // patient can see the updated card (doctor, date, medicines).
+                    navController.navigate(Routes.PRESCRIPTIONS) {
+                        popUpTo(Routes.PRESCRIPTIONS) { inclusive = true }
+                    }
+                },
             )
         }
 

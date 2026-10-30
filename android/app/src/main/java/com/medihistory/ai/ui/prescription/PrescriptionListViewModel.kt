@@ -6,6 +6,7 @@ import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.DoctorSpecialty
 import com.medihistory.ai.data.model.Prescription
 import com.medihistory.ai.data.repository.DoctorRepository
+import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import com.medihistory.ai.data.session.SessionManager
 import com.medihistory.ai.ui.components.OcrStatus
@@ -24,16 +25,14 @@ import javax.inject.Inject
 /**
  * ViewModel for [PrescriptionListScreen].
  *
- * Combines prescriptions and doctors from Room for the current patient, then maps
- * to [PrescriptionSummary] UI models grouped by doctor name.
- *
- * [SyntheticPrescriptions] is intentionally NOT used here — it is for Compose
- * previews and unit tests only.
+ * Combines prescriptions, doctors, and medicines from Room for the current patient,
+ * then maps to [PrescriptionSummary] UI models grouped by doctor name.
  */
 @HiltViewModel
 class PrescriptionListViewModel @Inject constructor(
     private val prescriptionRepository: PrescriptionRepository,
     private val doctorRepository: DoctorRepository,
+    private val medicineRepository: MedicineRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
 
@@ -54,21 +53,28 @@ class PrescriptionListViewModel @Inject constructor(
             combine(
                 prescriptionRepository.observeByPatient(patientId),
                 doctorRepository.observeByPatient(patientId),
-            ) { prescriptions, doctors ->
+                medicineRepository.observeByPatient(patientId),
+            ) { prescriptions, doctors, medicines ->
                 val doctorMap = doctors.associateBy { it.id }
-                prescriptions to doctorMap
+                // Count medicines per prescription for the card subtitle.
+                val medicineCountByRx = medicines.groupingBy { it.prescriptionId }.eachCount()
+                Triple(prescriptions, doctorMap, medicineCountByRx)
             }
                 .catch { _ ->
                     _uiState.update {
                         it.copy(isLoading = false, error = "Failed to load prescriptions.")
                     }
                 }
-                .collect { (prescriptions, doctorMap) ->
-                    val summaries = prescriptions.map { rx -> rx.toSummary(doctorMap[rx.doctorId]) }
+                .collect { (prescriptions, doctorMap, medicineCountByRx) ->
+                    val summaries = prescriptions.map { rx ->
+                        rx.toSummary(
+                            doctor = doctorMap[rx.doctorId],
+                            medicineCount = medicineCountByRx[rx.id] ?: 0,
+                        )
+                    }
                     val groups = summaries
                         .groupBy { it.doctorName }
                         .map { (doctorName, rxList) ->
-                            // Preserve existing expand state if the group already exists
                             val existingExpanded = _uiState.value.doctorGroups
                                 .firstOrNull { it.doctorName == doctorName }
                                 ?.isExpanded ?: true
@@ -91,12 +97,10 @@ class PrescriptionListViewModel @Inject constructor(
         }
     }
 
-    /** Kept for the error-state retry button in [PrescriptionListScreen]. */
     fun loadPrescriptions() {
         observePrescriptions()
     }
 
-    /** Toggles the expand/collapse state of the doctor group with [doctorName]. */
     fun onToggleGroup(doctorName: String) {
         _uiState.update { state ->
             state.copy(
@@ -112,7 +116,7 @@ class PrescriptionListViewModel @Inject constructor(
     // Mapping helpers
     // -------------------------------------------------------------------------
 
-    private fun Prescription.toSummary(doctor: Doctor?): PrescriptionSummary {
+    private fun Prescription.toSummary(doctor: Doctor?, medicineCount: Int): PrescriptionSummary {
         val displayName = doctor?.name ?: "Doctor removed"
         val displaySpecialty = when {
             doctor == null -> ""
@@ -128,7 +132,7 @@ class PrescriptionListViewModel @Inject constructor(
             doctorName = displayName,
             doctorSpecialty = displaySpecialty,
             prescriptionDate = displayDate,
-            medicineCount = 0, // populated by a future medicines query
+            medicineCount = medicineCount,
             ocrStatus = ocrStatus.toUiOcrStatus(),
         )
     }

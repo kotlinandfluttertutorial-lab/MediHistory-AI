@@ -2,10 +2,14 @@ package com.medihistory.ai.ui.prescription
 
 import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.DoctorSpecialty
+import com.medihistory.ai.data.model.Medicine
+import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.model.Prescription
 import com.medihistory.ai.data.repository.DoctorRepository
+import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
+import com.medihistory.ai.data.security.SecurePreferencesStore
 import com.medihistory.ai.data.session.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,6 +45,7 @@ class PrescriptionListViewModelTest {
 
     private lateinit var fakePrescriptionRepository: FakePrescriptionRepositoryForList
     private lateinit var fakeDoctorRepository: FakeDoctorRepository
+    private lateinit var fakeMedicineRepository: FakeMedicineRepositoryForList
     private lateinit var fakeSessionManager: FakeSessionManager
     private lateinit var viewModel: PrescriptionListViewModel
 
@@ -49,10 +54,12 @@ class PrescriptionListViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakePrescriptionRepository = FakePrescriptionRepositoryForList()
         fakeDoctorRepository = FakeDoctorRepository()
+        fakeMedicineRepository = FakeMedicineRepositoryForList()
         fakeSessionManager = FakeSessionManager(patientId)
         viewModel = PrescriptionListViewModel(
             prescriptionRepository = fakePrescriptionRepository,
             doctorRepository = fakeDoctorRepository,
+            medicineRepository = fakeMedicineRepository,
             sessionManager = fakeSessionManager,
         )
     }
@@ -331,4 +338,36 @@ private class FakeSessionManager(private val patientId: String) : SessionManager
     }
 ) {
     override fun getPatientId(): String = patientId
+}
+
+private class FakeMedicineRepositoryForList : MedicineRepository {
+    private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
+
+    fun add(medicine: Medicine) { _medicines.update { it + medicine } }
+
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> =
+        _medicines.map { it.filter { m -> m.patientId == patientId } }
+
+    override fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>> =
+        _medicines.map { it.filter { m -> m.patientId == patientId } }
+
+    override suspend fun getById(id: String, patientId: String): Medicine? =
+        _medicines.value.find { it.id == id && it.patientId == patientId }
+
+    override suspend fun insertAll(medicines: List<Medicine>) {
+        _medicines.update { it + medicines }
+    }
+
+    override suspend fun update(medicine: Medicine) {
+        _medicines.update { list -> list.map { if (it.id == medicine.id) medicine else it } }
+    }
+
+    override suspend fun delete(medicine: Medicine) {
+        _medicines.update { it.filter { m -> m.id != medicine.id } }
+    }
+
+    override fun observeActiveIngredients(patientId: String): Flow<List<String>> =
+        _medicines.map { list ->
+            list.filter { it.patientId == patientId }.mapNotNull { it.activeIngredient }.distinct()
+        }
 }
