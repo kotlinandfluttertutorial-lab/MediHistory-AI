@@ -48,7 +48,7 @@ def client() -> TestClient:
 
 def test_login_valid_credentials_returns_200(client: TestClient) -> None:
     response = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": SYNTHETIC_EMAIL, "password": SYNTHETIC_PASSWORD},
     )
     assert response.status_code == 200, response.text
@@ -56,7 +56,7 @@ def test_login_valid_credentials_returns_200(client: TestClient) -> None:
 
 def test_login_invalid_credentials_returns_401(client: TestClient) -> None:
     response = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": SYNTHETIC_EMAIL, "password": "WrongPassword!"},
     )
     assert response.status_code == 401, response.text
@@ -64,7 +64,7 @@ def test_login_invalid_credentials_returns_401(client: TestClient) -> None:
 
 def test_login_response_has_access_token(client: TestClient) -> None:
     response = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": SYNTHETIC_EMAIL, "password": SYNTHETIC_PASSWORD},
     )
     assert response.status_code == 200
@@ -88,7 +88,7 @@ def test_token_value_not_in_logs(
     """Verify that the JWT string never appears in application logs."""
     with caplog.at_level(logging.DEBUG):
         response = client.post(
-            "/auth/login",
+            "/api/v1/auth/login",
             json={"email": SYNTHETIC_EMAIL, "password": SYNTHETIC_PASSWORD},
         )
     assert response.status_code == 200
