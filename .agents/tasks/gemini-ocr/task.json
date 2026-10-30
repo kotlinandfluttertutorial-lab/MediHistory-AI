@@ -1,0 +1,7 @@
+{
+  "task_id": "task-gemini-ocr",
+  "task_description": "Replace the fragile regex-based PrescriptionFieldParser with Gemini 1.5 Flash for structured field extraction. ML Kit continues to do pixel-to-text OCR; Gemini takes the raw OCR text and returns structured JSON fields. Falls back to ML Kit parser silently if Gemini is unavailable, the API key is blank, or the patient has not consented.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

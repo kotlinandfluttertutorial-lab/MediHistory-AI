@@ -346,6 +346,120 @@ class OcrReviewViewModelTest {
         }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Gemini consent state machine
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `should_emit_UNKNOWN_when_consent_key_absent`() {
+        // FakeSecurePrefsStore starts empty — no KEY_GEMINI_OCR_CONSENT stored.
+        // The ViewModel reads consent state during construction.
+        val prefs = FakeSecurePrefsStore()                      // nothing stored
+        val vm = OcrReviewViewModel(
+            extractedFieldDao    = fakeFieldDao,
+            prescriptionDao      = fakePrescriptionDao,
+            postReviewProcessor  = NoOpPostReviewProcessor(),
+            sessionManager       = FakeSessionManager(),
+            securePrefs          = prefs,
+        )
+
+        assertEquals(
+            "geminiConsentState must be UNKNOWN when no consent key is stored",
+            GeminiConsentState.UNKNOWN,
+            vm.geminiConsentState.value,
+        )
+    }
+
+    @Test
+    fun `should_emit_GRANTED_when_consent_key_is_true`() {
+        val prefs = FakeSecurePrefsStore()
+        prefs.putString(com.medihistory.ai.data.security.SecurePreferences.KEY_GEMINI_OCR_CONSENT, "true")
+        val vm = OcrReviewViewModel(
+            extractedFieldDao    = fakeFieldDao,
+            prescriptionDao      = fakePrescriptionDao,
+            postReviewProcessor  = NoOpPostReviewProcessor(),
+            sessionManager       = FakeSessionManager(),
+            securePrefs          = prefs,
+        )
+
+        assertEquals(
+            "geminiConsentState must be GRANTED when consent key is 'true'",
+            GeminiConsentState.GRANTED,
+            vm.geminiConsentState.value,
+        )
+    }
+
+    @Test
+    fun `should_emit_DECLINED_when_consent_key_is_false`() {
+        val prefs = FakeSecurePrefsStore()
+        prefs.putString(com.medihistory.ai.data.security.SecurePreferences.KEY_GEMINI_OCR_CONSENT, "false")
+        val vm = OcrReviewViewModel(
+            extractedFieldDao    = fakeFieldDao,
+            prescriptionDao      = fakePrescriptionDao,
+            postReviewProcessor  = NoOpPostReviewProcessor(),
+            sessionManager       = FakeSessionManager(),
+            securePrefs          = prefs,
+        )
+
+        assertEquals(
+            "geminiConsentState must be DECLINED when consent key is 'false'",
+            GeminiConsentState.DECLINED,
+            vm.geminiConsentState.value,
+        )
+    }
+
+    @Test
+    fun `should_persist_true_and_emit_GRANTED_when_onGeminiConsentGranted_called`() {
+        val prefs = FakeSecurePrefsStore()                      // starts with no consent
+        val vm = OcrReviewViewModel(
+            extractedFieldDao    = fakeFieldDao,
+            prescriptionDao      = fakePrescriptionDao,
+            postReviewProcessor  = NoOpPostReviewProcessor(),
+            sessionManager       = FakeSessionManager(),
+            securePrefs          = prefs,
+        )
+        assertEquals("Initial state must be UNKNOWN", GeminiConsentState.UNKNOWN, vm.geminiConsentState.value)
+
+        vm.onGeminiConsentGranted()
+
+        assertEquals(
+            "geminiConsentState must be GRANTED after onGeminiConsentGranted()",
+            GeminiConsentState.GRANTED,
+            vm.geminiConsentState.value,
+        )
+        assertEquals(
+            "SecurePrefs must store 'true' after onGeminiConsentGranted()",
+            "true",
+            prefs.getString(com.medihistory.ai.data.security.SecurePreferences.KEY_GEMINI_OCR_CONSENT),
+        )
+    }
+
+    @Test
+    fun `should_persist_false_and_emit_DECLINED_when_onGeminiConsentDeclined_called`() {
+        val prefs = FakeSecurePrefsStore()                      // starts with no consent
+        val vm = OcrReviewViewModel(
+            extractedFieldDao    = fakeFieldDao,
+            prescriptionDao      = fakePrescriptionDao,
+            postReviewProcessor  = NoOpPostReviewProcessor(),
+            sessionManager       = FakeSessionManager(),
+            securePrefs          = prefs,
+        )
+        assertEquals("Initial state must be UNKNOWN", GeminiConsentState.UNKNOWN, vm.geminiConsentState.value)
+
+        vm.onGeminiConsentDeclined()
+
+        assertEquals(
+            "geminiConsentState must be DECLINED after onGeminiConsentDeclined()",
+            GeminiConsentState.DECLINED,
+            vm.geminiConsentState.value,
+        )
+        assertEquals(
+            "SecurePrefs must store 'false' after onGeminiConsentDeclined()",
+            "false",
+            prefs.getString(com.medihistory.ai.data.security.SecurePreferences.KEY_GEMINI_OCR_CONSENT),
+        )
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // rawValue immutability — comprehensive
     // ─────────────────────────────────────────────────────────────────────────
 

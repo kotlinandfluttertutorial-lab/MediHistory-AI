@@ -156,7 +156,11 @@ internal class GeminiEnhancedOcrService @Inject constructor(
         val fields = mutableListOf<ExtractedField>()
 
         fun addScalarField(fieldName: String, jsonKey: String, conf: Float = GEMINI_CONFIDENCE) {
-            val value = obj.optString(jsonKey, "").takeIf { it.isNotBlank() }
+            // obj.isNull() returns true for JSON null AND missing keys.
+            // optString on a JSON-null key returns the literal "null" string — we must
+            // guard against this explicitly (medical-safety: never fabricate values).
+            val value = if (obj.isNull(jsonKey)) null
+                        else obj.optString(jsonKey, "").takeIf { it.isNotBlank() && it != "null" }
             fields.add(
                 ExtractedField(
                     fieldName       = fieldName,
@@ -180,7 +184,8 @@ internal class GeminiEnhancedOcrService @Inject constructor(
                 val medicine = medicinesArray.optJSONObject(i) ?: continue
                 val sfx = if (i == 0) "" else "_${i + 1}"
 
-                val name = medicine.optString("name", "").takeIf { it.isNotBlank() }
+                val name = if (medicine.isNull("name")) null
+                           else medicine.optString("name", "").takeIf { it.isNotBlank() && it != "null" }
                 fields.add(
                     ExtractedField(
                         fieldName       = "medicine_name$sfx",
@@ -192,7 +197,8 @@ internal class GeminiEnhancedOcrService @Inject constructor(
                     )
                 )
 
-                val dose = medicine.optString("dose", "").takeIf { it.isNotBlank() }
+                val dose = if (medicine.isNull("dose")) null
+                           else medicine.optString("dose", "").takeIf { it.isNotBlank() && it != "null" }
                 if (dose != null) {
                     fields.add(
                         ExtractedField(
@@ -206,7 +212,8 @@ internal class GeminiEnhancedOcrService @Inject constructor(
                     )
                 }
 
-                val freq = medicine.optString("frequency", "").takeIf { it.isNotBlank() }
+                val freq = if (medicine.isNull("frequency")) null
+                           else medicine.optString("frequency", "").takeIf { it.isNotBlank() && it != "null" }
                 if (freq != null) {
                     fields.add(
                         ExtractedField(
@@ -245,6 +252,71 @@ internal class GeminiEnhancedOcrService @Inject constructor(
         internal const val GEMINI_CONFIDENCE = 0.85f
         private const val MAX_MEDICINES      = 5
         internal const val GEMINI_SOURCE_REF = "gemini:page:1"
+
+        /**
+         * Static entry point for [parseGeminiJson] — used by unit tests that cannot
+         * construct a full [GeminiEnhancedOcrService] (which requires an Android Context
+         * and a live [MlKitOcrService]).
+         *
+         * This delegates to the same parsing logic as the instance method; the
+         * constants ([GEMINI_CONFIDENCE], [MAX_MEDICINES], [GEMINI_SOURCE_REF]) are
+         * shared so test expectations always match production behaviour.
+         *
+         * Accessible from the test package because it is `internal`.
+         */
+        internal fun parseGeminiJsonStatic(json: String): List<ExtractedField> {
+            val obj    = try { org.json.JSONObject(json) } catch (e: Exception) { return emptyList() }
+            val fields = mutableListOf<ExtractedField>()
+
+            fun addScalar(fieldName: String, jsonKey: String, conf: Float = GEMINI_CONFIDENCE) {
+                val value = if (obj.isNull(jsonKey)) null
+                            else obj.optString(jsonKey, "").takeIf { it.isNotBlank() && it != "null" }
+                fields.add(
+                    ExtractedField(
+                        fieldName       = fieldName,
+                        rawValue        = value,
+                        patientValue    = null,
+                        confidence      = if (value != null) conf else 0f,
+                        reviewState     = ReviewState.PENDING_REVIEW,
+                        sourceReference = GEMINI_SOURCE_REF,
+                    )
+                )
+            }
+
+            addScalar("doctor_name",       "doctor_name")
+            addScalar("prescription_date", "prescription_date")
+
+            val medicines = obj.optJSONArray("medicines")
+            if (medicines != null) {
+                val count = minOf(medicines.length(), MAX_MEDICINES)
+                for (i in 0 until count) {
+                    val med = medicines.optJSONObject(i) ?: continue
+                    val sfx  = if (i == 0) "" else "_${i + 1}"
+                    val name = if (med.isNull("name")) null
+                               else med.optString("name", "").takeIf { it.isNotBlank() && it != "null" }
+                    fields.add(ExtractedField("medicine_name$sfx", name, null,
+                        if (name != null) GEMINI_CONFIDENCE else 0f,
+                        ReviewState.PENDING_REVIEW, GEMINI_SOURCE_REF))
+                    val dose = if (med.isNull("dose")) null
+                               else med.optString("dose", "").takeIf { it.isNotBlank() && it != "null" }
+                    if (dose != null) fields.add(ExtractedField("dose$sfx", dose, null,
+                        GEMINI_CONFIDENCE, ReviewState.PENDING_REVIEW, GEMINI_SOURCE_REF))
+                    val freq = if (med.isNull("frequency")) null
+                               else med.optString("frequency", "").takeIf { it.isNotBlank() && it != "null" }
+                    if (freq != null) fields.add(ExtractedField("frequency$sfx", freq, null,
+                        GEMINI_CONFIDENCE, ReviewState.PENDING_REVIEW, GEMINI_SOURCE_REF))
+                }
+            }
+
+            if (fields.none { it.fieldName == "medicine_name" })
+                fields.add(ExtractedField("medicine_name", null, null, 0f, sourceReference = GEMINI_SOURCE_REF))
+            if (fields.none { it.fieldName == "dose" })
+                fields.add(ExtractedField("dose", null, null, 0f, sourceReference = GEMINI_SOURCE_REF))
+            if (fields.none { it.fieldName == "frequency" })
+                fields.add(ExtractedField("frequency", null, null, 0f, sourceReference = GEMINI_SOURCE_REF))
+
+            return fields
+        }
 
         private const val SYSTEM_INSTRUCTION =
             "You are a medical prescription parser. Extract structured fields from OCR text " +

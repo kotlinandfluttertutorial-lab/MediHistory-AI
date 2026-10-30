@@ -121,42 +121,50 @@ internal class PrescriptionFieldParser {
         val merged = mutableListOf<IndexedLine>()
         for (line in lines) {
             val prev = merged.lastOrNull()
-            if (prev != null &&
-                prev.blockIndex == line.blockIndex &&
-                isContinuationLine(line.text)
-            ) {
-                // Join continuation into the previous line.
-                val combinedText = "${prev.text} ${line.text}".trim()
-                val combinedConf = if (prev.confidence > 0f && line.confidence > 0f)
-                    (prev.confidence + line.confidence) / 2f
-                else
-                    maxOf(prev.confidence, line.confidence)
-                val combinedBounds = Rect(
-                    minOf(prev.bounds.left,   line.bounds.left),
-                    minOf(prev.bounds.top,    line.bounds.top),
-                    maxOf(prev.bounds.right,  line.bounds.right),
-                    maxOf(prev.bounds.bottom, line.bounds.bottom),
-                )
-                merged[merged.lastIndex] = prev.copy(
-                    text       = combinedText,
-                    confidence = combinedConf.coerceIn(0f, 1f),
-                    bounds     = combinedBounds,
-                )
-            } else {
-                merged.add(line)
+            if (prev != null && isContinuationLine(line.text)) {
+                // Merge when:
+                // (a) same block — always merge, OR
+                // (b) different block but the lines are vertically adjacent
+                //     (continuation line's top is within 1.5x the previous line's height below it)
+                val prevHeight = maxOf(1, prev.bounds.bottom - prev.bounds.top)
+                val verticalGap = line.bounds.top - prev.bounds.bottom
+                val verticallyAdjacent = verticalGap <= prevHeight * 1.5f
+
+                if (prev.blockIndex == line.blockIndex || verticallyAdjacent) {
+                    val combinedText = "${prev.text} ${line.text}".trim()
+                    val combinedConf = if (prev.confidence > 0f && line.confidence > 0f)
+                        (prev.confidence + line.confidence) / 2f
+                    else
+                        maxOf(prev.confidence, line.confidence)
+                    val combinedBounds = Rect(
+                        minOf(prev.bounds.left,   line.bounds.left),
+                        minOf(prev.bounds.top,    line.bounds.top),
+                        maxOf(prev.bounds.right,  line.bounds.right),
+                        maxOf(prev.bounds.bottom, line.bounds.bottom),
+                    )
+                    merged[merged.lastIndex] = prev.copy(
+                        text       = combinedText,
+                        confidence = combinedConf.coerceIn(0f, 1f),
+                        bounds     = combinedBounds,
+                    )
+                    continue
+                }
             }
+            merged.add(line)
         }
         return merged
     }
 
     /**
-     * Returns true if [text] looks like a continuation fragment rather than the
-     * start of a new medicine entry.
+     * Returns true if [text] is a continuation fragment — i.e. the start of the line
+     * is a dosage unit or closing bracket rather than a new medicine name or section header.
      *
-     * Continuation signals:
-     * - Starts with a dosage unit word: "MG", "ML", "MCG", "G", "IU", "MG)"
-     * - Starts with a closing parenthesis or bracket: ")", "]"
-     * - Starts with a digit immediately followed by a unit: "4MG", "10ML"
+     * Matches (case-insensitive):
+     *   "MG ) (1 Strip)"   → starts with MG
+     *   "ML/100 MG"        → starts with ML
+     *   ") (1 Strip)"      → starts with )
+     *   "4MG)"             → starts with digit+unit
+     *   "MCG (1 Strip)"    → starts with MCG
      */
     private fun isContinuationLine(text: String): Boolean {
         val t = text.trim()
@@ -349,8 +357,9 @@ internal class PrescriptionFieldParser {
 
     /**
      * Splits "Augmentin 625mg BD" → Triple("Augmentin 625mg", null, "BD").
-     * Strips frequency and Indian dose notation from the end of the text,
-     * leaving the medicine name + optional strength as the name part.
+     * Also handles parenthesised packaging suffixes like "(4 MG ) (1 Strip)" —
+     * these are stripped from the name entirely since they are not part of the
+     * medicine name the patient needs to recognise.
      */
     private fun splitParts(text: String): Triple<String, String?, String?> {
         var rem = text.trim()
@@ -358,6 +367,9 @@ internal class PrescriptionFieldParser {
         FREQUENCY_PATTERN.find(rem)?.let { m -> freq = m.value.trim(); rem = rem.removeRange(m.range).trim() }
         var dose: String? = null
         INDIAN_DOSE_PATTERN.find(rem)?.let { m -> dose = m.value.trim(); rem = rem.removeRange(m.range).trim() }
+        // Strip trailing parenthesised packaging/strip-count expressions
+        // e.g. "(4 MG ) (1 Strip)", "(10 ML)", "(1 Strip of 10)"
+        rem = PAREN_PACKAGING_SUFFIX.replace(rem, "").trim()
         return Triple(rem.trim(), dose?.ifBlank { null }, freq?.ifBlank { null })
     }
 
@@ -466,7 +478,8 @@ internal class PrescriptionFieldParser {
 
         /** Matches lines that are continuations of the previous line (dosage unit or bracket at start). */
         private val CONTINUATION_START_REGEX = Regex(
-            """^(?:\d*\s*(?:MG|ML|MCG|MCG|G|IU|UNITS?)\b|[)\]]\s*\(|\)\s*\d)""",
+            // Starts with a dosage unit word (with optional digit prefix), or starts with ) or ]
+            """^(?:\d*\s*(?:mg|ml|mcg|g\b|iu|units?)\b|[)\]]\s*[\(\d])""",
             RegexOption.IGNORE_CASE,
         )
 
@@ -495,6 +508,20 @@ internal class PrescriptionFieldParser {
         private val NUMBERED_LIST_PREFIX   = Regex("""^\d{1,2}[.)]\s*""")
         private val DOSAGE_SUFFIX_REGEX    = Regex("""\d+\s*(?:mg|ml|mcg|g|IU|units?)""", RegexOption.IGNORE_CASE)
         private val INDIAN_DOSE_PATTERN    = Regex("""\b[01]-[01]-[01]\b""")
+
+        /**
+         * Matches trailing parenthesised packaging / strip-count expressions that
+         * appear after a medicine name and should be stripped from the name:
+         *   "(4 MG ) (1 Strip)"  →  stripped
+         *   "(10 ML)"            →  stripped
+         *   "(1 Strip of 10)"    →  stripped
+         *   "(1 Strip)"          →  stripped
+         * The pattern is greedy from the first opening paren containing a digit or unit.
+         */
+        private val PAREN_PACKAGING_SUFFIX = Regex(
+            """\s*\(\s*\d.*$""",
+            RegexOption.DOT_MATCHES_ALL,
+        )
         private val FREQUENCY_PATTERN      = Regex(
             """\b(?:OD|BD|TDS|QID|once\s+daily|twice\s+daily|three\s+times\s+(?:a\s+)?daily|thrice\s+daily|four\s+times\s+daily)\b""",
             RegexOption.IGNORE_CASE,

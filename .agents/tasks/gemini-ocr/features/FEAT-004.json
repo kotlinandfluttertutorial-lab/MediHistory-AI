@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-004",
+  "type": "test",
+  "description": "Add unit tests for GeminiEnhancedOcrService and OcrReviewViewModel consent state machine. Depends on FEAT-002 (GeminiEnhancedOcrService must exist) and FEAT-003 (OcrReviewViewModel consent methods must exist). These tests verify all fallback paths, JSON parsing correctness, and consent state transitions.",
+  "status": "pending",
+  "steps": [
+    "Create android/app/src/test/java/com/medihistory/ai/data/ocr/GeminiEnhancedOcrServiceTest.kt. Because GeminiEnhancedOcrService makes a real network call via Client, create a test subclass or use constructor injection with a testable wrapper. Preferred approach: make callGemini() internal and override it in a TestableGeminiEnhancedOcrService subclass in the test file that returns synthetic JSON without a network call. Create a FakeSecurePreferencesStore implementing SecurePreferencesStore backed by a HashMap. Create a FakeMlKitOcrService implementing OcrService that returns a fixed OcrResult with synthetic fields (use 'Dr. Synthetic' and 'Synthamol 500mg' — no real names). Tests: should_use_mlkit_fallback_when_feature_flag_is_false (set BuildConfig.ENABLE_GEMINI_OCR via test subclass override or reflection; verify FakeMlKitOcrService result is returned); should_use_mlkit_fallback_when_api_key_is_blank; should_use_mlkit_fallback_when_consent_is_unknown (prefs returns null); should_use_mlkit_fallback_when_consent_is_declined (prefs returns 'false'); should_use_mlkit_fallback_when_raw_text_is_blank; should_parse_doctor_name_from_gemini_json (inject synthetic JSON '{\"doctor_name\":\"Dr. Synthetic\",\"prescription_date\":null,\"medicines\":[]}' and verify doctor_name field rawValue='Dr. Synthetic'); should_set_absent_field_to_null_when_missing_from_gemini_json (JSON with no prescription_date → rawValue null); should_not_exceed_max_medicines (JSON with 6 medicines array → only 5 medicine_name fields); should_use_mlkit_fallback_when_gemini_throws (override callGemini to throw IOException → verify FakeMlKitOcrService result returned). All synthetic data: 'Dr. Synthetic', 'Synthamol 500mg', 'Test Patient Alpha'.",
+    "Create or update android/app/src/test/java/com/medihistory/ai/ui/ocr/OcrReviewViewModelTest.kt. Create FakeSecurePreferencesStore (HashMap-backed, implements SecurePreferencesStore) if not already created in step 1. Tests: should_emit_UNKNOWN_when_consent_key_absent (prefs has no KEY_GEMINI_OCR_CONSENT key → geminiConsentState.value == UNKNOWN); should_emit_GRANTED_when_consent_key_is_true (prefs has 'true' → GRANTED); should_emit_DECLINED_when_consent_key_is_false (prefs has 'false' → DECLINED); should_persist_true_and_emit_GRANTED_when_onGeminiConsentGranted_called (call onGeminiConsentGranted(), verify prefs.getString(KEY_GEMINI_OCR_CONSENT) == 'true' AND geminiConsentState.value == GRANTED); should_persist_false_and_emit_DECLINED_when_onGeminiConsentDeclined_called. Use kotlinx.coroutines.test.runTest and TestCoroutineDispatcher where needed. Note: OcrReviewViewModel has a complex constructor — use fake implementations for all dependencies (FakeExtractedFieldDao returning empty Flow, FakePrescriptionDao, FakePostReviewProcessor, FakeSessionManager).",
+    "Commit with message: test: add GeminiEnhancedOcrService and OcrReviewViewModel consent state tests"
+  ],
+  "acceptance_criteria": [
+    "GeminiEnhancedOcrServiceTest.kt exists with all 9 listed test methods",
+    "OcrReviewViewModelTest.kt exists with all 5 consent state tests",
+    "cd android && .\\gradlew :app:testDebugUnitTest --tests '*.GeminiEnhancedOcrServiceTest' returns BUILD SUCCESSFUL",
+    "cd android && .\\gradlew :app:testDebugUnitTest --tests '*.OcrReviewViewModelTest' returns BUILD SUCCESSFUL",
+    "cd android && .\\gradlew :app:testDebugUnitTest returns BUILD SUCCESSFUL (no regressions)",
+    "cd android && .\\gradlew :app:jacocoTestCoverageVerification returns BUILD SUCCESSFUL (data layer coverage >= 80%)"
+  ],
+  "verification": [
+    "cd android && .\\gradlew :app:testDebugUnitTest 2>&1 | Select-String 'BUILD|FAIL|tests'",
+    "cd android && .\\gradlew :app:jacocoTestCoverageVerification 2>&1 | Select-String 'BUILD|FAIL'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

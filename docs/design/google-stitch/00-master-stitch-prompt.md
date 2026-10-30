@@ -280,8 +280,168 @@ This master prompt applies to all screens and links to all features:
 - F08 Medication Reminders and Adherence
 - F09 Medication Interaction Checks
 - F10 Privacy and Security
+- F11 Prescription Understanding Agent
+- F12 Prepare for Doctor Visit Agent
+- F13 Duplicate Detection Explainer Agent
+- F14 OCR Correction Assistant Agent
+- F15 Medicine History Narrator Agent
+- F16 Reminder Advisor Agent
 
 All screens implement the accessibility, safety, and design standards defined here.
+
+---
+
+## In-App AI Agent Features (F11–F16)
+
+These are **patient-facing AI agent capabilities** built into the app. They are distinct from the OCR service (F03) — they reason over already-reviewed, patient-confirmed data and provide plain-language assistance. Every agent feature follows the same medical-safety and privacy rules that apply to the rest of the app.
+
+### Universal Agent Safety Rules (apply to F11–F16)
+
+1. **Never infer or fabricate** — agents only reason over data the patient has explicitly reviewed and confirmed. They never fill in missing dose, duration, diagnosis, allergy, or medicine status.
+2. **Never give clinical advice** — agents never say a medicine is safe, unsafe, appropriate, or interchangeable. They never advise starting, stopping, or changing a medicine.
+3. **Always cite the source** — every agent output links to the source prescription document or confirmed field.
+4. **Always show a disclaimer** — any agent-generated text visible to the patient carries: *"AI-generated — always verify with your doctor or pharmacist."*
+5. **Patient controls always visible** — agents suggest; patients confirm. No agent action is applied without explicit patient approval.
+6. **Privacy** — agent inputs and outputs are never logged to any external service without explicit patient consent. On-device processing is preferred.
+
+---
+
+### F11 — Prescription Understanding Agent
+
+**Purpose:** After a patient reviews OCR-extracted fields, the agent explains what the prescription is for in plain language.
+
+**What it does:**
+- Reads all REVIEWED extracted fields (doctor name, medicine names, dosage instructions) for a single prescription
+- Generates a plain-language explanation: *"This prescription from Dr. Krishnamurthy includes Metoprolol Succinate (Betaloc ZOK), which is commonly used to manage heart rate and blood pressure. Always confirm with your doctor."*
+- Lists each medicine with a one-sentence plain-language note
+- Every sentence links to the confirmed field it was derived from
+
+**What it never does:** Diagnose, recommend, or comment on whether the prescription is appropriate.
+
+**UI placement:** "Understand this prescription" button on `PrescriptionDetailScreen`, shown only after OCR status = REVIEWED. Output appears in a bottom sheet with a non-dismissible disclaimer banner.
+
+**Design:**
+- Bottom sheet, `MediumTopAppBar` title "Prescription summary"
+- Disclaimer banner (non-dismissible, `secondary-container`)
+- Each medicine row: medicine name (`titleMedium`) + plain-language note (`bodyMedium`) + source chip (`AssistChip` → opens `OcrReviewScreen`)
+- Loading: skeleton rows during generation
+- Feedback: "Was this helpful?" thumb up/down at the bottom (logged locally only)
+
+---
+
+### F12 — Prepare for Doctor Visit Agent
+
+**Purpose:** Before a new appointment, the patient taps one button and receives a concise, doctor-ready summary of their current medicines and open questions.
+
+**What it does:**
+- Reads all REVIEWED prescriptions and confirmed medicines for the patient
+- Generates a visit preparation card with:
+  - Current medicines list (name, strength, prescribing doctor)
+  - Open duplicate alerts (potential overlaps to discuss)
+  - Suggested questions (e.g., *"You have two medicines containing Paracetamol — consider asking your doctor if both are still needed"*)
+- Formats output for easy sharing via the existing New Doctor Mode PDF export (F07)
+
+**What it never does:** Recommend stopping or changing any medicine. Questions are framed as *"consider asking"* — never *"you should stop"*.
+
+**UI placement:** "Prepare for visit" quick-action card on Dashboard (F01), or "Prepare" button on New Doctor Mode screen (F07).
+
+**Design:**
+- Full-screen or large modal, `LargeTopAppBar` title "Prepare for your visit"
+- Non-dismissible disclaimer banner
+- Section 1: "Your current medicines" — `OutlinedCard` list
+- Section 2: "Points to discuss" — `ElevatedCard` list, amber left border for duplicate-related items
+- Section 3: "Suggested questions" — `FilledCard`, each item prefixed with ❓
+- Share button at bottom: feeds into F07 PDF export
+
+---
+
+### F13 — Duplicate Detection Explainer Agent
+
+**Purpose:** When a duplicate alert is shown, the agent explains in plain language *why* the two medicines were flagged and *what to ask a doctor*.
+
+**What it does:**
+- Reads the `DuplicateAlert` record (matching ingredient, match type, combination note)
+- Generates a plain-language explanation: *"Both Calpol 500mg and Dolo 650 contain Paracetamol as their active ingredient. Taking both at the same time may increase the total Paracetamol dose beyond recommended limits. Please review with your doctor or pharmacist."*
+- Suggests a specific question: *"Ask your doctor: Are both of these medicines still needed, or can one be stopped?"*
+- Populates `DuplicateAlert.explanation` field in Room so the explanation persists
+
+**What it never does:** Say the combination is dangerous, unsafe, or should be stopped.
+
+**UI placement:** "Explain this alert" button on `DuplicateAlertCard` (F05). Output shown inline below the existing alert card.
+
+**Design:**
+- Expandable section below the existing alert card
+- "Explain this alert" `TextButton` when collapsed
+- Expanded: explanation text (`bodyMedium`) + suggested question (`bodyMedium`, `primary-container` background) + disclaimer `labelSmall`
+- Non-dismissible disclaimer: *"Potential duplicate — please review with your doctor or pharmacist"*
+
+---
+
+### F14 — OCR Correction Assistant Agent
+
+**Purpose:** When OCR confidence is low on a field, the agent suggests the most likely correct value based on context — the patient still confirms.
+
+**What it does:**
+- Reads the low-confidence `rawValue` and the surrounding page context (other fields on the same prescription)
+- Generates one suggested correction: *"Did you mean: Dr. Ananya Krishnamurthy?"*
+- Patient taps "Use suggestion" (applies to `patientValue`) or "Edit manually" (opens text field)
+- If no confident suggestion can be made, shows nothing — never fabricates
+
+**What it never does:** Auto-apply the suggestion. The patient must tap "Use suggestion" explicitly.
+
+**UI placement:** On each `ExtractedFieldCard` in `OcrReviewScreen` where `confidence < 0.70` and `rawValue != null`. Shown as a `SuggestionChip` below the amber highlight.
+
+**Design:**
+- Below the existing amber field card: `SuggestionChip` "💡 Suggestion: Dr. Ananya Krishnamurthy"
+- Tap chip: shows `AlertDialog` with "Use suggestion" (`FilledButton`) and "Edit manually" (`OutlinedButton`) and "Dismiss" (`TextButton`)
+- "Use suggestion" sets `patientValue = suggestion` and advances to REVIEWED
+- Confidence displayed as percentage: "62% confidence — review carefully"
+
+---
+
+### F15 — Medicine History Narrator Agent
+
+**Purpose:** Replaces the stub AI summary in Medical History (F06) with a real plain-language narrative of the patient's medication history.
+
+**What it does:**
+- Reads all REVIEWED prescriptions in chronological order
+- Generates a narrative paragraph per timeline period: *"From June 2024, Dr. Krishnamurthy prescribed Metoprolol Succinate and Rosuvastatin, likely for cardiovascular management. In March 2025, Dr. Bose added Metformin, suggesting ongoing management of blood sugar."*
+- Every sentence is tagged: `[Source: Prescription — Dr. Krishnamurthy, June 2024]`
+- Explicitly states what is NOT known: *"No diagnosis or clinical reason is recorded for this prescription."*
+
+**What it never does:** Infer diagnoses, reasons for prescriptions, or clinical conclusions. Every fact must come from a confirmed field.
+
+**UI placement:** Replaces the stub `AI_SUMMARY` section in `MedicalHistoryScreen` (F06). "Generate narrative" button triggers the agent.
+
+**Design:**
+- Non-dismissible disclaimer at top: *"AI-generated narrative — this is a patient-compiled record, not a clinical report. Always verify with your doctor."*
+- Each paragraph has a source chip row below: `AssistChip`s linking to source prescriptions
+- Uncertain items displayed with ⚠ and `tertiary-container` background
+- Generation progress: `LinearProgressIndicator` with "Compiling your history… 60%" label
+- Refresh button to regenerate after new prescriptions are reviewed
+
+---
+
+### F16 — Reminder Advisor Agent
+
+**Purpose:** When a patient adds a medicine to their reminder list, the agent reads the confirmed dosage instructions and suggests a practical reminder schedule.
+
+**What it does:**
+- Reads the REVIEWED `dosageInstructions` field for the selected medicine (set by `PostReviewProcessor` from OCR)
+- Parses common instruction patterns: *"twice daily after meals"*, *"at bedtime"*, *"once daily morning"*
+- Suggests specific reminder times: *"Twice daily after meals → suggested times: 8:00 AM and 8:00 PM"*
+- Patient approves the suggested times, edits them, or sets manually — agent never schedules without approval
+
+**What it never does:** Change a dosage, suggest a different frequency, or flag the prescription as incorrect.
+
+**UI placement:** In the medicine picker dialog (`ReminderScreen`, F08) after the patient selects a medicine. Before the reminder is created, shows a suggestion card.
+
+**Design:**
+- After medicine selection, show a card: *"Based on the instructions on your prescription: 'Twice daily after meals' — suggested reminder times: 8:00 AM, 8:00 PM"*
+- Two `TimePickerDialog`-style time chips, each editable
+- `FilledButton` "Set reminders" — creates the reminders
+- `TextButton` "Set manually instead" — opens plain time picker
+- Disclaimer `labelSmall`: *"Suggested times are based on your prescription instructions. Confirm with your doctor or pharmacist."*
 
 ---
 
