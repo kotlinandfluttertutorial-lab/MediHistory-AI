@@ -187,6 +187,9 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
+    // ML Kit — on-device text recognition, bundled (offline-capable, no API key required)
+    implementation(libs.mlkit.text.recognition)
+
     // Firebase — BOM manages all Firebase library versions
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

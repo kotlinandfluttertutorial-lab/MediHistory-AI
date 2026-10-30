@@ -1,21 +1,23 @@
 package com.medihistory.ai.data.ocr
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
  * Hilt module that binds the [OcrService] implementation.
  *
- * Currently provides [StubOcrService] for development. Replace with a real
- * provider adapter when the OCR provider is selected (ADR-006). The interface
- * [OcrService] is provider-independent — no cloud imports leak into call sites.
+ * Provides [MlKitOcrService] — Google ML Kit Text Recognition v2, running fully
+ * on-device with no API key or network access required (ADR-006).
+ *
+ * The [TextRecognizer] inside [MlKitOcrService] is thread-safe and reusable;
+ * [Singleton] scope ensures it is created once per app process.
  *
  * Security: no API keys, tokens, or secrets are initialised here.
- * All provider configuration must come from BuildConfig fields sourced from
- * local.properties or CI environment variables (never hardcoded).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -23,6 +25,6 @@ object OcrModule {
 
     @Provides
     @Singleton
-    fun provideOcrService(): OcrService = StubOcrService()
-    // TODO(ADR-006): replace StubOcrService with the selected provider adapter.
+    fun provideOcrService(@ApplicationContext context: Context): OcrService =
+        MlKitOcrService(context)
 }
