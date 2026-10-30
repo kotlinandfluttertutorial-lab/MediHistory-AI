@@ -211,8 +211,6 @@ async def test_refresh_returns_new_access_token(
     )
     assert login.status_code == 200, login.text
     refresh_token = login.json()["refresh_token"]
-    original_access = login.json()["access_token"]
-
     # Exchange refresh token for a new access token
     response = await async_client.post(
         "/api/v1/auth/refresh",

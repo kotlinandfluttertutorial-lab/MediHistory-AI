@@ -332,7 +332,7 @@ else
             check_result "backend-pytest" "FAIL" "pytest not installed -- run: pip install -r requirements.txt"
         else
             print_info "Running pytest tests/ -m not db ..."
-            export DATABASE_URL="sqlite:///:memory:"
+            export DATABASE_URL="sqlite+aiosqlite:///:memory:"
             export JWT_SECRET_KEY="test-jwt-secret-for-ci-only-not-a-real-secret"
             export TESTING="true"
             # NOTE: CI runs pytest --cov=app --cov-fail-under=90; the local gate omits

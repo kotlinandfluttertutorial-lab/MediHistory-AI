@@ -377,7 +377,7 @@ if (-not (Test-Path $REQUIREMENTS_FILE)) {
             Write-CheckResult "backend-pytest" "FAIL" "pytest not installed -- run: pip install -r requirements.txt"
         } else {
             Write-Info "Running pytest tests/ -m not db ..."
-            $env:DATABASE_URL  = "sqlite:///:memory:"
+            $env:DATABASE_URL  = "sqlite+aiosqlite:///:memory:"
             $env:JWT_SECRET_KEY = "test-jwt-secret-for-ci-only-not-a-real-secret"
             $env:TESTING       = "true"
             Set-Location $BACKEND_DIR

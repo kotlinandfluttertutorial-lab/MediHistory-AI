@@ -15,7 +15,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
-from sqlalchemy import pool, text
+from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # ---------------------------------------------------------------------------
@@ -29,8 +29,8 @@ if _backend_root not in sys.path:
 # ---------------------------------------------------------------------------
 # Import all models so Base.metadata is fully populated for autogenerate.
 # ---------------------------------------------------------------------------
-import app.models  # noqa: F401 — side-effect import registers all tables
-from app.core.database import Base
+import app.models  # noqa: E402, F401 — side-effect import registers all tables
+from app.core.database import Base  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Alembic config object
@@ -42,9 +42,7 @@ if config.config_file_name is not None:
 
 # Override the sqlalchemy.url with the environment variable so the .ini
 # placeholder is never used in practice.
-_database_url = os.getenv(
-    "DATABASE_URL", "sqlite+aiosqlite:///./medihistory.db"
-)
+_database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./medihistory.db")
 config.set_main_option("sqlalchemy.url", _database_url)
 
 target_metadata = Base.metadata

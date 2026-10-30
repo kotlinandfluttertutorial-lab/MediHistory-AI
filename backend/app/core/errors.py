@@ -14,7 +14,7 @@ Error response shape:
     }
 """
 
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import HTTPException
 from pydantic import BaseModel
@@ -39,7 +39,7 @@ def raise_http_error(
     code: str,
     message: str,
     details: dict[str, Any] | None = None,
-) -> None:
+) -> NoReturn:
     """
     Raise an HTTPException whose detail is a dict matching ErrorResponse.
 
@@ -50,8 +50,7 @@ def raise_http_error(
         details:     Optional extra key/value pairs for structured context.
 
     Raises:
-        HTTPException: always — the return type is None to satisfy type checkers
-                       that expect the call to be a statement, not an expression.
+        HTTPException: always.
     """
     raise HTTPException(
         status_code=status_code,

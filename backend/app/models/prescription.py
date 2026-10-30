@@ -8,11 +8,16 @@ related PrescriptionMedicine records.
 
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.doctor import Doctor
+    from app.models.patient import Patient
 
 
 def _utcnow() -> datetime:
@@ -38,9 +43,7 @@ class Prescription(Base):
     ocr_status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="PENDING"
     )
-    source_document_path: Mapped[str | None] = mapped_column(
-        String(512), nullable=True
-    )
+    source_document_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
     patient_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
@@ -50,8 +53,12 @@ class Prescription(Base):
     )
 
     # Relationships
-    patient: Mapped["Patient"] = relationship("Patient", back_populates="prescriptions")  # noqa: F821
-    doctor: Mapped["Doctor | None"] = relationship("Doctor", back_populates="prescriptions")  # noqa: F821
+    patient: Mapped["Patient"] = relationship(
+        "Patient", back_populates="prescriptions"
+    )  # noqa: F821
+    doctor: Mapped["Doctor | None"] = relationship(
+        "Doctor", back_populates="prescriptions"
+    )  # noqa: F821
     medicines: Mapped[list] = relationship(
         "PrescriptionMedicine",
         back_populates="prescription",

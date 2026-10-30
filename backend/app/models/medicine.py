@@ -11,11 +11,15 @@ medicine_status values: CURRENT | PAST | UNKNOWN
 
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Float, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.prescription import Prescription
 
 
 def _utcnow() -> datetime:

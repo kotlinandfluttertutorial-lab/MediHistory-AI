@@ -8,11 +8,15 @@ patient's doctors.
 
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.patient import Patient
 
 
 def _utcnow() -> datetime:
@@ -42,9 +46,9 @@ class Doctor(Base):
     )
 
     # Relationships
-    patient: Mapped["Patient"] = relationship("Patient", back_populates="doctors")  # noqa: F821
-    prescriptions: Mapped[list] = relationship(
-        "Prescription", back_populates="doctor"
-    )
+    patient: Mapped["Patient"] = relationship(
+        "Patient", back_populates="doctors"
+    )  # noqa: F821
+    prescriptions: Mapped[list] = relationship("Prescription", back_populates="doctor")
 
     __table_args__ = (Index("ix_doctors_patient_deleted", "patient_id", "is_deleted"),)
