@@ -63,7 +63,7 @@ Coverage threshold: 90% (fails the build if not met).
 | Job | Depends on | Steps |
 |---|---|---|
 | `verify-no-secrets-committed` | — | Check for `.env`, `google-services.json`, `local.properties`, `*.keystore`, hardcoded secrets in source |
-| `android-ci` | `verify-no-secrets-committed` | `./gradlew lintDebug` → `./gradlew testDebugUnitTest` |
+| `android-ci` | `verify-no-secrets-committed` | `./gradlew lintDebug` → `./gradlew testDebugUnitTest` (Google Services plugin is applied only when the untracked `google-services.json` is present; Firebase-dependent runtime features require it) |
 | `backend-ci` | `verify-no-secrets-committed` | `ruff check .` → `black --check .` → `pytest --cov-fail-under=90` |
 | `pr-gate` | `android-ci`, `backend-ci`, `verify-no-secrets-committed` | Aggregate pass/fail — must pass for merge |
 

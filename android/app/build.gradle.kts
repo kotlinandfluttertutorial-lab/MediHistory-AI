@@ -5,8 +5,17 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.google.services)
+    alias(libs.plugins.google.services) apply false
     jacoco
+}
+
+if (file("google-services.json").isFile) {
+    pluginManager.apply("com.google.gms.google-services")
+} else {
+    logger.lifecycle(
+        "google-services.json not found; skipping Google Services plugin. " +
+            "Firebase-dependent runtime features require this file."
+    )
 }
 
 // ---------------------------------------------------------------------------
