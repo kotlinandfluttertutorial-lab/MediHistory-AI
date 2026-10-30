@@ -399,3 +399,111 @@ private fun OcrStatus.toUiOcrStatus(): UiOcrStatus =
         OcrStatus.REVIEWED -> UiOcrStatus.REVIEWED
         OcrStatus.ERROR -> UiOcrStatus.ERROR
     }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Understanding bottom sheet (F11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Content of the "Understand this prescription" bottom sheet.
+ *
+ * Shows a non-dismissible disclaimer, then one row per confirmed medicine with its AI note.
+ * Medical safety: disclaimer is always shown first; graceful fallback when AI unavailable.
+ */
+@Composable
+fun UnderstandingSheetContent(
+    uiState: PrescriptionDetailUiState,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = "Prescription Summary",
+            style = MaterialTheme.typography.titleLarge,
+        )
+
+        // Non-dismissible disclaimer — required by medical safety steering
+        Card(
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                ),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "AI-generated — always verify with your doctor or pharmacist.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.padding(12.dp),
+            )
+        }
+
+        when {
+            uiState.isUnderstandingLoading -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    Text(
+                        text = "Generating explanation…",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            uiState.understandingError != null -> {
+                Text(
+                    text = uiState.understandingError,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            uiState.understanding.isEmpty() -> {
+                Text(
+                    text = "No medicines found on this prescription.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            else -> {
+                uiState.understanding.forEach { item ->
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = item.medicineName,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text =
+                                if (item.note != null) {
+                                    item.note
+                                } else {
+                                    "General information for this medicine is not available."
+                                },
+                            style = MaterialTheme.typography.bodySmall,
+                            color =
+                                if (item.note != null) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
