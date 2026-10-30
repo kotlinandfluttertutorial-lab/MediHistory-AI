@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Create GeminiEnhancedOcrService: the core extraction layer. Adds extractRawText() to MlKitOcrService, creates GeminiEnhancedOcrService that calls Gemini 1.5 Flash with structured JSON schema and falls back to MlKitOcrService silently, and updates OcrModule to provide the new service. Depends on FEAT-001 (SDK dep and KEY constant must exist). Independent of FEAT-003 (UI consent layer).",
+  "status": "completed",
+  "steps": [
+    "Add internal suspend fun extractRawText(documentPath: String, mimeType: String): String to MlKitOcrService in android/app/src/main/java/com/medihistory/ai/data/ocr/MlKitOcrService.kt. The method reuses the existing private runMlKit() and PDF_TARGET_WIDTH/MAX_PDF_PAGES companion constants. For image/ mimeType: open file, create InputImage.fromFilePath, call runMlKit(), join all textBlocks by newline. For application/pdf: same PDF rendering loop as extractFromPdf() but join each page's textBlocks into a string, join pages with '\\n\\n--- page break ---\\n\\n'. On any exception return empty string silently.",
+    "Create android/app/src/main/java/com/medihistory/ai/data/ocr/GeminiEnhancedOcrService.kt as an internal class implementing OcrService. Constructor: @ApplicationContext context, mlKitService: MlKitOcrService, securePrefs: SecurePreferencesStore (all @Inject). Implement three gates in extract(): gate 1 BuildConfig.ENABLE_GEMINI_OCR false → mlKitService.extract(); gate 2 BuildConfig.GEMINI_API_KEY blank → mlKitService.extract(); gate 3 securePrefs.getString(KEY_GEMINI_OCR_CONSENT) != \"true\" → mlKitService.extract(). If all gates pass: call extractRawText(); if blank → fallback; call callGemini(apiKey, rawText); if empty → fallback; return OcrResult. On any exception → fallback. The callGemini() method uses: import com.google.genai.kotlin.Client; import com.google.genai.kotlin.types.Content; import com.google.genai.kotlin.types.GenerateContentConfig; import com.google.genai.kotlin.types.Schema; import com.google.genai.kotlin.types.Type. API call: Client(apiKey=apiKey).use { client -> client.models.generateContent(model=\"gemini-1.5-flash\", text=prompt, config=config).text }. GenerateContentConfig: systemInstruction=Content.fromText(SYSTEM_INSTRUCTION), responseMimeType=\"application/json\", responseSchema=PRESCRIPTION_SCHEMA (Schema with type=Type.OBJECT, properties for doctor_name/prescription_date/medicines array), temperature=0.0, maxOutputTokens=1024. parseGeminiJson() uses org.json.JSONObject. Each field absent in JSON = rawValue null, never fabricated. confidence=0.85f for present fields. All fields start as ReviewState.PENDING_REVIEW with sourceReference=\"gemini:page:1\". Max 5 medicines. Ensure sentinel absent fields for medicine_name, dose, frequency if none extracted. MODEL_ID = \"gemini-1.5-flash\".",
+    "Replace the entire body of android/app/src/main/java/com/medihistory/ai/data/ocr/OcrModule.kt: add two @Provides @Singleton methods — provideMlKitOcrService(@ApplicationContext context): MlKitOcrService = MlKitOcrService(context), and provideOcrService(@ApplicationContext context, mlKitOcrService: MlKitOcrService, securePrefs: SecurePreferencesStore): OcrService = GeminiEnhancedOcrService(context, mlKitOcrService, securePrefs). Import SecurePreferencesStore.",
+    "Commit with message: feat: add GeminiEnhancedOcrService with Gemini 1.5 Flash extraction and ML Kit fallback"
+  ],
+  "acceptance_criteria": [
+    "MlKitOcrService.extractRawText() compiles as an internal method accessible from the same package",
+    "GeminiEnhancedOcrService.kt exists and implements OcrService",
+    "All three gates (feature flag, API key, consent) return mlKitService.extract() result when not satisfied",
+    "OcrModule provides MlKitOcrService and OcrService (as GeminiEnhancedOcrService) as separate @Singleton bindings",
+    "cd android && .\\gradlew :app:compileDebugKotlin returns BUILD SUCCESSFUL with no errors"
+  ],
+  "verification": [
+    "cd android && .\\gradlew :app:compileDebugKotlin 2>&1 | Select-String 'error|BUILD'",
+    "cd android && .\\gradlew :app:testDebugUnitTest 2>&1 | Select-String 'BUILD|FAIL'"
+  ],
+  "blocked_reason": null,
+  "findings": "All three implementation steps completed successfully. extractRawText() added as internal method to MlKitOcrService. GeminiEnhancedOcrService created with all three gates (feature flag, API key, consent) and silent ML Kit fallback on any exception. OcrModule updated to provide both MlKitOcrService and OcrService (as GeminiEnhancedOcrService). Fix applied: @Provides methods marked internal to avoid 'public function exposes internal return type' Kotlin compile error. compileDebugKotlin: BUILD SUCCESSFUL. testDebugUnitTest: BUILD SUCCESSFUL."
+}

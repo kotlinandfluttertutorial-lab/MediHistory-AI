@@ -1,6 +1,7 @@
 package com.medihistory.ai.data.ocr
 
 import android.content.Context
+import com.medihistory.ai.data.security.SecurePreferencesStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -11,20 +12,37 @@ import javax.inject.Singleton
 /**
  * Hilt module that binds the [OcrService] implementation.
  *
- * Provides [MlKitOcrService] — Google ML Kit Text Recognition v2, running fully
- * on-device with no API key or network access required (ADR-006).
+ * Provides [GeminiEnhancedOcrService] which uses ML Kit for pixel→text OCR and
+ * Gemini 1.5 Flash for structured field extraction, falling back to the ML Kit
+ * parser when Gemini is unavailable, the patient has not consented, or the feature
+ * flag is off.
  *
- * The [TextRecognizer] inside [MlKitOcrService] is thread-safe and reusable;
- * [Singleton] scope ensures it is created once per app process.
- *
- * Security: no API keys, tokens, or secrets are initialised here.
+ * Security: no API keys are initialised here. [BuildConfig.GEMINI_API_KEY] is read
+ * inside [GeminiEnhancedOcrService] at call time, not at injection time.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object OcrModule {
 
+    /**
+     * Provides [MlKitOcrService] as a [Singleton] so the [TextRecognizer] inside
+     * it is created once per process (ML Kit recommendation).
+     */
     @Provides
     @Singleton
-    fun provideOcrService(@ApplicationContext context: Context): OcrService =
-        MlKitOcrService(context)
+    internal fun provideMlKitOcrService(
+        @ApplicationContext context: Context,
+    ): MlKitOcrService = MlKitOcrService(context)
+
+    /**
+     * Provides the [OcrService] interface implementation.
+     * [GeminiEnhancedOcrService] wraps [MlKitOcrService] and the consent store.
+     */
+    @Provides
+    @Singleton
+    internal fun provideOcrService(
+        @ApplicationContext context: Context,
+        mlKitOcrService: MlKitOcrService,
+        securePrefs: SecurePreferencesStore,
+    ): OcrService = GeminiEnhancedOcrService(context, mlKitOcrService, securePrefs)
 }

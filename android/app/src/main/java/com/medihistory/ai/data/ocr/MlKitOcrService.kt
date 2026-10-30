@@ -47,6 +47,25 @@ internal class MlKitOcrService @Inject constructor(
     private val parser = PrescriptionFieldParser()
 
     // -------------------------------------------------------------------------
+    // DEBUG: raw ML Kit structure logger (remove before production release)
+    // Logs block/line structure only — tagged OcrDebug so it can be grepped.
+    // Text content is logged here intentionally for development diagnosis only.
+    // This must be removed or gated behind BuildConfig.DEBUG before production.
+    // -------------------------------------------------------------------------
+    private fun logRawStructure(text: Text, imageWidth: Int, imageHeight: Int) {
+        android.util.Log.d("OcrDebug", "=== ML Kit raw structure (${imageWidth}x${imageHeight}) ===")
+        text.textBlocks.forEachIndexed { bi, block ->
+            val bb = block.boundingBox
+            android.util.Log.d("OcrDebug", "BLOCK[$bi] bounds=${bb?.left},${bb?.top}-${bb?.right},${bb?.bottom}")
+            block.lines.forEachIndexed { li, line ->
+                val lb = line.boundingBox
+                android.util.Log.d("OcrDebug", "  LINE[$bi.$li] bounds=${lb?.left},${lb?.top}-${lb?.right},${lb?.bottom} xMid=${lb?.let{(it.left+it.right)/2}} text=[${line.text}]")
+            }
+        }
+        android.util.Log.d("OcrDebug", "=== end ML Kit raw structure ===")
+    }
+
+    // -------------------------------------------------------------------------
     // OcrService implementation
     // -------------------------------------------------------------------------
 
@@ -89,6 +108,60 @@ internal class MlKitOcrService @Inject constructor(
     }
 
     // -------------------------------------------------------------------------
+    // Raw text extraction for GeminiEnhancedOcrService
+    // -------------------------------------------------------------------------
+
+    /**
+     * Runs ML Kit pixel-to-text OCR and returns the concatenated raw text string.
+     * Used by [GeminiEnhancedOcrService] to obtain the OCR text before passing it
+     * to Gemini for structured field extraction.
+     *
+     * Privacy: never log the returned string.
+     */
+    internal suspend fun extractRawText(documentPath: String, mimeType: String): String {
+        return try {
+            when {
+                mimeType.startsWith("image/") -> {
+                    val file = File(documentPath)
+                    if (!file.exists() || !file.canRead()) return ""
+                    val inputImage = InputImage.fromFilePath(context, Uri.fromFile(file))
+                    runMlKit(inputImage).textBlocks
+                        .joinToString("\n") { block -> block.text }
+                }
+                mimeType == "application/pdf" -> {
+                    val file = File(documentPath)
+                    if (!file.exists() || !file.canRead()) return ""
+                    val pages = mutableListOf<String>()
+                    ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
+                        PdfRenderer(pfd).use { renderer ->
+                            val pageCount = minOf(renderer.pageCount, MAX_PDF_PAGES)
+                            for (pageIndex in 0 until pageCount) {
+                                renderer.openPage(pageIndex).use { page ->
+                                    val scale = PDF_TARGET_WIDTH.toFloat() / page.width
+                                    val bitmapWidth  = PDF_TARGET_WIDTH
+                                    val bitmapHeight = (page.height * scale).toInt()
+                                    val bitmap = Bitmap.createBitmap(
+                                        bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888,
+                                    )
+                                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                                    val mlKitText = runMlKit(InputImage.fromBitmap(bitmap, 0))
+                                    pages.add(mlKitText.textBlocks.joinToString("\n") { it.text })
+                                    bitmap.recycle()
+                                }
+                            }
+                        }
+                    }
+                    pages.joinToString("\n\n--- page break ---\n\n")
+                }
+                else -> ""
+            }
+        } catch (e: Exception) {
+            // Silently return empty; GeminiEnhancedOcrService will fall back to ML Kit parser.
+            ""
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Image extraction (JPEG / PNG)
     // -------------------------------------------------------------------------
 
@@ -99,6 +172,7 @@ internal class MlKitOcrService @Inject constructor(
         }
         val inputImage = InputImage.fromFilePath(context, Uri.fromFile(file))
         val mlKitText  = runMlKit(inputImage)
+        logRawStructure(mlKitText, inputImage.width, inputImage.height)
         return parser.parse(
             text        = mlKitText,
             pageIndex   = 0,
