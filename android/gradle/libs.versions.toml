@@ -18,6 +18,7 @@ security-crypto    = "1.1.0-alpha06"
 timber             = "5.0.1"
 firebase-bom       = "33.1.2"
 mlkit-text-recognition = "16.0.1"
+google-genai-kotlin    = "1.8.0"
 appcompat               = "1.7.0"
 junit              = "4.13.2"
 junit-ext          = "1.1.5"
@@ -100,6 +101,9 @@ androidx-espresso-core          = { group = "androidx.test.espresso",      name 
 
 # ML Kit — on-device text recognition (bundled, no API key, offline-capable)
 mlkit-text-recognition          = { group = "com.google.mlkit",            name = "text-recognition",                version.ref = "mlkit-text-recognition" }
+
+# Gemini — generative AI SDK for prescription OCR via Gemini 1.5 Flash
+google-genai-kotlin             = { group = "com.google.genai",            name = "google-genai-kotlin",             version.ref = "google-genai-kotlin" }
 
 # AppCompat — required to resolve resources transitively needed by ML Kit
 androidx-appcompat              = { group = "androidx.appcompat",          name = "appcompat",                       version.ref = "appcompat" }

@@ -44,6 +44,16 @@ val enableInteractionCheck: Boolean =
         ?: System.getenv("ENABLE_INTERACTION_CHECK")
         ?: "false").toBoolean()
 
+val geminiApiKey: String =
+    localProperties.getProperty("gemini.api.key")
+        ?: System.getenv("GEMINI_API_KEY")
+        ?: ""
+
+val enableGeminiOcr: Boolean =
+    (localProperties.getProperty("enable.gemini.ocr")
+        ?: System.getenv("ENABLE_GEMINI_OCR")
+        ?: "false").toBoolean()
+
 android {
     namespace = "com.medihistory.ai"
     compileSdk = 34
@@ -66,6 +76,8 @@ android {
         buildConfigField("String", "BACKEND_BASE_URL", "\"$backendBaseUrl\"")
         buildConfigField("boolean", "ENABLE_CLOUD_BACKUP", "$enableCloudBackup")
         buildConfigField("boolean", "ENABLE_INTERACTION_CHECK", "$enableInteractionCheck")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+        buildConfigField("boolean", "ENABLE_GEMINI_OCR", "$enableGeminiOcr")
 
         // Room schema export — keeps annotationProcessorOptions path for compatibility.
         // The ksp { } block below is the active path when using KSP.
@@ -189,6 +201,9 @@ dependencies {
 
     // ML Kit — on-device text recognition, bundled (offline-capable, no API key required)
     implementation(libs.mlkit.text.recognition)
+
+    // Gemini — generative AI SDK for prescription OCR (Gemini 1.5 Flash)
+    implementation(libs.google.genai.kotlin)
 
     // Firebase — BOM manages all Firebase library versions
     implementation(platform(libs.firebase.bom))

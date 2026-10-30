@@ -55,5 +55,6 @@ class SecurePreferences @Inject constructor(
         const val KEY_ACCESS_TOKEN = "access_token"
         const val KEY_PATIENT_ID = "patient_id"
         const val KEY_CLOUD_BACKUP_ENABLED = "cloud_backup_enabled"
+        const val KEY_GEMINI_OCR_CONSENT = "gemini_ocr_consent_granted"
     }
 }
