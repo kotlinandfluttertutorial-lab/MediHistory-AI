@@ -22,6 +22,7 @@ import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -54,11 +55,17 @@ import com.medihistory.ai.ui.components.LoadingIndicator
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicineListScreen(
+    patientId: String,
     onMedicineClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MedicineListViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Trigger data load whenever the patientId changes (e.g. on first composition).
+    LaunchedEffect(patientId) {
+        viewModel.loadMedicines(patientId)
+    }
 
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
     var selectedStatus by rememberSaveable { mutableStateOf<MedicineStatus?>(null) }

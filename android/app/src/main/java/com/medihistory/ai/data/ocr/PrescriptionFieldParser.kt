@@ -74,16 +74,94 @@ internal class PrescriptionFieldParser {
         // in the left 70% of any standard prescription pad).
         val nameCutoffX = if (imageWidth > 0) (imageWidth * NAME_COLUMN_MAX_X_RATIO).toInt() else Int.MAX_VALUE
 
+        // Merge continuation lines within the same block before any extraction.
+        // ML Kit sometimes splits one logical medicine entry across two lines, e.g.:
+        //   line 0: "TAB Montair (4"
+        //   line 1: "MG ) (1 Strip)"
+        // A continuation line starts with a dosage unit keyword (MG, ML, MCG …),
+        // a closing bracket, or a digit+unit fragment — and has no standalone name prefix.
+        val mergedLines = mergeLineContinuations(allLines)
+
         val results = mutableListOf<ExtractedField>()
-        results.add(extractDoctorName(allLines))
-        results.add(extractPrescriptionDate(allLines))
-        results.addAll(extractMedicines(allLines, nameCutoffX))
+        results.add(extractDoctorName(mergedLines))
+        results.add(extractPrescriptionDate(mergedLines))
+        results.addAll(extractMedicines(mergedLines, nameCutoffX))
 
         if (results.none { it.fieldName == "medicine_name" }) results.add(absentField("medicine_name"))
         if (results.none { it.fieldName == "dose" })          results.add(absentField("dose"))
         if (results.none { it.fieldName == "frequency" })     results.add(absentField("frequency"))
-
         return results
+    }
+
+    // -------------------------------------------------------------------------
+    // Line continuation merging
+    // -------------------------------------------------------------------------
+
+    /**
+     * Merges lines that are continuations of the previous line within the same block.
+     *
+     * ML Kit sometimes splits a single medicine name across two lines due to line
+     * wrapping on the physical prescription:
+     *
+     *   "TAB Montair (4"   ← real line 1
+     *   "MG ) (1 Strip)"   ← continuation: starts with a dosage unit keyword
+     *
+     * A line is a continuation when ALL of the following are true:
+     * 1. It is in the same [blockIndex] as the previous line.
+     * 2. Its first non-space character starts with a dosage unit keyword
+     *    (MG, ML, MCG, G, IU) or a closing bracket ')'.
+     * 3. It does NOT start with a known section header or doctor prefix.
+     *
+     * When merged, the resulting [IndexedLine] keeps the predecessor's index/blockIndex
+     * and combines the text with a single space separator. Confidence is the average of
+     * both lines. The predecessor's bounding box is expanded to cover the continuation.
+     */
+    private fun mergeLineContinuations(lines: List<IndexedLine>): List<IndexedLine> {
+        if (lines.isEmpty()) return lines
+        val merged = mutableListOf<IndexedLine>()
+        for (line in lines) {
+            val prev = merged.lastOrNull()
+            if (prev != null &&
+                prev.blockIndex == line.blockIndex &&
+                isContinuationLine(line.text)
+            ) {
+                // Join continuation into the previous line.
+                val combinedText = "${prev.text} ${line.text}".trim()
+                val combinedConf = if (prev.confidence > 0f && line.confidence > 0f)
+                    (prev.confidence + line.confidence) / 2f
+                else
+                    maxOf(prev.confidence, line.confidence)
+                val combinedBounds = Rect(
+                    minOf(prev.bounds.left,   line.bounds.left),
+                    minOf(prev.bounds.top,    line.bounds.top),
+                    maxOf(prev.bounds.right,  line.bounds.right),
+                    maxOf(prev.bounds.bottom, line.bounds.bottom),
+                )
+                merged[merged.lastIndex] = prev.copy(
+                    text       = combinedText,
+                    confidence = combinedConf.coerceIn(0f, 1f),
+                    bounds     = combinedBounds,
+                )
+            } else {
+                merged.add(line)
+            }
+        }
+        return merged
+    }
+
+    /**
+     * Returns true if [text] looks like a continuation fragment rather than the
+     * start of a new medicine entry.
+     *
+     * Continuation signals:
+     * - Starts with a dosage unit word: "MG", "ML", "MCG", "G", "IU", "MG)"
+     * - Starts with a closing parenthesis or bracket: ")", "]"
+     * - Starts with a digit immediately followed by a unit: "4MG", "10ML"
+     */
+    private fun isContinuationLine(text: String): Boolean {
+        val t = text.trim()
+        if (t.isEmpty()) return false
+        return CONTINUATION_START_REGEX.containsMatchIn(t)
     }
 
     // -------------------------------------------------------------------------
@@ -385,6 +463,12 @@ internal class PrescriptionFieldParser {
          * 0.70 = left 70% of the prescription is the medicine column.
          */
         private const val NAME_COLUMN_MAX_X_RATIO = 0.70
+
+        /** Matches lines that are continuations of the previous line (dosage unit or bracket at start). */
+        private val CONTINUATION_START_REGEX = Regex(
+            """^(?:\d*\s*(?:MG|ML|MCG|MCG|G|IU|UNITS?)\b|[)\]]\s*\(|\)\s*\d)""",
+            RegexOption.IGNORE_CASE,
+        )
 
         private val QUALIFICATION_REGEX = Regex(
             """M\.?B\.?B\.?S|M\.?D\.?|M\.?S\.?|D\.?G\.?O|B\.?D\.?S|F\.?R\.?C\.?S""",

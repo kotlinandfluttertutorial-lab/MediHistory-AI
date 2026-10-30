@@ -92,6 +92,7 @@ fun MediHistoryNavHost(
         // ── Medicine explorer (was already wired) ────────────────────────────
         composable(Routes.MEDICINE_EXPLORER) {
             MedicineListScreen(
+                patientId = patientId,
                 onMedicineClick = { id -> navController.navigate(Routes.medicineDetail(id)) },
             )
         }
