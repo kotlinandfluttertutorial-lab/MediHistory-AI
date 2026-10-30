@@ -125,25 +125,39 @@ class PostReviewProcessor @Inject constructor(
 
         if (medicines.isNotEmpty()) {
             medicineRepository.insertAll(medicines)
-        }
 
-        // Run duplicate detection across ALL patient medicines (not just the ones inserted
-        // this run). This ensures every new medicine is checked against the full history.
-        val allMedicines = medicineRepository.observeByPatient(patientId).first()
-        val candidates = DuplicateDetector.detect(allMedicines)
-        for (candidate in candidates) {
-            val alert = DuplicateAlert(
-                id = UUID.randomUUID().toString(),
-                patientId = patientId,
-                medicineAId = candidate.medicineAId,
-                medicineBId = candidate.medicineBId,
-                matchingIngredient = candidate.matchingIngredient,
-                matchType = candidate.matchType,
-                confidence = candidate.confidence,
-                combinationNote = candidate.combinationNote,
-                createdAt = System.currentTimeMillis(),
-            )
-            duplicateAlertRepository.insert(alert)
+            // Run duplicate detection only when new medicines were added this review.
+            // Load all patient medicines (including the ones just inserted) and detect pairs.
+            val allMedicines = medicineRepository.observeByPatient(patientId).first()
+            val candidates = DuplicateDetector.detect(allMedicines)
+
+            // Load existing alerts so we can skip pairs that are already recorded.
+            // Deduplication is on (medicineAId, medicineBId) — the UUID primary key
+            // is always fresh, so OnConflictStrategy.IGNORE on the DAO is not sufficient.
+            val existingAlerts = duplicateAlertRepository.observeByPatient(patientId).first()
+            val existingPairs: Set<Pair<String, String>> = existingAlerts
+                .map { alert -> Pair(alert.medicineAId, alert.medicineBId) }
+                .toSet()
+
+            for (candidate in candidates) {
+                // Skip if this exact pair (in either order) was already inserted.
+                val pairFwd = Pair(candidate.medicineAId, candidate.medicineBId)
+                val pairRev = Pair(candidate.medicineBId, candidate.medicineAId)
+                if (pairFwd in existingPairs || pairRev in existingPairs) continue
+
+                val alert = DuplicateAlert(
+                    id = UUID.randomUUID().toString(),
+                    patientId = patientId,
+                    medicineAId = candidate.medicineAId,
+                    medicineBId = candidate.medicineBId,
+                    matchingIngredient = candidate.matchingIngredient,
+                    matchType = candidate.matchType,
+                    confidence = candidate.confidence,
+                    combinationNote = candidate.combinationNote,
+                    createdAt = System.currentTimeMillis(),
+                )
+                duplicateAlertRepository.insert(alert)
+            }
         }
     }
 

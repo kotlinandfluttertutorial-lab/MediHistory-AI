@@ -2,7 +2,10 @@ package com.medihistory.ai.ui.reminders
 
 import com.medihistory.ai.data.model.DoseRecord
 import com.medihistory.ai.data.model.DoseRecordEntity
+import com.medihistory.ai.data.model.Medicine
+import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.Reminder
+import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.ReminderRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,13 +42,15 @@ class ReminderViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeReminderRepository
+    private lateinit var fakeMedicineRepository: FakeMedicineRepositoryForReminders
     private lateinit var viewModel: ReminderViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakeReminderRepository()
-        viewModel = ReminderViewModel(fakeRepository)
+        fakeMedicineRepository = FakeMedicineRepositoryForReminders()
+        viewModel = ReminderViewModel(fakeRepository, fakeMedicineRepository)
     }
 
     @After
@@ -227,4 +232,36 @@ private class FakeReminderRepository : ReminderRepository {
         doseRecords.filter {
             it.patientId == patientId && it.scheduledTime in from..to
         }
+}
+
+// ---------------------------------------------------------------------------
+// Fake MedicineRepository — in-memory, no I/O
+// ---------------------------------------------------------------------------
+
+private class FakeMedicineRepositoryForReminders : MedicineRepository {
+    private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
+
+    override fun observeByPatient(patientId: String): kotlinx.coroutines.flow.Flow<List<Medicine>> =
+        _medicines.map { it.filter { m -> m.patientId == patientId } }
+
+    override fun searchByPatient(patientId: String, query: String): kotlinx.coroutines.flow.Flow<List<Medicine>> =
+        _medicines.map { it.filter { m -> m.patientId == patientId } }
+
+    override suspend fun getById(id: String, patientId: String): Medicine? =
+        _medicines.value.find { it.id == id && it.patientId == patientId }
+
+    override suspend fun insertAll(medicines: List<Medicine>) {
+        _medicines.update { it + medicines }
+    }
+
+    override suspend fun update(medicine: Medicine) {
+        _medicines.update { list -> list.map { if (it.id == medicine.id) medicine else it } }
+    }
+
+    override suspend fun delete(medicine: Medicine) {
+        _medicines.update { it.filter { m -> m.id != medicine.id } }
+    }
+
+    override fun observeActiveIngredients(patientId: String): kotlinx.coroutines.flow.Flow<List<String>> =
+        _medicines.map { list -> list.filter { it.patientId == patientId }.mapNotNull { it.activeIngredient }.distinct() }
 }

@@ -69,6 +69,7 @@ fun PrescriptionDetailScreen(
     patientId: String,
     onBack: () -> Unit,
     onReviewOcr: () -> Unit = {},
+    onExtractText: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     viewModel: PrescriptionDetailViewModel = hiltViewModel(),
 ) {
@@ -322,7 +323,13 @@ fun PrescriptionDetailScreen(
                     ) {
                         Spacer(modifier = Modifier.height(24.dp))
                         OutlinedButton(
-                            onClick = { viewModel.triggerOcrExtraction(prescriptionId, patientId) },
+                            onClick = {
+                                if (onExtractText != null) {
+                                    onExtractText()
+                                } else {
+                                    viewModel.triggerOcrExtraction(prescriptionId, patientId)
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(text = "Extract text")

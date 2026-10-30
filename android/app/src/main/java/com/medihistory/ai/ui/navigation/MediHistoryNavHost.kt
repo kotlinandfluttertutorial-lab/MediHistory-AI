@@ -187,9 +187,12 @@ fun MediHistoryNavHost(
 
             LaunchedEffect(cameraResultPath, cameraResultSha) {
                 if (cameraResultPath.isNotEmpty() && cameraResultSha.isNotEmpty()) {
+                    // Clear the keys synchronously BEFORE calling onCameraImageConfirmed so
+                    // any concurrent recomposition (including process-death restore) sees empty
+                    // values and does not fire a second prescription insert for the same image.
+                    backStackEntry.savedStateHandle["camera_result_path"] = ""
+                    backStackEntry.savedStateHandle["camera_result_sha256"] = ""
                     importViewModel.onCameraImageConfirmed(cameraResultPath, cameraResultSha)
-                    backStackEntry.savedStateHandle.remove<String>("camera_result_path")
-                    backStackEntry.savedStateHandle.remove<String>("camera_result_sha256")
                 }
             }
 

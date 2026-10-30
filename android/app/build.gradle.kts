@@ -158,8 +158,8 @@ dependencies {
     implementation(libs.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 
-    // Room
-    implementation(libs.androidx.room.runtime)
+    // AppCompat — required to satisfy resource references pulled in by ML Kit text-recognition
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
@@ -212,4 +212,94 @@ dependencies {
     // Debug — Compose tooling
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+// ---------------------------------------------------------------------------
+// JaCoCo — coverage report and enforcement gate
+// ---------------------------------------------------------------------------
+// Run with: ./gradlew :app:jacocoTestReport (report only)
+//           ./gradlew :app:jacocoTestCoverageVerification (gate — fails if below threshold)
+// Both tasks depend on :app:testDebugUnitTest so they run tests automatically.
+// ---------------------------------------------------------------------------
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    group = "verification"
+    description = "Generates JaCoCo code coverage reports for the debug unit tests."
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    // Class files to include in the report (exclude generated / non-business code).
+    val buildDir = project.layout.buildDirectory.asFile.get()
+    val classesDir = fileTree("$buildDir/tmp/kotlin-classes/debug") {
+        exclude(
+            "**/R.class", "**/R$*.class",
+            "**/BuildConfig.*",
+            "**/Manifest*.*",
+            "**/*_Hilt*.*", "**/Hilt_*.*",       // Hilt generated
+            "**/*_MembersInjector*.*",
+            "**/*_Factory*.*",
+            "**/*Dao_Impl*.*",                    // Room generated
+            "**/databinding/**",
+            "**/ComposableSingletons*.*",          // Compose generated
+        )
+    }
+    classDirectories.setFrom(classesDir)
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+    executionData.setFrom(fileTree("$buildDir/jacoco") { include("*.exec") })
+}
+
+tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn("jacocoTestReport")
+    group = "verification"
+    description = "Enforces JaCoCo coverage thresholds (data layer ≥80%, DuplicateDetector/ValidationUtils 100% branch)."
+
+    val buildDir = project.layout.buildDirectory.asFile.get()
+    val classesDir = fileTree("$buildDir/tmp/kotlin-classes/debug") {
+        exclude(
+            "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
+            "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_MembersInjector*.*", "**/*_Factory*.*",
+            "**/*Dao_Impl*.*", "**/databinding/**", "**/ComposableSingletons*.*",
+        )
+    }
+    classDirectories.setFrom(classesDir)
+    sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
+    executionData.setFrom(fileTree("$buildDir/jacoco") { include("*.exec") })
+
+    violationRules {
+        // ≥80% line coverage for the data layer (repositories, DAOs, use-cases, OCR).
+        rule {
+            element = "PACKAGE"
+            includes = listOf("com.medihistory.ai.data.*")
+            limit {
+                counter = "LINE"
+                value   = "COVEREDRATIO"
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+        // 100% branch coverage for DuplicateDetector (medical-safety critical path).
+        rule {
+            element = "CLASS"
+            includes = listOf("com.medihistory.ai.duplicate.DuplicateDetector")
+            limit {
+                counter = "BRANCH"
+                value   = "COVEREDRATIO"
+                minimum = "1.00".toBigDecimal()
+            }
+        }
+        // 100% branch coverage for ValidationUtils (medical-safety critical path).
+        rule {
+            element = "CLASS"
+            includes = listOf("com.medihistory.ai.data.ocr.ValidationUtils")
+            limit {
+                counter = "BRANCH"
+                value   = "COVEREDRATIO"
+                minimum = "1.00".toBigDecimal()
+            }
+        }
+    }
 }

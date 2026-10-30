@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medihistory.ai.data.model.DoseRecord
+import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.Reminder
 import com.medihistory.ai.ui.components.EmptyStateView
 import com.medihistory.ai.ui.components.LoadingIndicator
@@ -95,16 +98,15 @@ fun ReminderScreen(
             )
         },
         floatingActionButton = {
-            // Stub FAB — full reminder setup is initiated from the medicine detail screen.
             ExtendedFloatingActionButton(
                 text = { Text(text = "Set Up Reminder") },
                 icon = {
                     Icon(
                         imageVector = Icons.Filled.Add,
-                        contentDescription = null, // label describes the action
+                        contentDescription = null,
                     )
                 },
-                onClick = { /* TODO: navigate to medicine list to pick a medicine */ },
+                onClick = { viewModel.onShowMedicinePicker() },
             )
         },
     ) { innerPadding ->
@@ -153,6 +155,82 @@ fun ReminderScreen(
             }
         }
     }
+
+    // ── Medicine picker dialog ─────────────────────────────────────────────
+    // Shown when the patient taps "Set Up Reminder" FAB.
+    if (uiState.showMedicinePicker) {
+        MedicinePickerDialog(
+            medicines = uiState.availableMedicines,
+            onMedicineSelected = { medicine -> viewModel.onMedicineSelected(medicine, patientId) },
+            onDismiss = viewModel::onDismissMedicinePicker,
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Medicine picker dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Simple medicine selection dialog shown before creating a reminder.
+ *
+ * If no medicines exist yet, shows guidance to add prescriptions first.
+ * Tapping a medicine creates a reminder with a default time of 08:00.
+ *
+ * Privacy: medicine names are not logged anywhere in this composable.
+ */
+@Composable
+private fun MedicinePickerDialog(
+    medicines: List<Medicine>,
+    onMedicineSelected: (Medicine) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Choose a medicine") },
+        text = {
+            if (medicines.isEmpty()) {
+                Text(
+                    text = "No medicines found. Add a prescription first and review the extracted fields to populate your medicine list.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else {
+                LazyColumn {
+                    items(items = medicines, key = { it.id }) { medicine ->
+                        TextButton(
+                            onClick = { onMedicineSelected(medicine) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = "Set reminder for ${medicine.medicineName}"
+                                },
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.Start,
+                            ) {
+                                Text(
+                                    text = medicine.medicineName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                                if (!medicine.dosageInstructions.isNullOrBlank()) {
+                                    Text(
+                                        text = medicine.dosageInstructions,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,7 +315,7 @@ private fun ReminderContent(
         ) { reminder ->
             ReminderCard(
                 reminder = reminder,
-                onToggleActive = { /* Active toggle — wired in a follow-up ticket */ },
+                onToggleActive = { viewModel.toggleActive(reminder) },
                 onRecordDose = { doseRecord ->
                     viewModel.recordDose(
                         reminderId = reminder.id,
