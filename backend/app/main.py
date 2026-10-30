@@ -11,7 +11,18 @@ Security:
 from fastapi import FastAPI
 
 from app.middleware.rate_limit import RateLimitMiddleware
-from app.routers import auth, doctors, medicines, patients, prescriptions
+from app.routers import (
+    auth,
+    doctors,
+    duplicates,
+    export,
+    history,
+    interactions,
+    medicines,
+    patients,
+    prescriptions,
+    reminders,
+)
 
 app = FastAPI(
     title="MediHistory AI API",
@@ -23,6 +34,11 @@ app = FastAPI(
         {"name": "doctors", "description": "Doctor record operations"},
         {"name": "prescriptions", "description": "Prescription document operations"},
         {"name": "medicines", "description": "Medicine list and update operations"},
+        {"name": "duplicates", "description": "Potential duplicate medicine alert operations"},
+        {"name": "history", "description": "Medical history summary operations"},
+        {"name": "reminders", "description": "Medication reminder operations"},
+        {"name": "interactions", "description": "Drug interaction check (stub)"},
+        {"name": "export", "description": "PDF export operations (stub)"},
     ],
 )
 
@@ -41,3 +57,8 @@ app.include_router(patients.router, prefix="/api/v1")
 app.include_router(doctors.router, prefix="/api/v1")
 app.include_router(prescriptions.router, prefix="/api/v1")
 app.include_router(medicines.router, prefix="/api/v1")
+app.include_router(duplicates.router, prefix="/api/v1")
+app.include_router(history.router, prefix="/api/v1")
+app.include_router(reminders.router, prefix="/api/v1")
+app.include_router(interactions.router, prefix="/api/v1")
+app.include_router(export.router, prefix="/api/v1")

@@ -30,10 +30,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 # Import models to register them with Base.metadata before any fixture runs
 import app.models.doctor  # noqa: F401
 import app.models.duplicate_alert  # noqa: F401
+import app.models.history  # noqa: F401
 import app.models.medicine  # noqa: F401
 import app.models.patient  # noqa: F401
 import app.models.prescription  # noqa: F401
 import app.models.refresh_token  # noqa: F401
+import app.models.reminder  # noqa: F401
 from app.core.database import Base, create_all_tables, get_db
 from app.main import app
 
