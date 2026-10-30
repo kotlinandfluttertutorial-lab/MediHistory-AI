@@ -62,6 +62,34 @@ class DoctorViewModel @Inject constructor(
     }
 
     // -------------------------------------------------------------------------
+    // Single doctor load (for edit route pre-population)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Loads a single doctor by [doctorId] and pre-populates the form state.
+     * Called by the DOCTOR_EDIT composable via [LaunchedEffect] before showing the form.
+     *
+     * Security: [patientId] is used to scope the lookup so a patient can only edit
+     * their own doctors.
+     */
+    fun loadDoctor(doctorId: String, patientId: String) {
+        viewModelScope.launch {
+            val doctor = doctorRepository.getById(doctorId, patientId)
+            if (doctor != null) {
+                _uiState.update {
+                    it.copy(
+                        name = doctor.name,
+                        specialty = doctor.specialty,
+                        specialtyOther = doctor.specialtyOther ?: "",
+                        clinicName = doctor.clinicName ?: "",
+                        isLoading = false,
+                    )
+                }
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Form field mutations
     // -------------------------------------------------------------------------
 

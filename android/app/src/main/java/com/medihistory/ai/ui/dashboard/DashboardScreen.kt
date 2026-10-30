@@ -105,6 +105,8 @@ fun DashboardScreen(
     onNewDoctorMode: () -> Unit,
     onViewPrescriptions: () -> Unit,
     onViewMedicines: () -> Unit = {},
+    onViewDoctors: () -> Unit = {},
+    onViewProfile: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
@@ -126,6 +128,7 @@ fun DashboardScreen(
                 currentDate = uiState.currentDate,
                 pendingAlertCount = uiState.pendingAlertCount,
                 onViewDuplicates = onViewDuplicates,
+                onViewProfile = onViewProfile,
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -191,6 +194,7 @@ fun DashboardScreen(
                             onViewPrescriptions = onViewPrescriptions,
                             onViewMedicines = onViewMedicines,
                             onViewDuplicates = onViewDuplicates,
+                            onViewDoctors = onViewDoctors,
                         )
                     }
 
@@ -274,6 +278,7 @@ private fun DashboardTopBar(
     currentDate: String,
     pendingAlertCount: Int,
     onViewDuplicates: () -> Unit,
+    onViewProfile: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
 ) {
     LargeTopAppBar(
@@ -317,7 +322,9 @@ private fun DashboardTopBar(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable(onClickLabel = "View profile") { onViewProfile() }
+                    .semantics { contentDescription = "Profile. Tap to view your profile." },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -346,6 +353,7 @@ private fun StatsGrid(
     onViewPrescriptions: () -> Unit,
     onViewMedicines: () -> Unit,
     onViewDuplicates: () -> Unit,
+    onViewDoctors: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -370,8 +378,8 @@ private fun StatsGrid(
                 count = uiState.doctorCount,
                 label = "Doctors",
                 countColor = MaterialTheme.colorScheme.secondary,
-                onClick = {},
-                contentDesc = "${uiState.doctorCount} doctors.",
+                onClick = onViewDoctors,
+                contentDesc = "${uiState.doctorCount} doctors. Tap to manage.",
                 modifier = Modifier.weight(1f),
             )
         }

@@ -123,6 +123,54 @@ class ImportViewModel @Inject constructor(
         handleUri(uri = uri, resolvedMimeType = resolvedMime, expectedCategory = "file")
     }
 
+    /**
+     * Called when the camera capture flow returns a confirmed image.
+     *
+     * [CameraViewModel] already wrote the file to app-private storage and computed its
+     * SHA-256; this method only creates the Prescription row and enqueues the OCR worker.
+     * It does NOT copy the file.
+     *
+     * Privacy: the file path is never written to Logcat.
+     */
+    fun onCameraImageConfirmed(filePath: String, sha256: String) {
+        _importState.value = ImportState.Processing
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val patientId = sessionManager.getPatientId()
+                ensurePatientRowExists(patientId)
+
+                val prescription = Prescription(
+                    id = UUID.randomUUID().toString(),
+                    patientId = patientId,
+                    documentPath = filePath,
+                    documentMimeType = "image/jpeg",
+                    documentHashSha256 = sha256,
+                    ocrStatus = OcrStatus.PENDING,
+                )
+                try {
+                    prescriptionRepository.insert(prescription)
+                    workManager.enqueue(
+                        OcrWorker.buildRequest(
+                            prescriptionId = prescription.id,
+                            patientId = patientId,
+                            documentPath = filePath,
+                            mimeType = "image/jpeg",
+                        )
+                    )
+                    _importState.value = ImportState.Success(
+                        filePath = filePath,
+                        sha256 = sha256,
+                        mimeType = "image/jpeg",
+                        prescriptionId = prescription.id,
+                    )
+                } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                    Timber.tag("ImportViewModel").e(e.javaClass.simpleName)
+                    _importState.value = ImportState.Error("Could not save prescription. Please try again.")
+                }
+            }
+        }
+    }
+
     /** Resets state back to [ImportState.Idle]. */
     fun reset() {
         _importState.value = ImportState.Idle

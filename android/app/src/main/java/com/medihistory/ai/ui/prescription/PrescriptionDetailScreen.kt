@@ -59,6 +59,7 @@ import java.util.Locale
  * @param prescriptionId The ID of the prescription to display.
  * @param patientId      The ID of the owning patient (used to scope the repository query).
  * @param onBack         Called when the user taps the back arrow.
+ * @param onReviewOcr    Called when the user taps the "Review →" button.
  * @param viewModel      Injected by Hilt; override in tests.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,6 +68,7 @@ fun PrescriptionDetailScreen(
     prescriptionId: String,
     patientId: String,
     onBack: () -> Unit,
+    onReviewOcr: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: PrescriptionDetailViewModel = hiltViewModel(),
 ) {
@@ -139,7 +141,7 @@ fun PrescriptionDetailScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = prescription.doctorId?.let { "Doctor ID: $it" } ?: "Doctor not specified",
+                                        text = uiState.doctorName ?: "Doctor not specified",
                                         style = MaterialTheme.typography.titleMedium,
                                     )
                                 }
@@ -201,7 +203,7 @@ fun PrescriptionDetailScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Button(onClick = { /* OCR review nav — wired in NavHost */ }) {
+                                Button(onClick = onReviewOcr) {
                                     Text("Review →")
                                 }
                             }
@@ -262,7 +264,7 @@ fun PrescriptionDetailScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = prescription.doctorId ?: "Not specified",
+                        text = uiState.doctorName ?: "Not specified",
                         style = MaterialTheme.typography.bodyLarge,
                     )
 
@@ -320,7 +322,7 @@ fun PrescriptionDetailScreen(
                     ) {
                         Spacer(modifier = Modifier.height(24.dp))
                         OutlinedButton(
-                            onClick = { /* OCR trigger — implemented in a future ticket */ },
+                            onClick = { viewModel.triggerOcrExtraction(prescriptionId, patientId) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(text = "Extract text")

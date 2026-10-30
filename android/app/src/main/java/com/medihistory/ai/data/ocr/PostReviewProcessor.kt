@@ -4,11 +4,14 @@ import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.DoctorSpecialty
+import com.medihistory.ai.data.model.DuplicateAlert
 import com.medihistory.ai.data.model.ExtractedFieldEntity
 import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.repository.DoctorRepository
+import com.medihistory.ai.data.repository.DuplicateAlertRepository
 import com.medihistory.ai.data.repository.MedicineRepository
+import com.medihistory.ai.duplicate.DuplicateDetector
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -37,6 +40,7 @@ class PostReviewProcessor @Inject constructor(
     private val prescriptionDao: PrescriptionDao,
     private val doctorRepository: DoctorRepository,
     private val medicineRepository: MedicineRepository,
+    private val duplicateAlertRepository: DuplicateAlertRepository,
 ) : PostReviewProcessorInterface {
 
     /**
@@ -121,6 +125,25 @@ class PostReviewProcessor @Inject constructor(
 
         if (medicines.isNotEmpty()) {
             medicineRepository.insertAll(medicines)
+        }
+
+        // Run duplicate detection across ALL patient medicines (not just the ones inserted
+        // this run). This ensures every new medicine is checked against the full history.
+        val allMedicines = medicineRepository.observeByPatient(patientId).first()
+        val candidates = DuplicateDetector.detect(allMedicines)
+        for (candidate in candidates) {
+            val alert = DuplicateAlert(
+                id = UUID.randomUUID().toString(),
+                patientId = patientId,
+                medicineAId = candidate.medicineAId,
+                medicineBId = candidate.medicineBId,
+                matchingIngredient = candidate.matchingIngredient,
+                matchType = candidate.matchType,
+                confidence = candidate.confidence,
+                combinationNote = candidate.combinationNote,
+                createdAt = System.currentTimeMillis(),
+            )
+            duplicateAlertRepository.insert(alert)
         }
     }
 
