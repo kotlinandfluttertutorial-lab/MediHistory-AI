@@ -10,7 +10,6 @@ import com.medihistory.ai.BuildConfig
 import com.medihistory.ai.data.security.SecurePreferences
 import com.medihistory.ai.data.security.SecurePreferencesStore
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.json.JSONObject
 import javax.inject.Inject
 
 /**
@@ -159,120 +158,7 @@ internal class GeminiEnhancedOcrService
          * Privacy: the JSON string is never logged.
          */
         internal fun parseGeminiJson(json: String): List<ExtractedField> {
-            val obj =
-                try {
-                    JSONObject(json)
-                } catch (e: Exception) {
-                    return emptyList()
-                }
-            val fields = mutableListOf<ExtractedField>()
-
-            fun addScalarField(
-                fieldName: String,
-                jsonKey: String,
-                conf: Float = GEMINI_CONFIDENCE,
-            ) {
-                // obj.isNull() returns true for JSON null AND missing keys.
-                // optString on a JSON-null key returns the literal "null" string — we must
-                // guard against this explicitly (medical-safety: never fabricate values).
-                val value =
-                    if (obj.isNull(jsonKey)) {
-                        null
-                    } else {
-                        obj.optString(jsonKey, "").takeIf { it.isNotBlank() && it != "null" }
-                    }
-                fields.add(
-                    ExtractedField(
-                        fieldName = fieldName,
-                        rawValue = value,
-                        patientValue = null,
-                        confidence = if (value != null) conf else 0f,
-                        reviewState = ReviewState.PENDING_REVIEW,
-                        sourceReference = GEMINI_SOURCE_REF,
-                    ),
-                )
-            }
-
-            addScalarField("doctor_name", "doctor_name")
-            addScalarField("prescription_date", "prescription_date")
-
-            // Medicines: up to MAX_MEDICINES entries
-            val medicinesArray = obj.optJSONArray("medicines")
-            if (medicinesArray != null) {
-                val count = minOf(medicinesArray.length(), MAX_MEDICINES)
-                for (i in 0 until count) {
-                    val medicine = medicinesArray.optJSONObject(i) ?: continue
-                    val sfx = if (i == 0) "" else "_${i + 1}"
-
-                    val name =
-                        if (medicine.isNull("name")) {
-                            null
-                        } else {
-                            medicine.optString("name", "").takeIf { it.isNotBlank() && it != "null" }
-                        }
-                    fields.add(
-                        ExtractedField(
-                            fieldName = "medicine_name$sfx",
-                            rawValue = name,
-                            patientValue = null,
-                            confidence = if (name != null) GEMINI_CONFIDENCE else 0f,
-                            reviewState = ReviewState.PENDING_REVIEW,
-                            sourceReference = GEMINI_SOURCE_REF,
-                        ),
-                    )
-
-                    val dose =
-                        if (medicine.isNull("dose")) {
-                            null
-                        } else {
-                            medicine.optString("dose", "").takeIf { it.isNotBlank() && it != "null" }
-                        }
-                    if (dose != null) {
-                        fields.add(
-                            ExtractedField(
-                                fieldName = "dose$sfx",
-                                rawValue = dose,
-                                patientValue = null,
-                                confidence = GEMINI_CONFIDENCE,
-                                reviewState = ReviewState.PENDING_REVIEW,
-                                sourceReference = GEMINI_SOURCE_REF,
-                            ),
-                        )
-                    }
-
-                    val freq =
-                        if (medicine.isNull("frequency")) {
-                            null
-                        } else {
-                            medicine.optString("frequency", "").takeIf { it.isNotBlank() && it != "null" }
-                        }
-                    if (freq != null) {
-                        fields.add(
-                            ExtractedField(
-                                fieldName = "frequency$sfx",
-                                rawValue = freq,
-                                patientValue = null,
-                                confidence = GEMINI_CONFIDENCE,
-                                reviewState = ReviewState.PENDING_REVIEW,
-                                sourceReference = GEMINI_SOURCE_REF,
-                            ),
-                        )
-                    }
-                }
-            }
-
-            // Ensure sentinel absent fields for medicine_name, dose, frequency if none extracted.
-            if (fields.none { it.fieldName == "medicine_name" }) {
-                fields.add(ExtractedField("medicine_name", null, null, 0f, sourceReference = GEMINI_SOURCE_REF))
-            }
-            if (fields.none { it.fieldName == "dose" }) {
-                fields.add(ExtractedField("dose", null, null, 0f, sourceReference = GEMINI_SOURCE_REF))
-            }
-            if (fields.none { it.fieldName == "frequency" }) {
-                fields.add(ExtractedField("frequency", null, null, 0f, sourceReference = GEMINI_SOURCE_REF))
-            }
-
-            return fields
+            return parseGeminiJsonStatic(json)
         }
 
         // -------------------------------------------------------------------------

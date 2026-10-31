@@ -277,6 +277,32 @@ class DuplicateDetectorTest {
         assertEquals("synthamol", result[0].matchingIngredient)
     }
 
+    @Test
+    fun `should return no match for combination ingredients with no overlap`() {
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthacillin Combo", "synthamol+testocillin"),
+                medicine("med-002", "Ibusynth Mono", "ibuprofen"),
+            )
+
+        assertTrue(DuplicateDetector.detect(medicines).isEmpty())
+    }
+
+    @Test
+    fun `should ignore empty tokens in combination ingredient strings`() {
+        val medicines =
+            listOf(
+                medicine("med-001", "Synthacillin Mono", "synthamol"),
+                medicine("med-002", "Synthacillin Combo", "synthamol++testocillin"),
+            )
+
+        val result = DuplicateDetector.detect(medicines)
+
+        assertEquals(1, result.size)
+        assertEquals(MatchType.PARTIAL, result.single().matchType)
+        assertEquals("synthamol", result.single().matchingIngredient)
+    }
+
     // --- Multiple matches ---
 
     @Test

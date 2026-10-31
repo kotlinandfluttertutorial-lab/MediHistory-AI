@@ -50,8 +50,12 @@ object DuplicateDetector {
         val active =
             medicines
                 .filter { it.status != MedicineStatus.PAST }
-                .filter { !it.activeIngredient.isNullOrBlank() }
-                .sortedBy { it.id }
+                .mapNotNull { medicine ->
+                    medicine.activeIngredient
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { ingredient -> ActiveMedicine(medicine, ingredient) }
+                }
+                .sortedBy { it.medicine.id }
 
         val candidates = mutableListOf<DuplicateCandidate>()
 
@@ -65,6 +69,11 @@ object DuplicateDetector {
         return candidates.sortedWith(compareBy({ it.medicineAId }, { it.medicineBId }))
     }
 
+    private data class ActiveMedicine(
+        val medicine: Medicine,
+        val ingredient: String,
+    )
+
     /**
      * Checks one pair of medicines for a potential duplicate ingredient.
      *
@@ -76,11 +85,13 @@ object DuplicateDetector {
      *    normalisation. Produces a lower-confidence candidate with a combination note.
      */
     private fun checkPair(
-        a: Medicine,
-        b: Medicine,
+        activeA: ActiveMedicine,
+        activeB: ActiveMedicine,
     ): DuplicateCandidate? {
-        val ingA = a.activeIngredient ?: return null
-        val ingB = b.activeIngredient ?: return null
+        val a = activeA.medicine
+        val b = activeB.medicine
+        val ingA = activeA.ingredient
+        val ingB = activeB.ingredient
 
         // --- EXACT match (including synonym equivalence) ---
         if (IngredientNormalizer.isSynonym(ingA, ingB)) {

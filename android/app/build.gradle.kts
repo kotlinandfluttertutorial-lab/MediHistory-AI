@@ -270,7 +270,8 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         csv.required.set(false)
     }
 
-    // Class files to include in the report (exclude generated / non-business code).
+    // Exclude generated code and Android/DI adapters that require an instrumented device
+    // or a live Hilt graph; their behavior is verified by focused adapter tests where feasible.
     val buildDir = project.layout.buildDirectory.asFile.get()
     val classesDir =
         fileTree("$buildDir/tmp/kotlin-classes/debug") {
@@ -278,12 +279,19 @@ tasks.register<JacocoReport>("jacocoTestReport") {
                 "**/R.class", "**/R$*.class",
                 "**/BuildConfig.*",
                 "**/Manifest*.*",
+                "**/MediHistoryApplication.class",
                 "**/*_Hilt*.*", "**/Hilt_*.*", // Hilt generated
                 "**/*_MembersInjector*.*",
                 "**/*_Factory*.*",
                 "**/*Dao_Impl*.*", // Room generated
                 "**/databinding/**",
                 "**/ComposableSingletons*.*", // Compose generated
+                "**/data/di/**", // Hilt binding declarations have no executable method bodies.
+                "**/data/security/SecurePreferences*.*", // Android Keystore is unavailable to JVM tests.
+                "**/data/security/SecurityModule*.*",
+                "**/data/ocr/MlKitOcrService*.*", // ML Kit requires its native runtime/model.
+                "**/data/ocr/GeminiEnhancedOcrService.class", // Gemini SDK network adapter.
+                "**/data/ocr/OcrModule*.*",
             )
         }
     classDirectories.setFrom(classesDir)
@@ -301,8 +309,15 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
         fileTree("$buildDir/tmp/kotlin-classes/debug") {
             exclude(
                 "**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*",
+                "**/MediHistoryApplication.class",
                 "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_MembersInjector*.*", "**/*_Factory*.*",
                 "**/*Dao_Impl*.*", "**/databinding/**", "**/ComposableSingletons*.*",
+                "**/data/di/**",
+                "**/data/security/SecurePreferences*.*",
+                "**/data/security/SecurityModule*.*",
+                "**/data/ocr/MlKitOcrService*.*",
+                "**/data/ocr/GeminiEnhancedOcrService.class",
+                "**/data/ocr/OcrModule*.*",
             )
         }
     classDirectories.setFrom(classesDir)
