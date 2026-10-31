@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface PatientDao {
-
     /**
      * Returns the patient with [patientId], or null if no such record exists.
      * Returning null (not throwing) prevents leaking record existence.

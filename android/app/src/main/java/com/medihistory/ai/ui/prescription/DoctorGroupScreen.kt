@@ -2,7 +2,6 @@ package com.medihistory.ai.ui.prescription
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,11 +39,11 @@ import androidx.lifecycle.viewModelScope
 import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.repository.DoctorRepository
+import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import com.medihistory.ai.ui.components.EmptyStateView
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.components.StatusBadge
-import com.medihistory.ai.ui.components.OcrStatus as UiOcrStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +53,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.medihistory.ai.ui.components.OcrStatus as UiOcrStatus
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI state
@@ -81,56 +81,72 @@ data class DoctorGroupUiState(
  * Privacy: never log [doctorId], [patientId], or any prescription data.
  */
 @HiltViewModel
-class DoctorGroupViewModel @Inject constructor(
-    private val prescriptionRepository: PrescriptionRepository,
-    private val doctorRepository: DoctorRepository,
-) : ViewModel() {
+class DoctorGroupViewModel
+    @Inject
+    constructor(
+        private val prescriptionRepository: PrescriptionRepository,
+        private val doctorRepository: DoctorRepository,
+        private val medicineRepository: MedicineRepository,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(DoctorGroupUiState(isLoading = true))
+        val uiState: StateFlow<DoctorGroupUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(DoctorGroupUiState(isLoading = true))
-    val uiState: StateFlow<DoctorGroupUiState> = _uiState.asStateFlow()
-
-    fun load(doctorId: String, patientId: String) {
-        viewModelScope.launch {
-            combine(
-                prescriptionRepository.observeByPatient(patientId),
-                doctorRepository.observeByPatient(patientId),
-            ) { prescriptions, doctors ->
-                val doctor = doctors.firstOrNull { it.id == doctorId }
-                val filtered = prescriptions
-                    .filter { it.doctorId == doctorId }
-                    .map { prescription ->
-                        PrescriptionSummary(
-                            id = prescription.id,
-                            doctorName = doctor?.name ?: "Unknown doctor",
-                            doctorSpecialty = doctor?.specialty?.name?.lowercase()
-                                ?.replaceFirstChar { it.uppercase() } ?: "",
-                            prescriptionDate = prescription.prescriptionDate?.toString() ?: "Date unknown",
-                            medicineCount = 0, // resolved separately in a future ticket
-                            ocrStatus = prescription.ocrStatus.toUiOcrStatus(),
-                        )
-                    }
-                DoctorGroupUiState(
-                    doctor = doctor,
-                    prescriptions = filtered,
-                    isLoading = false,
-                    error = null,
-                )
-            }
-                .catch { _ ->
-                    _uiState.update { it.copy(isLoading = false, error = "Failed to load prescriptions.") }
+        fun load(
+            doctorId: String,
+            patientId: String,
+        ) {
+            viewModelScope.launch {
+                combine(
+                    prescriptionRepository.observeByPatient(patientId),
+                    doctorRepository.observeByPatient(patientId),
+                    medicineRepository.observeByPatient(patientId),
+                ) { prescriptions, doctors, medicines ->
+                    val doctor = doctors.firstOrNull { it.id == doctorId }
+                    val medicineCountByRx = medicines.groupingBy { it.prescriptionId }.eachCount()
+                    val filtered =
+                        prescriptions
+                            .filter { it.doctorId == doctorId }
+                            .map { prescription ->
+                                PrescriptionSummary(
+                                    id = prescription.id,
+                                    doctorName = doctor?.name ?: "Unknown doctor",
+                                    doctorSpecialty =
+                                        when {
+                                            doctor == null -> ""
+                                            doctor.specialty == com.medihistory.ai.data.model.DoctorSpecialty.OTHER ->
+                                                doctor.specialtyOther ?: "Other"
+                                            else ->
+                                                doctor.specialty.name.lowercase()
+                                                    .replaceFirstChar { it.uppercase() }
+                                        },
+                                    prescriptionDate = prescription.prescriptionDate?.toString() ?: "Date unknown",
+                                    medicineCount = medicineCountByRx[prescription.id] ?: 0,
+                                    ocrStatus = prescription.ocrStatus.toUiOcrStatus(),
+                                )
+                            }
+                    DoctorGroupUiState(
+                        doctor = doctor,
+                        prescriptions = filtered,
+                        isLoading = false,
+                        error = null,
+                    )
                 }
-                .collect { state -> _uiState.update { state } }
+                    .catch { _ ->
+                        _uiState.update { it.copy(isLoading = false, error = "Failed to load prescriptions.") }
+                    }
+                    .collect { state -> _uiState.update { state } }
+            }
         }
-    }
 
-    private fun OcrStatus.toUiOcrStatus(): UiOcrStatus = when (this) {
-        OcrStatus.PENDING      -> UiOcrStatus.PENDING
-        OcrStatus.PROCESSING   -> UiOcrStatus.PROCESSING
-        OcrStatus.NEEDS_REVIEW -> UiOcrStatus.NEEDS_REVIEW
-        OcrStatus.REVIEWED     -> UiOcrStatus.REVIEWED
-        OcrStatus.ERROR        -> UiOcrStatus.ERROR
+        private fun OcrStatus.toUiOcrStatus(): UiOcrStatus =
+            when (this) {
+                OcrStatus.PENDING -> UiOcrStatus.PENDING
+                OcrStatus.PROCESSING -> UiOcrStatus.PROCESSING
+                OcrStatus.NEEDS_REVIEW -> UiOcrStatus.NEEDS_REVIEW
+                OcrStatus.REVIEWED -> UiOcrStatus.REVIEWED
+                OcrStatus.ERROR -> UiOcrStatus.ERROR
+            }
     }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen
@@ -199,9 +215,10 @@ fun DoctorGroupScreen(
         when {
             uiState.isLoading -> {
                 LoadingIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                     contentDescription = "Loading prescriptions",
                 )
             }
@@ -211,9 +228,10 @@ fun DoctorGroupScreen(
                     message = uiState.error ?: "An error occurred.",
                     actionLabel = "Retry",
                     onAction = { viewModel.load(doctorId, patientId) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -221,9 +239,10 @@ fun DoctorGroupScreen(
                 LazyColumn(
                     contentPadding = innerPadding,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
                 ) {
                     // ── Doctor summary card ────────────────────────────────────────
                     item {
@@ -231,9 +250,10 @@ fun DoctorGroupScreen(
                             DoctorSummaryCard(
                                 doctor = doctor,
                                 prescriptionCount = uiState.prescriptions.size,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp),
                             )
                         }
                     }
@@ -288,14 +308,18 @@ private fun DoctorSummaryCard(
     prescriptionCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    val specialtyLabel = doctor.specialty.name
-        .lowercase()
-        .replaceFirstChar { it.uppercase() }
+    val specialtyLabel =
+        when {
+            doctor.specialty == com.medihistory.ai.data.model.DoctorSpecialty.OTHER ->
+                doctor.specialtyOther ?: "Other"
+            else -> doctor.specialty.name.lowercase().replaceFirstChar { it.uppercase() }
+        }
 
     ElevatedCard(
-        modifier = modifier.semantics {
-            contentDescription = "Doctor ${doctor.name}, $specialtyLabel, $prescriptionCount prescriptions"
-        },
+        modifier =
+            modifier.semantics {
+                contentDescription = "Doctor ${doctor.name}, $specialtyLabel, $prescriptionCount prescriptions"
+            },
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -349,9 +373,10 @@ private fun PrescriptionTimelineEntry(
         modifier = modifier.semantics { contentDescription = entryContentDescription },
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -373,9 +398,10 @@ private fun PrescriptionTimelineEntry(
             Spacer(modifier = Modifier.width(8.dp))
             TextButton(
                 onClick = onView,
-                modifier = Modifier.semantics {
-                    contentDescription = "View prescription from ${prescription.prescriptionDate}"
-                },
+                modifier =
+                    Modifier.semantics {
+                        contentDescription = "View prescription from ${prescription.prescriptionDate}"
+                    },
             ) {
                 Text(text = "View")
             }

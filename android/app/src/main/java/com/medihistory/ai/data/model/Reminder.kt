@@ -33,19 +33,15 @@ enum class DoseRecord { TAKEN, SKIPPED, MISSED }
 data class Reminder(
     @PrimaryKey
     val id: String,
-
     /** Patient scope — included on every DAO query without a JOIN. */
     val patientId: String,
-
     /** FK to the medicine this reminder is for. */
     val medicineId: String,
-
     /**
      * Denormalized medicine name for display purposes.
      * Avoids a JOIN on the medicines table in the reminders list.
      */
     val medicineName: String,
-
     /**
      * Prescribed instructions copied verbatim from a REVIEWED OCR extracted field.
      * Null when not provided by the patient.
@@ -55,16 +51,13 @@ data class Reminder(
      * The app must NEVER fabricate or infer this value.
      */
     val prescribedInstructions: String?,
-
     /** Time of day the notification is scheduled. Stored as seconds-of-day via [Converters]. */
     val reminderTime: LocalTime,
-
     /**
      * Whether this reminder is active (i.e. notifications are enabled).
      * Defaults to true. Patients can cancel at any time.
      */
     val isActive: Boolean = true,
-
     /** Unix epoch milliseconds — set at creation, never updated. */
     val createdAt: Long = System.currentTimeMillis(),
 )
@@ -84,25 +77,19 @@ data class Reminder(
 data class DoseRecordEntity(
     @PrimaryKey
     val id: String,
-
     /** FK to the [Reminder] this dose belongs to. */
     val reminderId: String,
-
     /** Denormalized patient scope — used on every DAO query without a JOIN. */
     val patientId: String,
-
     /** Epoch milliseconds when the dose was scheduled. */
     val scheduledTime: Long,
-
     /** Epoch milliseconds when the patient recorded the action. Null if not yet recorded. */
     val recordedTime: Long?,
-
     /**
      * Patient-reported dose outcome: TAKEN, SKIPPED, or MISSED.
      * This is patient-reported — it does NOT imply clinical compliance.
      */
     val record: DoseRecord,
-
     /**
      * Optional free-text note entered by the patient.
      * Must NEVER contain or copy prescription text from any source.

@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface DoseRecordDao {
-
     /**
      * Emits the live list of dose records for [reminderId], newest scheduled time first.
      * The Flow updates automatically when the underlying data changes.
@@ -56,5 +55,9 @@ interface DoseRecordDao {
         ORDER BY scheduledTime DESC
         """,
     )
-    suspend fun getByDateRange(patientId: String, from: Long, to: Long): List<DoseRecordEntity>
+    suspend fun getByDateRange(
+        patientId: String,
+        from: Long,
+        to: Long,
+    ): List<DoseRecordEntity>
 }

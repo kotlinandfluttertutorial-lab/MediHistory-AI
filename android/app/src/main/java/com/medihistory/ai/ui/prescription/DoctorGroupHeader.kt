@@ -16,8 +16,8 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,13 +47,14 @@ fun DoctorGroupHeader(
     val actionLabel = if (group.isExpanded) "collapse" else "expand"
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onToggle)
-            .semantics {
-                contentDescription =
-                    "${group.doctorName}, ${group.prescriptions.size} prescription(s), $stateLabel. Double-tap to $actionLabel."
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle)
+                .semantics {
+                    contentDescription =
+                        "${group.doctorName}, ${group.prescriptions.size} prescription(s), $stateLabel. Double-tap to $actionLabel."
+                },
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(
@@ -63,17 +64,19 @@ fun DoctorGroupHeader(
         ) {
             // Doctor initials avatar circle
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
-                val initials = group.doctorName
-                    .split(" ")
-                    .filter { it.isNotBlank() && it.first().isLetter() }
-                    .takeLast(2)
-                    .joinToString("") { it.first().uppercase() }
+                val initials =
+                    group.doctorName
+                        .split(" ")
+                        .filter { it.isNotBlank() && it.first().isLetter() }
+                        .takeLast(2)
+                        .joinToString("") { it.first().uppercase() }
                 Text(
                     text = initials.ifEmpty { "?" },
                     style = MaterialTheme.typography.labelMedium,

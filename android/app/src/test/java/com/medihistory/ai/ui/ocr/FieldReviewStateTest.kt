@@ -2,7 +2,6 @@ package com.medihistory.ai.ui.ocr
 
 import com.medihistory.ai.data.ocr.ReviewState
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
@@ -13,17 +12,17 @@ import org.junit.Test
  * Naming convention: `should_[outcome]_when_[condition]`
  */
 class FieldReviewStateTest {
-
     // ─────────────────────────────────────────────────────────────────────────
     // displayValue derivation
     // ─────────────────────────────────────────────────────────────────────────
 
     @Test
     fun `should use patientValue for displayValue when patientValue is set`() {
-        val field = makeField(
-            rawValue     = "Synthamol 500mg",
-            patientValue = "Synthamol 250mg",
-        )
+        val field =
+            makeField(
+                rawValue = "Synthamol 500mg",
+                patientValue = "Synthamol 250mg",
+            )
         assertEquals(
             "displayValue must use patientValue when it is set",
             "Synthamol 250mg",
@@ -33,10 +32,11 @@ class FieldReviewStateTest {
 
     @Test
     fun `should use rawValue for displayValue when patientValue is null`() {
-        val field = makeField(
-            rawValue     = "Synthamol 500mg",
-            patientValue = null,
-        )
+        val field =
+            makeField(
+                rawValue = "Synthamol 500mg",
+                patientValue = null,
+            )
         assertEquals(
             "displayValue must fall back to rawValue when patientValue is null",
             "Synthamol 500mg",
@@ -46,10 +46,11 @@ class FieldReviewStateTest {
 
     @Test
     fun `should show Not extracted for displayValue when both rawValue and patientValue are null`() {
-        val field = makeField(
-            rawValue     = null,
-            patientValue = null,
-        )
+        val field =
+            makeField(
+                rawValue = null,
+                patientValue = null,
+            )
         assertEquals(
             "displayValue must be 'Not extracted' when no value is available",
             "Not extracted",
@@ -64,11 +65,12 @@ class FieldReviewStateTest {
     @Test
     fun `should never change rawValue when patientValue differs`() {
         val original = makeField(rawValue = "Dr Synthetic", patientValue = null)
-        val confirmed = original.copy(
-            patientValue = "Dr Test Cardiologist",
-            reviewState  = ReviewState.REVIEWED,
-            displayValue = "Dr Test Cardiologist",
-        )
+        val confirmed =
+            original.copy(
+                patientValue = "Dr Test Cardiologist",
+                reviewState = ReviewState.REVIEWED,
+                displayValue = "Dr Test Cardiologist",
+            )
         assertEquals(
             "rawValue must NEVER change — only patientValue changes",
             "Dr Synthetic",
@@ -120,14 +122,16 @@ class FieldReviewStateTest {
 
     @Test
     fun `should count only fields with rawValue and PENDING_REVIEW for pendingCount`() {
-        val state = OcrReviewUiState(
-            fields = listOf(
-                makeField(rawValue = "val1", reviewState = ReviewState.PENDING_REVIEW),
-                makeField(rawValue = "val2", reviewState = ReviewState.REVIEWED),
-                makeField(rawValue = null,   reviewState = ReviewState.PENDING_REVIEW),
-                makeField(rawValue = "val4", reviewState = ReviewState.REJECTED),
-            ),
-        )
+        val state =
+            OcrReviewUiState(
+                fields =
+                    listOf(
+                        makeField(rawValue = "val1", reviewState = ReviewState.PENDING_REVIEW),
+                        makeField(rawValue = "val2", reviewState = ReviewState.REVIEWED),
+                        makeField(rawValue = null, reviewState = ReviewState.PENDING_REVIEW),
+                        makeField(rawValue = "val4", reviewState = ReviewState.REJECTED),
+                    ),
+            )
         assertEquals(
             "pendingCount must be 1: only PENDING_REVIEW with non-null rawValue",
             1,
@@ -137,12 +141,14 @@ class FieldReviewStateTest {
 
     @Test
     fun `should have pendingCount zero when all fields are reviewed`() {
-        val state = OcrReviewUiState(
-            fields = listOf(
-                makeField(rawValue = "val1", reviewState = ReviewState.REVIEWED),
-                makeField(rawValue = "val2", reviewState = ReviewState.REVIEWED),
-            ),
-        )
+        val state =
+            OcrReviewUiState(
+                fields =
+                    listOf(
+                        makeField(rawValue = "val1", reviewState = ReviewState.REVIEWED),
+                        makeField(rawValue = "val2", reviewState = ReviewState.REVIEWED),
+                    ),
+            )
         assertEquals(0, state.pendingCount)
     }
 
@@ -173,24 +179,24 @@ class FieldReviewStateTest {
     // ─────────────────────────────────────────────────────────────────────────
 
     private fun makeField(
-        fieldId     : String      = "field-test-001",
-        fieldName   : String      = "Medicine Name",
-        rawValue    : String?     = "Synthamol 500mg",
-        patientValue: String?     = null,
-        confidence  : Float       = 0.85f,
-        reviewState : ReviewState = ReviewState.PENDING_REVIEW,
+        fieldId: String = "field-test-001",
+        fieldName: String = "Medicine Name",
+        rawValue: String? = "Synthamol 500mg",
+        patientValue: String? = null,
+        confidence: Float = 0.85f,
+        reviewState: ReviewState = ReviewState.PENDING_REVIEW,
     ): FieldReviewState {
         val display = patientValue ?: rawValue ?: "Not extracted"
         val editBuf = patientValue ?: rawValue ?: ""
         return FieldReviewState(
-            fieldId      = fieldId,
-            fieldName    = fieldName,
-            rawValue     = rawValue,
+            fieldId = fieldId,
+            fieldName = fieldName,
+            rawValue = rawValue,
             patientValue = patientValue,
             displayValue = display,
-            confidence   = confidence,
-            reviewState  = reviewState,
-            editText     = editBuf,
+            confidence = confidence,
+            reviewState = reviewState,
+            editText = editBuf,
         )
     }
 }

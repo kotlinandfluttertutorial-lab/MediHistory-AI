@@ -103,3 +103,13 @@ Thumbs.db
 # =============================================================
 *.sqlite
 *.db
+
+# =============================================================
+# Backend runtime artefacts (never commit test uploads or DBs)
+# =============================================================
+backend/uploads/
+backend/_inspect_*.py
+backend/_verify_*.py
+backend/medihistory.db
+backend/test*.db
+backend/verify*.db

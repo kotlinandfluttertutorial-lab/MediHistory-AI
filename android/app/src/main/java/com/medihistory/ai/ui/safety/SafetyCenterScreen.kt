@@ -101,9 +101,10 @@ fun SafetyCenterScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Back"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Back"
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
@@ -117,18 +118,20 @@ fun SafetyCenterScreen(
 
         if (uiState.isLoading) {
             LoadingIndicator(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
                 contentDescription = "Loading safety information",
             )
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 // ── Section 1: Duplicate alerts ──────────────────────────────────
                 item {
@@ -178,9 +181,10 @@ private fun DuplicateAlertsSection(
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "Potential duplicate alerts section" },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "Potential duplicate alerts section" },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -199,11 +203,12 @@ private fun DuplicateAlertsSection(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val countText = if (unreviewedCount == 0) {
-                "No pending alerts"
-            } else {
-                "$unreviewedCount potential duplicate alert${if (unreviewedCount == 1) "" else "s"} need${if (unreviewedCount == 1) "s" else ""} review"
-            }
+            val countText =
+                if (unreviewedCount == 0) {
+                    "No pending alerts"
+                } else {
+                    "$unreviewedCount potential duplicate alert${if (unreviewedCount == 1) "" else "s"} need${if (unreviewedCount == 1) "s" else ""} review"
+                }
             Text(
                 text = countText,
                 style = MaterialTheme.typography.bodyMedium,
@@ -222,9 +227,10 @@ private fun DuplicateAlertsSection(
 
             ElevatedButton(
                 onClick = onViewDuplicates,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Review duplicate alerts" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Review duplicate alerts" },
             ) {
                 Text(text = "Review duplicates")
             }
@@ -255,9 +261,10 @@ private fun InteractionCheckSection(
 
         is InteractionCheckStatus.Checking -> {
             LoadingIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(80.dp),
                 contentDescription = "Checking for interactions",
             )
         }
@@ -265,11 +272,12 @@ private fun InteractionCheckSection(
         is InteractionCheckStatus.Results -> {
             val results = status.interactions
             ElevatedCard(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .semantics {
-                        contentDescription = "Interaction check results: ${results.size} item${if (results.size == 1) "" else "s"}"
-                    },
+                modifier =
+                    modifier
+                        .fillMaxWidth()
+                        .semantics {
+                            contentDescription = "Interaction check results: ${results.size} item${if (results.size == 1) "" else "s"}"
+                        },
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -303,12 +311,14 @@ private fun InteractionCheckSection(
 
         is InteractionCheckStatus.Error -> {
             ElevatedCard(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Interaction check error" },
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                ),
+                modifier =
+                    modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Interaction check error" },
+                colors =
+                    CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                    ),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -325,9 +335,10 @@ private fun InteractionCheckSection(
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
                         onClick = onRetry,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics { contentDescription = "Retry interaction check" },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .semantics { contentDescription = "Retry interaction check" },
                     ) {
                         Text(text = "Try again")
                     }
@@ -345,18 +356,18 @@ private fun InteractionCheckSection(
  * The word "safe" does not appear in this composable.
  */
 @Composable
-private fun NotConfiguredCard(
-    modifier: Modifier = Modifier,
-) {
+private fun NotConfiguredCard(modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "Interaction checking not available" },
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        ),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "Interaction checking not available" },
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -398,16 +409,18 @@ private fun NotConfiguredCard(
                     // Open phone dialer. If no phone intent is available, the OS handles
                     // gracefully — no crash. An information dialog could be shown instead
                     // once emergency contact support is implemented.
-                    val intent = Intent(Intent.ACTION_DIAL).apply {
-                        data = Uri.parse("tel:")
-                    }
+                    val intent =
+                        Intent(Intent.ACTION_DIAL).apply {
+                            data = Uri.parse("tel:")
+                        }
                     if (intent.resolveActivity(context.packageManager) != null) {
                         context.startActivity(intent)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Consult your doctor or pharmacist" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Consult your doctor or pharmacist" },
             ) {
                 Text(text = "Consult your doctor or pharmacist")
             }
@@ -433,30 +446,33 @@ private fun InteractionResultCard(
     modifier: Modifier = Modifier,
 ) {
     val severityLower = result.severity.lowercase()
-    val severityContainerColor = when {
-        severityLower.contains("consult doctor") ->
-            MaterialTheme.extendedColors.warningContainer
-        severityLower.contains("review with pharmacist") ->
-            MaterialTheme.colorScheme.secondaryContainer
-        else ->
-            MaterialTheme.colorScheme.surfaceVariant
-    }
-    val severityContentColor = when {
-        severityLower.contains("consult doctor") ->
-            MaterialTheme.extendedColors.onWarningContainer
-        severityLower.contains("review with pharmacist") ->
-            MaterialTheme.colorScheme.onSecondaryContainer
-        else ->
-            MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val severityContainerColor =
+        when {
+            severityLower.contains("consult doctor") ->
+                MaterialTheme.extendedColors.warningContainer
+            severityLower.contains("review with pharmacist") ->
+                MaterialTheme.colorScheme.secondaryContainer
+            else ->
+                MaterialTheme.colorScheme.surfaceVariant
+        }
+    val severityContentColor =
+        when {
+            severityLower.contains("consult doctor") ->
+                MaterialTheme.extendedColors.onWarningContainer
+            severityLower.contains("review with pharmacist") ->
+                MaterialTheme.colorScheme.onSecondaryContainer
+            else ->
+                MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics {
-                contentDescription =
-                    "Interaction between ${result.medicineAName} and ${result.medicineBName}: ${result.severity}"
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription =
+                        "Interaction between ${result.medicineAName} and ${result.medicineBName}: ${result.severity}"
+                },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(

@@ -22,9 +22,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import com.medihistory.ai.data.model.Medicine
-import com.medihistory.ai.data.model.MedicineStatus as DataMedicineStatus
 import com.medihistory.ai.ui.components.MediCard
 import com.medihistory.ai.ui.components.MedicineStatusChip
+import com.medihistory.ai.data.model.MedicineStatus as DataMedicineStatus
 import com.medihistory.ai.ui.components.MedicineStatus as UiMedicineStatus
 
 /**
@@ -49,26 +49,29 @@ fun MedicineCard(
     modifier: Modifier = Modifier,
 ) {
     val ingredientLabel = medicine.activeIngredient ?: "Active ingredient unknown"
-    val strengthFormulation = listOfNotNull(medicine.strength, medicine.formulation)
-        .joinToString(" · ")
+    val strengthFormulation =
+        listOfNotNull(medicine.strength, medicine.formulation)
+            .joinToString(" · ")
 
-    val cardContentDescription = buildString {
-        append("Medicine ${medicine.medicineName}")
-        if (medicine.activeIngredient != null) {
-            append(", ${medicine.activeIngredient}")
+    val cardContentDescription =
+        buildString {
+            append("Medicine ${medicine.medicineName}")
+            if (medicine.activeIngredient != null) {
+                append(", ${medicine.activeIngredient}")
+            }
+            append(", prescribed by doctor")
+            append(", status ${medicine.status.name.lowercase()}")
         }
-        append(", prescribed by doctor")
-        append(", status ${medicine.status.name.lowercase()}")
-    }
 
     MediCard(
         onClick = onClick,
         modifier = modifier.semantics { contentDescription = cardContentDescription },
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Medicine icon — decorative
@@ -93,11 +96,12 @@ fun MedicineCard(
                 Text(
                     text = ingredientLabel,
                     style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
-                    color = if (medicine.activeIngredient == null) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
+                    color =
+                        if (medicine.activeIngredient == null) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                 )
                 if (strengthFormulation.isNotEmpty()) {
                     Text(
@@ -135,8 +139,9 @@ fun MedicineCard(
  * Both enums have the same three values (CURRENT, PAST, UNKNOWN); this mapping
  * keeps the data and UI layers decoupled.
  */
-private fun DataMedicineStatus.toUiStatus(): UiMedicineStatus = when (this) {
-    DataMedicineStatus.CURRENT -> UiMedicineStatus.CURRENT
-    DataMedicineStatus.PAST    -> UiMedicineStatus.PAST
-    DataMedicineStatus.UNKNOWN -> UiMedicineStatus.UNKNOWN
-}
+private fun DataMedicineStatus.toUiStatus(): UiMedicineStatus =
+    when (this) {
+        DataMedicineStatus.CURRENT -> UiMedicineStatus.CURRENT
+        DataMedicineStatus.PAST -> UiMedicineStatus.PAST
+        DataMedicineStatus.UNKNOWN -> UiMedicineStatus.UNKNOWN
+    }

@@ -3,16 +3,13 @@ package com.medihistory.ai.ui.history
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.LocalHospital
 import androidx.compose.material.icons.outlined.MedicalServices
 import androidx.compose.material.icons.outlined.Person
@@ -65,9 +62,10 @@ fun HistorySectionView(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -103,14 +101,16 @@ fun HistorySectionView(
                             modifier = Modifier.size(16.dp),
                         )
                     },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        iconContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    ),
-                    modifier = Modifier.semantics {
-                        contentDescription = "AI-generated section"
-                    },
+                    colors =
+                        SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                            iconContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "AI-generated section"
+                        },
                 )
             }
 
@@ -187,9 +187,10 @@ private fun SourceChip(
     AssistChip(
         onClick = { onViewSource(reference.prescriptionId) },
         label = { Text(text = "Source ↗") },
-        modifier = modifier.semantics {
-            contentDescription = "View source prescription"
-        },
+        modifier =
+            modifier.semantics {
+                contentDescription = "View source prescription"
+            },
     )
 }
 
@@ -197,31 +198,35 @@ private fun SourceChip(
 // Icon helpers
 // -------------------------------------------------------------------------
 
-private fun sectionIcon(type: SectionType): ImageVector = when (type) {
-    SectionType.MEDICINES  -> Icons.Outlined.MedicalServices
-    SectionType.DOCTORS    -> Icons.Outlined.LocalHospital
-    SectionType.TIMELINE   -> Icons.Outlined.Timeline
-    SectionType.AI_SUMMARY -> Icons.Outlined.AutoAwesome
-}
+private fun sectionIcon(type: SectionType): ImageVector =
+    when (type) {
+        SectionType.MEDICINES -> Icons.Outlined.MedicalServices
+        SectionType.DOCTORS -> Icons.Outlined.LocalHospital
+        SectionType.TIMELINE -> Icons.Outlined.Timeline
+        SectionType.AI_SUMMARY -> Icons.Outlined.AutoAwesome
+    }
 
-private fun contentTypeIcon(type: ContentType): ImageVector = when (type) {
-    ContentType.DOCUMENTED_FACT   -> Icons.Outlined.CheckCircle
-    ContentType.UNCERTAIN_EXTRACTED -> Icons.AutoMirrored.Outlined.HelpOutline
-    ContentType.PATIENT_REPORTED  -> Icons.Outlined.Person
-    ContentType.AI_GENERATED      -> Icons.Outlined.AutoAwesome
-}
+private fun contentTypeIcon(type: ContentType): ImageVector =
+    when (type) {
+        ContentType.DOCUMENTED_FACT -> Icons.Outlined.CheckCircle
+        ContentType.UNCERTAIN_EXTRACTED -> Icons.AutoMirrored.Outlined.HelpOutline
+        ContentType.PATIENT_REPORTED -> Icons.Outlined.Person
+        ContentType.AI_GENERATED -> Icons.Outlined.AutoAwesome
+    }
 
-private fun contentTypeDescription(type: ContentType): String = when (type) {
-    ContentType.DOCUMENTED_FACT     -> "Documented fact"
-    ContentType.UNCERTAIN_EXTRACTED -> "Uncertain — low confidence extraction"
-    ContentType.PATIENT_REPORTED    -> "Patient reported"
-    ContentType.AI_GENERATED        -> "AI generated"
-}
+private fun contentTypeDescription(type: ContentType): String =
+    when (type) {
+        ContentType.DOCUMENTED_FACT -> "Documented fact"
+        ContentType.UNCERTAIN_EXTRACTED -> "Uncertain — low confidence extraction"
+        ContentType.PATIENT_REPORTED -> "Patient reported"
+        ContentType.AI_GENERATED -> "AI generated"
+    }
 
 @Composable
-private fun contentTypeIconTint(type: ContentType) = when (type) {
-    ContentType.DOCUMENTED_FACT     -> MaterialTheme.colorScheme.primary
-    ContentType.UNCERTAIN_EXTRACTED -> MaterialTheme.colorScheme.error
-    ContentType.PATIENT_REPORTED    -> MaterialTheme.colorScheme.secondary
-    ContentType.AI_GENERATED        -> MaterialTheme.colorScheme.tertiary
-}
+private fun contentTypeIconTint(type: ContentType) =
+    when (type) {
+        ContentType.DOCUMENTED_FACT -> MaterialTheme.colorScheme.primary
+        ContentType.UNCERTAIN_EXTRACTED -> MaterialTheme.colorScheme.error
+        ContentType.PATIENT_REPORTED -> MaterialTheme.colorScheme.secondary
+        ContentType.AI_GENERATED -> MaterialTheme.colorScheme.tertiary
+    }

@@ -31,7 +31,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class OcrWorkerTest {
-
     private val context: Context = ApplicationProvider.getApplicationContext()
 
     // --- fake input data ---
@@ -63,81 +62,86 @@ class OcrWorkerTest {
     // --- tests ---
 
     @Test
-    fun `should set status PROCESSING before calling OCR service`() = runTest {
-        val statusLog = mutableListOf<OcrStatus>()
-        val fakePrescriptionDao = RecordingPrescriptionDao(statusLog)
-        val fakeExtractedFieldDao = NoOpExtractedFieldDao()
-        val fakeOcrService = SuccessfulOcrService(syntheticPrescriptionId)
+    fun `should set status PROCESSING before calling OCR service`() =
+        runTest {
+            val statusLog = mutableListOf<OcrStatus>()
+            val fakePrescriptionDao = RecordingPrescriptionDao(statusLog)
+            val fakeExtractedFieldDao = NoOpExtractedFieldDao()
+            val fakeOcrService = SuccessfulOcrService(syntheticPrescriptionId)
 
-        val worker = buildWorker(fakeOcrService, fakePrescriptionDao, fakeExtractedFieldDao)
-        worker.doWork()
+            val worker = buildWorker(fakeOcrService, fakePrescriptionDao, fakeExtractedFieldDao)
+            worker.doWork()
 
-        assertEquals(
-            "First status update must be PROCESSING",
-            OcrStatus.PROCESSING,
-            statusLog.firstOrNull(),
-        )
-    }
-
-    @Test
-    fun `should set status NEEDS_REVIEW when OCR returns low-confidence fields`() = runTest {
-        val statusLog = mutableListOf<OcrStatus>()
-        val fakePrescriptionDao = RecordingPrescriptionDao(statusLog)
-        val fakeExtractedFieldDao = NoOpExtractedFieldDao()
-        // Returns a result with pendingReviewCount > 0 (low-confidence fields)
-        val fakeOcrService = SuccessfulOcrService(syntheticPrescriptionId)
-
-        val worker = buildWorker(fakeOcrService, fakePrescriptionDao, fakeExtractedFieldDao)
-        val result = worker.doWork()
-
-        assertEquals(ListenableWorker.Result.success(), result)
-        assertEquals(
-            "Final status must be NEEDS_REVIEW when pendingReviewCount > 0",
-            OcrStatus.NEEDS_REVIEW,
-            statusLog.lastOrNull(),
-        )
-    }
-
-    @Test
-    fun `should set status ERROR when OcrService throws an exception`() = runTest {
-        val statusLog = mutableListOf<OcrStatus>()
-        val fakePrescriptionDao = RecordingPrescriptionDao(statusLog)
-        val fakeExtractedFieldDao = NoOpExtractedFieldDao()
-        val throwingService = ThrowingOcrService()
-
-        val worker = buildWorker(throwingService, fakePrescriptionDao, fakeExtractedFieldDao)
-        val result = worker.doWork()
-
-        assertEquals(ListenableWorker.Result.failure(), result)
-        assertEquals(
-            "Final status must be ERROR when OcrService throws",
-            OcrStatus.ERROR,
-            statusLog.lastOrNull(),
-        )
-    }
-
-    @Test
-    fun `should return failure when prescription_id input is missing`() = runTest {
-        val worker = TestListenableWorkerBuilder<OcrWorker>(context)
-            .setInputData(
-                androidx.work.workDataOf(
-                    OcrWorker.KEY_PATIENT_ID to syntheticPatientId,
-                    OcrWorker.KEY_DOCUMENT_PATH to syntheticDocumentPath,
-                    OcrWorker.KEY_MIME_TYPE to syntheticMimeType,
-                    // KEY_PRESCRIPTION_ID intentionally omitted
-                ),
+            assertEquals(
+                "First status update must be PROCESSING",
+                OcrStatus.PROCESSING,
+                statusLog.firstOrNull(),
             )
-            .setWorkerFactory(
-                FakeOcrWorkerFactory(
-                    SuccessfulOcrService(syntheticPrescriptionId),
-                    RecordingPrescriptionDao(mutableListOf()),
-                    NoOpExtractedFieldDao(),
-                ),
-            )
-            .build()
+        }
 
-        assertEquals(ListenableWorker.Result.failure(), worker.doWork())
-    }
+    @Test
+    fun `should set status NEEDS_REVIEW when OCR returns low-confidence fields`() =
+        runTest {
+            val statusLog = mutableListOf<OcrStatus>()
+            val fakePrescriptionDao = RecordingPrescriptionDao(statusLog)
+            val fakeExtractedFieldDao = NoOpExtractedFieldDao()
+            // Returns a result with pendingReviewCount > 0 (low-confidence fields)
+            val fakeOcrService = SuccessfulOcrService(syntheticPrescriptionId)
+
+            val worker = buildWorker(fakeOcrService, fakePrescriptionDao, fakeExtractedFieldDao)
+            val result = worker.doWork()
+
+            assertEquals(ListenableWorker.Result.success(), result)
+            assertEquals(
+                "Final status must be NEEDS_REVIEW when pendingReviewCount > 0",
+                OcrStatus.NEEDS_REVIEW,
+                statusLog.lastOrNull(),
+            )
+        }
+
+    @Test
+    fun `should set status ERROR when OcrService throws an exception`() =
+        runTest {
+            val statusLog = mutableListOf<OcrStatus>()
+            val fakePrescriptionDao = RecordingPrescriptionDao(statusLog)
+            val fakeExtractedFieldDao = NoOpExtractedFieldDao()
+            val throwingService = ThrowingOcrService()
+
+            val worker = buildWorker(throwingService, fakePrescriptionDao, fakeExtractedFieldDao)
+            val result = worker.doWork()
+
+            assertEquals(ListenableWorker.Result.failure(), result)
+            assertEquals(
+                "Final status must be ERROR when OcrService throws",
+                OcrStatus.ERROR,
+                statusLog.lastOrNull(),
+            )
+        }
+
+    @Test
+    fun `should return failure when prescription_id input is missing`() =
+        runTest {
+            val worker =
+                TestListenableWorkerBuilder<OcrWorker>(context)
+                    .setInputData(
+                        androidx.work.workDataOf(
+                            OcrWorker.KEY_PATIENT_ID to syntheticPatientId,
+                            OcrWorker.KEY_DOCUMENT_PATH to syntheticDocumentPath,
+                            OcrWorker.KEY_MIME_TYPE to syntheticMimeType,
+                            // KEY_PRESCRIPTION_ID intentionally omitted
+                        ),
+                    )
+                    .setWorkerFactory(
+                        FakeOcrWorkerFactory(
+                            SuccessfulOcrService(syntheticPrescriptionId),
+                            RecordingPrescriptionDao(mutableListOf()),
+                            NoOpExtractedFieldDao(),
+                        ),
+                    )
+                    .build()
+
+            assertEquals(ListenableWorker.Result.failure(), worker.doWork())
+        }
 }
 
 // ---------------------------------------------------------------------------
@@ -153,17 +157,19 @@ private class SuccessfulOcrService(private val prescriptionId: String) : OcrServ
         documentPath: String,
         mimeType: String,
         prescriptionId: String,
-    ): OcrResult = OcrResult(
-        prescriptionId = this.prescriptionId,
-        fields = listOf(
-            // Low confidence — forces PENDING_REVIEW and increments pendingReviewCount.
-            ExtractedField("doctor_name", "Dr. Synthetic", null, 0.85f),
-            ExtractedField("medicine_name", "Synthamol 500mg", null, 0.62f),
-            // Absent field — rawValue null, does NOT count toward pendingReviewCount.
-            ExtractedField("dose", null, null, 0.0f),
-        ),
-        overallConfidence = 0.65f,
-    )
+    ): OcrResult =
+        OcrResult(
+            prescriptionId = this.prescriptionId,
+            fields =
+                listOf(
+                    // Low confidence — forces PENDING_REVIEW and increments pendingReviewCount.
+                    ExtractedField("doctor_name", "Dr. Synthetic", null, 0.85f),
+                    ExtractedField("medicine_name", "Synthamol 500mg", null, 0.62f),
+                    // Absent field — rawValue null, does NOT count toward pendingReviewCount.
+                    ExtractedField("dose", null, null, 0.0f),
+                ),
+            overallConfidence = 0.65f,
+        )
 }
 
 /** Always throws to simulate an OCR service failure. */
@@ -179,10 +185,12 @@ private class ThrowingOcrService : OcrService {
 private class RecordingPrescriptionDao(
     private val log: MutableList<OcrStatus>,
 ) : PrescriptionDao {
-    override fun observeByPatient(patientId: String) =
-        flowOf(emptyList<com.medihistory.ai.data.model.Prescription>())
+    override fun observeByPatient(patientId: String) = flowOf(emptyList<com.medihistory.ai.data.model.Prescription>())
 
-    override suspend fun getById(id: String, patientId: String) = null
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ) = null
 
     override suspend fun insert(prescription: com.medihistory.ai.data.model.Prescription) = Unit
 
@@ -200,13 +208,11 @@ private class RecordingPrescriptionDao(
     ) {
         log.add(status)
     }
-
 }
 
 /** No-op implementation for [ExtractedFieldDao]. */
 private class NoOpExtractedFieldDao : ExtractedFieldDao {
-    override fun observeByPrescription(prescriptionId: String): Flow<List<ExtractedFieldEntity>> =
-        flowOf(emptyList())
+    override fun observeByPrescription(prescriptionId: String): Flow<List<ExtractedFieldEntity>> = flowOf(emptyList())
 
     override suspend fun insertAll(fields: List<ExtractedFieldEntity>) = Unit
 
@@ -230,11 +236,12 @@ private class FakeOcrWorkerFactory(
         appContext: Context,
         workerClassName: String,
         workerParameters: androidx.work.WorkerParameters,
-    ): ListenableWorker = OcrWorker(
-        context = appContext,
-        params = workerParameters,
-        ocrService = ocrService,
-        prescriptionDao = prescriptionDao,
-        extractedFieldDao = extractedFieldDao,
-    )
+    ): ListenableWorker =
+        OcrWorker(
+            context = appContext,
+            params = workerParameters,
+            ocrService = ocrService,
+            prescriptionDao = prescriptionDao,
+            extractedFieldDao = extractedFieldDao,
+        )
 }

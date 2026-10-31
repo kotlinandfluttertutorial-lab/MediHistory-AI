@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface DuplicateAlertDao {
-
     /**
      * Emits the live list of duplicate alerts for [patientId], newest first.
      * The Flow updates automatically when the underlying data changes.
@@ -57,7 +56,11 @@ interface DuplicateAlertDao {
         WHERE id = :id AND patientId = :patientId
         """,
     )
-    suspend fun markReviewed(id: String, patientId: String, timestamp: Long)
+    suspend fun markReviewed(
+        id: String,
+        patientId: String,
+        timestamp: Long,
+    )
 
     /**
      * Deletes all duplicate alerts for [patientId].
@@ -81,7 +84,10 @@ interface DuplicateAlertDao {
         LIMIT 1
         """,
     )
-    suspend fun getById(id: String, patientId: String): DuplicateAlert?
+    suspend fun getById(
+        id: String,
+        patientId: String,
+    ): DuplicateAlert?
 
     /**
      * Emits the live count of unreviewed duplicate alerts for [patientId].
@@ -98,4 +104,24 @@ interface DuplicateAlertDao {
         """,
     )
     fun observeUnreviewedCount(patientId: String): Flow<Int>
+
+    /**
+     * Stores the engine-generated explanation for alert [id].
+     *
+     * Security: scoped to [patientId].
+     * Medical safety: [explanation] must originate from [DuplicateExplainerEngine] —
+     * it must never contain clinical advice.
+     */
+    @Query(
+        """
+        UPDATE duplicate_alerts
+        SET explanation = :explanation
+        WHERE id = :id AND patientId = :patientId
+        """,
+    )
+    suspend fun updateExplanation(
+        id: String,
+        patientId: String,
+        explanation: String,
+    )
 }

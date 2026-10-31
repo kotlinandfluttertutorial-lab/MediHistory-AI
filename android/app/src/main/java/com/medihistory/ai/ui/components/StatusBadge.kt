@@ -35,79 +35,82 @@ fun StatusBadge(
 ) {
     val label: String
     val icon: @Composable () -> Unit
-    val containerColor = when (status) {
-        OcrStatus.PENDING -> {
-            label = "Pending"
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.HourglassEmpty,
-                    contentDescription = null,
-                    modifier = Modifier.size(AssistChipDefaults.IconSize),
-                )
+    val containerColor =
+        when (status) {
+            OcrStatus.PENDING -> {
+                label = "Pending"
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.HourglassEmpty,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                }
+                MaterialTheme.colorScheme.surfaceVariant
             }
-            MaterialTheme.colorScheme.surfaceVariant
-        }
-        OcrStatus.PROCESSING -> {
-            label = "Extracting\u2026"
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.Sync,
-                    contentDescription = null,
-                    modifier = Modifier.size(AssistChipDefaults.IconSize),
-                )
+            OcrStatus.PROCESSING -> {
+                label = "Extracting\u2026"
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Sync,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                }
+                MaterialTheme.colorScheme.primaryContainer
             }
-            MaterialTheme.colorScheme.primaryContainer
-        }
-        OcrStatus.NEEDS_REVIEW -> {
-            label = "Needs review"
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.Warning,
-                    contentDescription = null,
-                    modifier = Modifier.size(AssistChipDefaults.IconSize),
-                )
+            OcrStatus.NEEDS_REVIEW -> {
+                label = "Needs review"
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Warning,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                }
+                MaterialTheme.extendedColors.warningContainer
             }
-            MaterialTheme.extendedColors.warningContainer
-        }
-        OcrStatus.REVIEWED -> {
-            label = "Reviewed"
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(AssistChipDefaults.IconSize),
-                )
+            OcrStatus.REVIEWED -> {
+                label = "Reviewed"
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                }
+                MaterialTheme.colorScheme.secondaryContainer
             }
-            MaterialTheme.colorScheme.secondaryContainer
-        }
-        OcrStatus.ERROR -> {
-            label = "Failed"
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.Error,
-                    contentDescription = null,
-                    modifier = Modifier.size(AssistChipDefaults.IconSize),
-                )
+            OcrStatus.ERROR -> {
+                label = "Failed"
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Error,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                }
+                MaterialTheme.colorScheme.errorContainer
             }
-            MaterialTheme.colorScheme.errorContainer
         }
-    }
 
-    val labelColor = when (status) {
-        OcrStatus.PENDING      -> MaterialTheme.colorScheme.onSurfaceVariant
-        OcrStatus.PROCESSING   -> MaterialTheme.colorScheme.onPrimaryContainer
-        OcrStatus.NEEDS_REVIEW -> MaterialTheme.extendedColors.onWarningContainer
-        OcrStatus.REVIEWED     -> MaterialTheme.colorScheme.onSecondaryContainer
-        OcrStatus.ERROR        -> MaterialTheme.colorScheme.onErrorContainer
-    }
+    val labelColor =
+        when (status) {
+            OcrStatus.PENDING -> MaterialTheme.colorScheme.onSurfaceVariant
+            OcrStatus.PROCESSING -> MaterialTheme.colorScheme.onPrimaryContainer
+            OcrStatus.NEEDS_REVIEW -> MaterialTheme.extendedColors.onWarningContainer
+            OcrStatus.REVIEWED -> MaterialTheme.colorScheme.onSecondaryContainer
+            OcrStatus.ERROR -> MaterialTheme.colorScheme.onErrorContainer
+        }
 
     AssistChip(
         onClick = {},
         label = { Text(text = label, color = labelColor) },
         leadingIcon = icon,
         colors = AssistChipDefaults.assistChipColors(containerColor = containerColor),
-        modifier = modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .semantics { contentDescription = "OCR status: $label" },
+        modifier =
+            modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = "OCR status: $label" },
     )
 }

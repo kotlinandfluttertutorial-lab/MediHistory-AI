@@ -2,7 +2,9 @@ package com.medihistory.ai.ui.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.medihistory.ai.data.ai.MedicineHistoryNarratorAgent
 import com.medihistory.ai.data.history.HistoryCompiler
+import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.repository.DoctorRepository
 import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
@@ -30,74 +32,101 @@ import javax.inject.Inject
  * Privacy: never log patient ID, medicine names, or doctor names in Logcat.
  */
 @HiltViewModel
-class MedicalHistoryViewModel @Inject constructor(
-    private val prescriptionRepository: PrescriptionRepository,
-    private val medicineRepository: MedicineRepository,
-    private val doctorRepository: DoctorRepository,
-) : ViewModel() {
+class MedicalHistoryViewModel
+    @Inject
+    constructor(
+        private val prescriptionRepository: PrescriptionRepository,
+        private val medicineRepository: MedicineRepository,
+        private val doctorRepository: DoctorRepository,
+        private val narratorAgent: MedicineHistoryNarratorAgent,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(MedicalHistoryUiState())
+        val uiState: StateFlow<MedicalHistoryUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(MedicalHistoryUiState())
-    val uiState: StateFlow<MedicalHistoryUiState> = _uiState.asStateFlow()
-
-    /**
-     * Compiles the medical history for [patientId].
-     *
-     * Progress steps reported via [MedicalHistoryUiState.generationProgress]:
-     * 0.0 — started
-     * 0.33 — prescriptions fetched
-     * 0.66 — medicines fetched
-     * 1.0 — doctors fetched; compilation complete
-     */
-    fun generateHistory(patientId: String) {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isGenerating = true,
-                    generationProgress = 0f,
-                    error = null,
-                )
-            }
-
-            try {
-                val prescriptions = prescriptionRepository.observeByPatient(patientId).first()
-                _uiState.update { it.copy(generationProgress = 0.33f) }
-
-                val medicines = medicineRepository.observeByPatient(patientId).first()
-                _uiState.update { it.copy(generationProgress = 0.66f) }
-
-                val doctors = doctorRepository.observeByPatient(patientId).first()
-                _uiState.update { it.copy(generationProgress = 1f) }
-
-                val sections = HistoryCompiler.compile(prescriptions, medicines, doctors)
-
+        /**
+         * Compiles the medical history for [patientId].
+         *
+         * Progress steps reported via [MedicalHistoryUiState.generationProgress]:
+         * 0.0 — started
+         * 0.33 — prescriptions fetched
+         * 0.66 — medicines fetched
+         * 1.0 — doctors fetched; compilation complete
+         */
+        fun generateHistory(patientId: String) {
+            viewModelScope.launch {
                 _uiState.update {
                     it.copy(
-                        sections = sections,
-                        isGenerating = false,
+                        isGenerating = true,
                         generationProgress = 0f,
-                        lastUpdated = System.currentTimeMillis(),
                         error = null,
                     )
                 }
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to compile medical history")
-                _uiState.update {
-                    it.copy(
-                        isGenerating = false,
-                        generationProgress = 0f,
-                        error = "Failed to compile history. Please try again.",
-                    )
+
+                try {
+                    val prescriptions = prescriptionRepository.observeByPatient(patientId).first()
+                    _uiState.update { it.copy(generationProgress = 0.33f) }
+
+                    val medicines = medicineRepository.observeByPatient(patientId).first()
+                    _uiState.update { it.copy(generationProgress = 0.66f) }
+
+                    val doctors = doctorRepository.observeByPatient(patientId).first()
+                    _uiState.update { it.copy(generationProgress = 1f) }
+
+                    // Build the deterministic sections first (medicines, doctors, timeline).
+                    val deterministicSections =
+                        HistoryCompiler.compile(
+                            prescriptions,
+                            medicines,
+                            doctors,
+                        ).filter { it.type != com.medihistory.ai.data.history.SectionType.AI_SUMMARY }
+
+                    // Generate the real AI narrative (F15) and append it.
+                    val reviewed = prescriptions.filter { it.ocrStatus == OcrStatus.REVIEWED }
+                    val reviewedMedicines =
+                        medicines.filter { m ->
+                            reviewed.any { it.id == m.prescriptionId }
+                        }
+                    val reviewedDoctors =
+                        doctors.filter { d ->
+                            reviewed.any { it.doctorId == d.id }
+                        }
+                    val aiSection =
+                        narratorAgent.generateSummary(
+                            reviewed = reviewed,
+                            medicines = reviewedMedicines,
+                            doctors = reviewedDoctors,
+                        )
+
+                    val sections = deterministicSections + aiSection
+
+                    _uiState.update {
+                        it.copy(
+                            sections = sections,
+                            isGenerating = false,
+                            generationProgress = 0f,
+                            lastUpdated = System.currentTimeMillis(),
+                            error = null,
+                        )
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to compile medical history")
+                    _uiState.update {
+                        it.copy(
+                            isGenerating = false,
+                            generationProgress = 0f,
+                            error = "Failed to compile history. Please try again.",
+                        )
+                    }
                 }
             }
         }
-    }
 
-    /**
-     * Refreshes the history for [patientId] by re-running [generateHistory].
-     * Convenience alias so the UI can call `refresh` without needing to know
-     * that it delegates to [generateHistory].
-     */
-    fun refresh(patientId: String) {
-        generateHistory(patientId)
+        /**
+         * Refreshes the history for [patientId] by re-running [generateHistory].
+         * Convenience alias so the UI can call `refresh` without needing to know
+         * that it delegates to [generateHistory].
+         */
+        fun refresh(patientId: String) {
+            generateHistory(patientId)
+        }
     }
-}

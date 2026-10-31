@@ -13,7 +13,6 @@ import org.junit.Test
  * Naming convention: given_[state]_when_[action]_then_[outcome]
  */
 class ComponentsTest {
-
     // -----------------------------------------------------------------------
     // OcrStatus enum cardinality
     // -----------------------------------------------------------------------
@@ -110,10 +109,11 @@ class ComponentsTest {
  * Pure mirror of the label-selection logic in [StatusBadge].
  * Kept here in the test source set so the production composable stays clean.
  */
-private fun statusBadgeLabel(status: OcrStatus): String = when (status) {
-    OcrStatus.PENDING      -> "Pending"
-    OcrStatus.PROCESSING   -> "Extracting\u2026"
-    OcrStatus.NEEDS_REVIEW -> "Needs review"
-    OcrStatus.REVIEWED     -> "Reviewed"
-    OcrStatus.ERROR        -> "Failed"
-}
+private fun statusBadgeLabel(status: OcrStatus): String =
+    when (status) {
+        OcrStatus.PENDING -> "Pending"
+        OcrStatus.PROCESSING -> "Extracting\u2026"
+        OcrStatus.NEEDS_REVIEW -> "Needs review"
+        OcrStatus.REVIEWED -> "Reviewed"
+        OcrStatus.ERROR -> "Failed"
+    }

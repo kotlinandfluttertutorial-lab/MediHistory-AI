@@ -99,16 +99,18 @@ fun PatientProfileScreen(
         },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
             ) {
                 // ── Name ──────────────────────────────────────────────────
                 OutlinedTextField(
@@ -117,12 +119,14 @@ fun PatientProfileScreen(
                     label = { Text("Full name *") },
                     singleLine = true,
                     isError = uiState.nameError != null,
-                    supportingText = uiState.nameError?.let { msg ->
-                        { Text(msg, color = MaterialTheme.colorScheme.error) }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics { contentDescription = "Patient name" },
+                    supportingText =
+                        uiState.nameError?.let { msg ->
+                            { Text(msg, color = MaterialTheme.colorScheme.error) }
+                        },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .semantics { contentDescription = "Patient name" },
                 )
 
                 // ── Date of birth ─────────────────────────────────────────
@@ -199,26 +203,29 @@ private fun DobField(
                     }
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = "Date of birth" },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Date of birth" },
         )
         // Transparent overlay captures taps on the read-only text field
         Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                ) { showPicker = true },
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    ) { showPicker = true },
         )
     }
 
     if (showPicker) {
-        val initialMillis = dateOfBirth
-            ?.atStartOfDay(ZoneOffset.UTC)
-            ?.toInstant()
-            ?.toEpochMilli()
+        val initialMillis =
+            dateOfBirth
+                ?.atStartOfDay(ZoneOffset.UTC)
+                ?.toInstant()
+                ?.toEpochMilli()
         val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 
         DatePickerDialog(
@@ -228,9 +235,10 @@ private fun DobField(
                     onClick = {
                         val selectedMillis = pickerState.selectedDateMillis
                         if (selectedMillis != null) {
-                            val selected = Instant.ofEpochMilli(selectedMillis)
-                                .atZone(ZoneOffset.UTC)
-                                .toLocalDate()
+                            val selected =
+                                Instant.ofEpochMilli(selectedMillis)
+                                    .atZone(ZoneOffset.UTC)
+                                    .toLocalDate()
                             onDateSelected(selected)
                         }
                         showPicker = false
@@ -280,10 +288,11 @@ private fun BloodGroupDropdown(
                     contentDescription = if (expanded) "Collapse blood group menu" else "Expand blood group menu",
                 )
             },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-                .semantics { contentDescription = "Blood group selector" },
+            modifier =
+                Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Blood group selector" },
         )
         ExposedDropdownMenu(
             expanded = expanded,
@@ -334,9 +343,10 @@ private fun AllergyInput(
                 onValueChange = { allergyText = it },
                 label = { Text("Add allergy") },
                 singleLine = true,
-                modifier = Modifier
-                    .weight(1f)
-                    .semantics { contentDescription = "Allergy input" },
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .semantics { contentDescription = "Allergy input" },
             )
             TextButton(
                 onClick = {

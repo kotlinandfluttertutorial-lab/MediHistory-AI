@@ -46,11 +46,12 @@ internal fun CameraPreviewContent(
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor: Executor = remember { ContextCompat.getMainExecutor(context) }
 
-    val imageCapture = remember {
-        ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .build()
-    }
+    val imageCapture =
+        remember {
+            ImageCapture.Builder()
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .build()
+        }
 
     Box(modifier = modifier.fillMaxSize()) {
         // CameraX PreviewView hosted inside Compose via AndroidView
@@ -62,9 +63,10 @@ internal fun CameraPreviewContent(
                     providerFuture.addListener(
                         {
                             val cameraProvider = providerFuture.get()
-                            val preview = Preview.Builder().build().also {
-                                it.setSurfaceProvider(previewView.surfaceProvider)
-                            }
+                            val preview =
+                                Preview.Builder().build().also {
+                                    it.setSurfaceProvider(previewView.surfaceProvider)
+                                }
                             try {
                                 cameraProvider.unbindAll()
                                 cameraProvider.bindToLifecycle(
@@ -86,10 +88,11 @@ internal fun CameraPreviewContent(
         // Shutter button
         IconButton(
             onClick = { captureImage(context, imageCapture, executor, onImageCaptured) },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-                .size(72.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+                    .size(72.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.Camera,

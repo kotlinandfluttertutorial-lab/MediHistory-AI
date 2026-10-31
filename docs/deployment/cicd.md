@@ -63,8 +63,8 @@ Coverage threshold: 90% (fails the build if not met).
 | Job | Depends on | Steps |
 |---|---|---|
 | `verify-no-secrets-committed` | — | Check for `.env`, `google-services.json`, `local.properties`, `*.keystore`, hardcoded secrets in source |
-| `android-ci` | `verify-no-secrets-committed` | `./gradlew lintDebug` → `./gradlew testDebugUnitTest` (Google Services plugin is applied only when the untracked `google-services.json` is present; Firebase-dependent runtime features require it) |
-| `backend-ci` | `verify-no-secrets-committed` | `ruff check .` → `black --check .` → `pytest --cov-fail-under=90` |
+| `android-ci` | `verify-no-secrets-committed` | `./gradlew lintDebug` → `./gradlew ktlintCheck` → `./gradlew testDebugUnitTest` (Google Services plugin is applied only when the untracked `google-services.json` is present; Firebase-dependent runtime features require it) |
+| `backend-ci` | `verify-no-secrets-committed` | `ruff check .` → `black --check .` → `mypy app/` → `pytest --cov-fail-under=90` (uses `sqlite+aiosqlite` and `JWT_SECRET_KEY` for tests) |
 | `pr-gate` | `android-ci`, `backend-ci`, `verify-no-secrets-committed` | Aggregate pass/fail — must pass for merge |
 
 The `pr-gate` job is the recommended required status check for branch protection
@@ -80,7 +80,7 @@ on `main`.
 | `:app:lintDebug` | Section 1 — MANDATORY | `lint` job | — | `android-ci` job |
 | `:app:testDebugUnitTest` | Section 1 — MANDATORY | `unit-test` job | — | `android-ci` job |
 | `:app:connectedDebugAndroidTest` | Not run locally | `unit-test` job (API 34 emulator) | — | — |
-| `ktlintCheck` | Section 1 — SKIP (not configured) | not configured | — | not configured |
+| `ktlintCheck` | Section 1 — MANDATORY | `lint` job | — | `android-ci` job |
 | `ruff check .` | Section 2 — MANDATORY | — | `lint` job | `backend-ci` job |
 | `black --check .` | Section 2 — MANDATORY | — | `lint` job | `backend-ci` job |
 | `mypy app/` | Section 2 — MANDATORY | — | `test` job | **absent (CI gap)** |
@@ -148,23 +148,13 @@ does **not** run `mypy`. Type errors can merge through the PR gate even though
 **Recommendation:** Add `mypy app/` to the `backend-ci` job in `pr-checks.yml`
 to ensure type errors block PRs.
 
-### Gap 4 — `ktlint` not configured
-
-**Affected workflows:** all Android workflows
-
-The `org.jlleitschuh.gradle.ktlint` Gradle plugin is not in `android/build.gradle.kts`.
-Kotlin formatting is not checked in CI or locally.
-
-**Recommendation:** Add the ktlint plugin before production release to enforce
-Kotlin code style.
-
-### Gap 5 — No `yamllint` in CI
+### Gap 4 — No `yamllint` in CI
 
 YAML syntax of workflow files is not validated in CI.
 
 **Recommendation:** Add `yamllint` to `pr-checks.yml` as a lightweight check.
 
-### Gap 6 — Local pytest omits `--cov-fail-under=90`
+### Gap 5 — Local pytest omits `--cov-fail-under=90`
 
 **Affected:** local gate Section 2; CI `backend-ci.yml` `test` job; `pr-checks.yml` `backend-ci` job.
 

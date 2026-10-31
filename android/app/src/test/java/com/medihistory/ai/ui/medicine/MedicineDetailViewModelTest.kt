@@ -1,9 +1,9 @@
 package com.medihistory.ai.ui.medicine
 
-import com.medihistory.ai.data.model.Medicine
-import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.dao.DuplicateAlertDao
 import com.medihistory.ai.data.model.DuplicateAlert
+import com.medihistory.ai.data.model.Medicine
+import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.repository.MedicineRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,6 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MedicineDetailViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeDetailMedicineRepository
     private lateinit var fakeDuplicateAlertDao: FakeDetailDuplicateAlertDao
@@ -95,116 +94,127 @@ class MedicineDetailViewModelTest {
     }
 
     @Test
-    fun should_set_isLoading_true_while_loading() = runTest {
-        val medicine = syntheticMedicine()
-        // Use a blocking fake that suspends until released so we can inspect the
-        // loading state after the coroutine starts but before getById returns.
-        val blockingRepo = BlockingFakeDetailMedicineRepository()
-        blockingRepo.add(medicine)
-        val blockingViewModel =
-            MedicineDetailViewModel(blockingRepo, FakeDetailDuplicateAlertDao())
+    fun should_set_isLoading_true_while_loading() =
+        runTest {
+            val medicine = syntheticMedicine()
+            // Use a blocking fake that suspends until released so we can inspect the
+            // loading state after the coroutine starts but before getById returns.
+            val blockingRepo = BlockingFakeDetailMedicineRepository()
+            blockingRepo.add(medicine)
+            val blockingViewModel =
+                MedicineDetailViewModel(blockingRepo, FakeDetailDuplicateAlertDao())
 
-        // Start load — the coroutine is launched but getById is suspended
-        val job = launch { blockingViewModel.load(medicineId = medicine.id, patientId = medicine.patientId) }
-        advanceUntilIdle() // drive the coroutine to the getById() suspension point
+            // Start load — the coroutine is launched but getById is suspended
+            val job = launch { blockingViewModel.load(medicineId = medicine.id, patientId = medicine.patientId) }
+            advanceUntilIdle() // drive the coroutine to the getById() suspension point
 
-        assertTrue("isLoading must be true while repository call is in progress",
-            blockingViewModel.uiState.value.isLoading)
+            assertTrue(
+                "isLoading must be true while repository call is in progress",
+                blockingViewModel.uiState.value.isLoading,
+            )
 
-        // Release the suspension so the coroutine finishes
-        blockingRepo.release()
-        advanceUntilIdle()
-        job.join()
+            // Release the suspension so the coroutine finishes
+            blockingRepo.release()
+            advanceUntilIdle()
+            job.join()
 
-        assertFalse("isLoading must be false after load completes",
-            blockingViewModel.uiState.value.isLoading)
-    }
-
-    @Test
-    fun should_set_medicine_when_load_called_with_valid_id() = runTest {
-        val medicine = syntheticMedicine()
-        fakeRepository.add(medicine)
-
-        viewModel.load(medicineId = medicine.id, patientId = medicine.patientId)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertNotNull("medicine must be set after successful load", state.medicine)
-        assertEquals(medicine.id, state.medicine?.id)
-        assertNull("error must be null on success", state.error)
-        assertFalse("isLoading must be false after success", state.isLoading)
-    }
+            assertFalse(
+                "isLoading must be false after load completes",
+                blockingViewModel.uiState.value.isLoading,
+            )
+        }
 
     @Test
-    fun should_set_error_when_load_called_with_unknown_id() = runTest {
-        // No medicine is added — repository returns null
-        viewModel.load(medicineId = "unknown-id", patientId = "test-patient-alpha")
-        advanceUntilIdle()
+    fun should_set_medicine_when_load_called_with_valid_id() =
+        runTest {
+            val medicine = syntheticMedicine()
+            fakeRepository.add(medicine)
 
-        val state = viewModel.uiState.value
-        assertNull("medicine must be null when not found", state.medicine)
-        assertNotNull("error must be set when medicine not found", state.error)
-        assertFalse("isLoading must be false after error", state.isLoading)
-    }
+            viewModel.load(medicineId = medicine.id, patientId = medicine.patientId)
+            advanceUntilIdle()
 
-    @Test
-    fun should_not_crash_when_activeIngredient_is_null() = runTest {
-        val medicine = syntheticMedicine(activeIngredient = null)
-        fakeRepository.add(medicine)
-
-        viewModel.load(medicineId = medicine.id, patientId = medicine.patientId)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertNotNull("medicine must still be set when activeIngredient is null", state.medicine)
-        assertNull("activeIngredient must be null in returned medicine", state.medicine?.activeIngredient)
-        assertNull("error must be null when load succeeds", state.error)
-    }
+            val state = viewModel.uiState.value
+            assertNotNull("medicine must be set after successful load", state.medicine)
+            assertEquals(medicine.id, state.medicine?.id)
+            assertNull("error must be null on success", state.error)
+            assertFalse("isLoading must be false after success", state.isLoading)
+        }
 
     @Test
-    fun should_not_crash_when_dosageInstructions_is_null() = runTest {
-        val medicine = syntheticMedicine(dosageInstructions = null)
-        fakeRepository.add(medicine)
+    fun should_set_error_when_load_called_with_unknown_id() =
+        runTest {
+            // No medicine is added — repository returns null
+            viewModel.load(medicineId = "unknown-id", patientId = "test-patient-alpha")
+            advanceUntilIdle()
 
-        viewModel.load(medicineId = medicine.id, patientId = medicine.patientId)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertNotNull("medicine must still be set when dosageInstructions is null", state.medicine)
-        assertNull("dosageInstructions must be null in returned medicine", state.medicine?.dosageInstructions)
-        assertNull("error must be null when load succeeds", state.error)
-    }
+            val state = viewModel.uiState.value
+            assertNull("medicine must be null when not found", state.medicine)
+            assertNotNull("error must be set when medicine not found", state.error)
+            assertFalse("isLoading must be false after error", state.isLoading)
+        }
 
     @Test
-    fun should_set_error_when_cross_patient_access_attempted() = runTest {
-        val medicine = syntheticMedicine(patientId = "test-patient-alpha")
-        fakeRepository.add(medicine)
+    fun should_not_crash_when_activeIngredient_is_null() =
+        runTest {
+            val medicine = syntheticMedicine(activeIngredient = null)
+            fakeRepository.add(medicine)
 
-        // Query with a different patient ID — repository returns null
-        viewModel.load(medicineId = medicine.id, patientId = "different-patient-beta")
-        advanceUntilIdle()
+            viewModel.load(medicineId = medicine.id, patientId = medicine.patientId)
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertNull("medicine must be null for cross-patient access", state.medicine)
-        assertNotNull("error must be set for cross-patient access", state.error)
-    }
+            val state = viewModel.uiState.value
+            assertNotNull("medicine must still be set when activeIngredient is null", state.medicine)
+            assertNull("activeIngredient must be null in returned medicine", state.medicine?.activeIngredient)
+            assertNull("error must be null when load succeeds", state.error)
+        }
+
+    @Test
+    fun should_not_crash_when_dosageInstructions_is_null() =
+        runTest {
+            val medicine = syntheticMedicine(dosageInstructions = null)
+            fakeRepository.add(medicine)
+
+            viewModel.load(medicineId = medicine.id, patientId = medicine.patientId)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertNotNull("medicine must still be set when dosageInstructions is null", state.medicine)
+            assertNull("dosageInstructions must be null in returned medicine", state.medicine?.dosageInstructions)
+            assertNull("error must be null when load succeeds", state.error)
+        }
+
+    @Test
+    fun should_set_error_when_cross_patient_access_attempted() =
+        runTest {
+            val medicine = syntheticMedicine(patientId = "test-patient-alpha")
+            fakeRepository.add(medicine)
+
+            // Query with a different patient ID — repository returns null
+            viewModel.load(medicineId = medicine.id, patientId = "different-patient-beta")
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertNull("medicine must be null for cross-patient access", state.medicine)
+            assertNotNull("error must be set for cross-patient access", state.error)
+        }
 }
 
 private class FakeDetailDuplicateAlertDao : DuplicateAlertDao {
-
     private val alerts = MutableStateFlow<List<DuplicateAlert>>(emptyList())
 
-    override fun observeByPatient(patientId: String): Flow<List<DuplicateAlert>> =
-        alerts.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<DuplicateAlert>> = alerts.map { list -> list.filter { it.patientId == patientId } }
 
-    override fun observeUnreviewedCount(patientId: String): Flow<Int> =
-        observeByPatient(patientId).map { list -> list.count { !it.isReviewed } }
+    override fun observeUnreviewedCount(patientId: String): Flow<Int> = observeByPatient(patientId).map { list -> list.count { !it.isReviewed } }
 
     override suspend fun insert(alert: DuplicateAlert) {
         alerts.update { current -> current + alert }
     }
 
-    override suspend fun markReviewed(id: String, patientId: String, timestamp: Long) {
+    override suspend fun markReviewed(
+        id: String,
+        patientId: String,
+        timestamp: Long,
+    ) {
         alerts.update { current ->
             current.map { alert ->
                 if (alert.id == id && alert.patientId == patientId) {
@@ -220,8 +230,26 @@ private class FakeDetailDuplicateAlertDao : DuplicateAlertDao {
         alerts.update { current -> current.filterNot { it.patientId == patientId } }
     }
 
-    override suspend fun getById(id: String, patientId: String): DuplicateAlert? =
-        alerts.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): DuplicateAlert? = alerts.value.find { it.id == id && it.patientId == patientId }
+
+    override suspend fun updateExplanation(
+        id: String,
+        patientId: String,
+        explanation: String,
+    ) {
+        alerts.update { current ->
+            current.map { alert ->
+                if (alert.id == id && alert.patientId == patientId) {
+                    alert.copy(explanation = explanation)
+                } else {
+                    alert
+                }
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -231,27 +259,32 @@ private class FakeDetailDuplicateAlertDao : DuplicateAlertDao {
 // ---------------------------------------------------------------------------
 
 private class FakeDetailMedicineRepository : MedicineRepository {
-
     private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
 
     fun add(medicine: Medicine) {
         _medicines.update { current -> current + medicine }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Medicine>> =
-        _medicines.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = _medicines.map { list -> list.filter { it.patientId == patientId } }
 
-    override fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>> =
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> =
         _medicines.map { list ->
             list.filter { m ->
                 m.patientId == patientId &&
-                    (m.medicineName.contains(query, ignoreCase = true) ||
-                        m.activeIngredient?.contains(query, ignoreCase = true) == true)
+                    (
+                        m.medicineName.contains(query, ignoreCase = true) ||
+                            m.activeIngredient?.contains(query, ignoreCase = true) == true
+                    )
             }
         }
 
-    override suspend fun getById(id: String, patientId: String): Medicine? =
-        _medicines.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? = _medicines.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insertAll(medicines: List<Medicine>) {
         _medicines.update { current -> current + medicines }
@@ -280,7 +313,6 @@ private class FakeDetailMedicineRepository : MedicineRepository {
  * Used to verify the [MedicineDetailUiState.isLoading] flag while the coroutine is in progress.
  */
 private class BlockingFakeDetailMedicineRepository : MedicineRepository {
-
     private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
     private val gate = CompletableDeferred<Unit>()
 
@@ -293,19 +325,26 @@ private class BlockingFakeDetailMedicineRepository : MedicineRepository {
         gate.complete(Unit)
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Medicine>> =
-        _medicines.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = _medicines.map { list -> list.filter { it.patientId == patientId } }
 
-    override fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>> =
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> =
         _medicines.map { list ->
             list.filter { m ->
                 m.patientId == patientId &&
-                    (m.medicineName.contains(query, ignoreCase = true) ||
-                        m.activeIngredient?.contains(query, ignoreCase = true) == true)
+                    (
+                        m.medicineName.contains(query, ignoreCase = true) ||
+                            m.activeIngredient?.contains(query, ignoreCase = true) == true
+                    )
             }
         }
 
-    override suspend fun getById(id: String, patientId: String): Medicine? {
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? {
         gate.await() // suspend here until release() is called
         return _medicines.value.find { it.id == id && it.patientId == patientId }
     }

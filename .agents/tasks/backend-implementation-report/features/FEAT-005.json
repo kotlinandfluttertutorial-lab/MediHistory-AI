@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-005",
+  "type": "test",
+  "description": "Cross-cutting verification: run the full test suite (all existing + all new tests), verify no secrets in source, verify the full Alembic migration runs cleanly, and ensure existing tests (test_auth.py, test_security.py) still pass. Also adds auth tests for the new register/refresh/logout endpoints. Depends on FEAT-001 through FEAT-004 all being complete.",
+  "status": "pending",
+  "steps": [
+    "Update backend/tests/test_auth.py to add new test cases for the extended auth endpoints: test_register_returns_201_with_valid_data (email='new-patient@synthetic.medihistory', password='SyntheticPass1!', display_name='Test Patient Alpha'), test_register_returns_409_for_duplicate_email, test_register_returns_422_for_short_password (password='short'), test_login_returns_refresh_token_in_response, test_refresh_returns_new_access_token, test_logout_returns_204. All use httpx.AsyncClient from conftest.py.",
+    "Run the full test suite: python -m pytest tests/ -v and confirm all tests pass (this is the integration check — no code changes, just verification of the full suite together).",
+    "Run security grep to confirm no hardcoded secrets: grep -rn 'SECRET\\|PASSWORD\\|API_KEY\\|token.*=.*eyJ' backend/app/ should return no hits (excluding test files and comments).",
+    "Verify Alembic migration produces all 8 tables: after 'alembic upgrade head', run a Python snippet that connects to the test DB and checks sqlite_master for all expected table names: patients, doctors, prescriptions, prescription_medicines, duplicate_alerts, medical_history_summaries, reminders, refresh_tokens.",
+    "Verify no patient data appears in any log output during test run: run pytest with --log-cli-level=DEBUG and check output for any email, prescription text, or token values — none should appear.",
+    "Commit: test: full suite verification and auth endpoint tests"
+  ],
+  "acceptance_criteria": [
+    "python -m pytest tests/ -v exits with code 0 — all tests pass",
+    "No hardcoded secrets in app/ source files",
+    "All 8 database tables created by Alembic migration",
+    "No patient data in test log output"
+  ],
+  "verification": [
+    "$env:JWT_SECRET_KEY='synthetic-test-secret'; $env:DATABASE_URL='sqlite+aiosqlite:///./test.db'; cd backend && python -m pytest tests/ -v --tb=short"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

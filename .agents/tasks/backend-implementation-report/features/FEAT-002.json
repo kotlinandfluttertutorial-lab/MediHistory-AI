@@ -1,0 +1,42 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Auth extension + patient profile + doctor CRUD. Depends on FEAT-001 (needs Patient, Doctor, RefreshToken models and DB session). Extends the existing auth router with register/refresh/logout, creates patients router and doctors router, builds test infrastructure (conftest.py) used by all subsequent test FEATs.",
+  "status": "completed",
+  "steps": [
+    "Update backend/app/schemas/auth.py: add RegisterRequest (email: EmailStr, password: str with min_length=8 max_length=128, display_name: str max_length=100), RegisterResponse (patient_id, email, display_name, created_at), RefreshRequest (refresh_token: str), RefreshResponse (access_token, token_type='bearer', expires_in=1800). Keep existing LoginRequest and TokenResponse; extend TokenResponse to include refresh_token: str and expires_in: int = 1800.",
+    "Create backend/app/schemas/common.py: ErrorDetail(code: str, message: str, details: dict = {}), ErrorResponse(error: ErrorDetail). Both with model_config from_attributes=True.",
+    "Create backend/app/schemas/patient.py: PatientResponse(id, email, display_name, created_at, updated_at) with from_attributes=True. UpdatePatientRequest(display_name: str max_length=100).",
+    "Create backend/app/schemas/doctor.py: DoctorResponse(id, patient_id, name, specialty, specialty_custom, clinic_name, contact_notes, created_at, updated_at) with from_attributes=True. CreateDoctorRequest(name: str max_length=200, specialty: str|None max_length=100, specialty_custom: str|None max_length=200, clinic_name: str|None max_length=200, contact_notes: str|None). UpdateDoctorRequest same as Create but all fields Optional. DoctorListResponse(doctors: list[DoctorResponse], total: int).",
+    "Update backend/app/services/auth_service.py: inject AsyncSession (db: AsyncSession parameter on __init__ or per-method). Implement register(email, password, display_name) -> Patient: hash password with bcrypt.hashpw, check for existing email (409 via raise_http_error), create Patient row, return it. Implement authenticate_full(email, password) -> tuple[str, str] | None: look up Patient by email, verify bcrypt hash, generate access JWT (TTL=ACCESS_TOKEN_TTL_SECONDS, type='access') and refresh JWT (TTL=REFRESH_TOKEN_TTL_DAYS days, type='refresh'), store hashed refresh token in RefreshToken table, return (access_token, refresh_token). Implement refresh(refresh_token_str) -> str: decode refresh JWT, verify type='refresh', look up RefreshToken row by hash (not revoked, not expired), generate new access JWT, return it. Implement logout(refresh_token_str): decode refresh JWT, find RefreshToken row, set revoked=True. Keep the existing synthetic account path in authenticate() for backward compatibility with existing tests.",
+    "Update backend/app/routers/auth.py: add POST /auth/register (201, RegisterResponse), POST /auth/refresh (200, RefreshResponse), POST /auth/logout (204). Wire AuthService via Depends(get_auth_service) where get_auth_service injects AsyncSession from Depends(get_db). Update POST /auth/login to return the extended TokenResponse with refresh_token and expires_in.",
+    "Create backend/app/services/patient_service.py: PatientService(db: AsyncSession). get_by_id(patient_id) -> Patient | None. update(patient_id, display_name) -> Patient: fetch, update field, commit, return.",
+    "Create backend/app/routers/patients.py: GET /patients/me (200, PatientResponse), PUT /patients/me (200, PatientResponse). Both require Depends(get_current_patient). Use raise_http_error for 404.",
+    "Create backend/app/services/doctor_service.py: DoctorService(db: AsyncSession). list_doctors(patient_id) -> list[Doctor]. get(doctor_id, patient_id) -> Doctor | None (filters by patient_id). create(patient_id, data: CreateDoctorRequest) -> Doctor. update(doctor_id, patient_id, data: UpdateDoctorRequest) -> Doctor. delete(doctor_id, patient_id): soft-delete by setting is_deleted=True.",
+    "Create backend/app/routers/doctors.py: GET /patients/me/doctors (200, DoctorListResponse), POST /patients/me/doctors (201, DoctorResponse), GET /patients/me/doctors/{doctor_id} (200, DoctorResponse), PUT /patients/me/doctors/{doctor_id} (200, DoctorResponse), DELETE /patients/me/doctors/{doctor_id} (204). All require Depends(get_current_patient). Use raise_http_error for 404.",
+    "Update backend/app/main.py: add prefix='/api/v1' to include_router calls. Include patients.router and doctors.router. Wire up OpenAPI with appropriate tags.",
+    "Create backend/tests/conftest.py: define async_engine fixture using create_async_engine with 'sqlite+aiosqlite:///:memory:' and echo=False. Define async_db fixture that runs Base.metadata.create_all then yields AsyncSession. Define override_get_db that uses the test session. Define async_client fixture that overrides app.dependency_overrides[get_db] with override_get_db and returns httpx.AsyncClient(app=app, base_url='http://test'). Set asyncio_mode='auto' in pytest.ini or conftest. Define helper get_auth_token(client, email, password) -> str. Define helper register_and_login(client) -> str that creates a synthetic patient and returns access_token. Add pytest.ini (or pyproject.toml [tool.pytest.ini_options]) with asyncio_mode = 'auto'.",
+    "Create backend/tests/test_patients.py: test_get_me_returns_200_for_authenticated_patient, test_get_me_returns_401_unauthenticated, test_update_me_returns_200_with_new_display_name, test_update_me_returns_401_unauthenticated, test_update_me_returns_422_for_empty_display_name. Use synthetic data: display_name='Test Patient Alpha'.",
+    "Create backend/tests/test_doctors.py: test_list_doctors_returns_empty_list_initially, test_create_doctor_returns_201, test_create_doctor_returns_401_unauthenticated, test_get_doctor_returns_404_for_other_patient, test_update_doctor_returns_200, test_delete_doctor_returns_204, test_deleted_doctor_not_in_list. Use synthetic data: name='Dr. Synthetic', specialty='Cardiology'.",
+    "Commit: feat: auth extension, patient and doctor routers with tests"
+  ],
+  "acceptance_criteria": [
+    "POST /api/v1/auth/register with valid data returns 201 with patient_id",
+    "POST /api/v1/auth/register with duplicate email returns 409",
+    "POST /api/v1/auth/register with password shorter than 8 chars returns 422",
+    "POST /api/v1/auth/login returns access_token and refresh_token",
+    "POST /api/v1/auth/refresh with valid refresh_token returns new access_token",
+    "POST /api/v1/auth/logout returns 204",
+    "GET /api/v1/patients/me with valid token returns patient profile",
+    "GET /api/v1/patients/me/doctors returns empty list initially",
+    "POST /api/v1/patients/me/doctors creates a doctor and returns 201",
+    "GET /api/v1/patients/me/doctors/{id} for a different patient's doctor returns 404",
+    "DELETE /api/v1/patients/me/doctors/{id} returns 204 and doctor no longer appears in list",
+    "python -m pytest tests/test_patients.py tests/test_doctors.py -v passes"
+  ],
+  "verification": [
+    "$env:JWT_SECRET_KEY='synthetic-test-secret'; $env:DATABASE_URL='sqlite+aiosqlite:///./test.db'; cd backend && python -m pytest tests/test_patients.py tests/test_doctors.py -v"
+  ],
+  "blocked_reason": null,
+  "findings": "All routers mounted under /api/v1 prefix. AuthService now requires AsyncSession injection (db param); synthetic test account fallback preserved in authenticate(). Login route: tries authenticate_full() first (real DB), falls back to synthetic path if None returned. TestClient-based tests (test_auth.py, test_security.py) rely on conftest.py creating DB tables at load time via asyncio.run(create_all_tables()). Async tests use per-test in-memory SQLite via async_client fixture that overrides get_db. bcrypt used for password hashing; refresh tokens stored as SHA-256 hashes. Soft-delete pattern on Doctor (is_deleted=True). pyproject.toml has asyncio_mode=auto. DATABASE_URL defaults to sqlite+aiosqlite:///./test_shared.db in test conftest."
+}

@@ -15,7 +15,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class OcrDaoModule {
-
     @Binds
     @Singleton
     abstract fun bindPostReviewProcessor(impl: PostReviewProcessor): PostReviewProcessorInterface
@@ -23,7 +22,6 @@ abstract class OcrDaoModule {
     companion object {
         @Provides
         @Singleton
-        fun provideExtractedFieldDao(database: MediHistoryDatabase): ExtractedFieldDao =
-            database.extractedFieldDao()
+        fun provideExtractedFieldDao(database: MediHistoryDatabase): ExtractedFieldDao = database.extractedFieldDao()
     }
 }

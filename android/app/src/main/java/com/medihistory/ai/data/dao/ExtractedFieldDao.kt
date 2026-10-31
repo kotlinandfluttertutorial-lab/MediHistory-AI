@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface ExtractedFieldDao {
-
     /**
      * Emits the live list of extracted fields for a given prescription.
      * Updates automatically when the underlying data changes.

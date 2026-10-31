@@ -30,7 +30,6 @@ import java.time.LocalDate
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PatientViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakePatientRepository
     private lateinit var viewModel: PatientViewModel
@@ -69,122 +68,131 @@ class PatientViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should populate state when loadPatient called with existing id`() = runTest {
-        val patient = syntheticPatient()
-        fakeRepository.addPatient(patient)
+    fun `should populate state when loadPatient called with existing id`() =
+        runTest {
+            val patient = syntheticPatient()
+            fakeRepository.addPatient(patient)
 
-        viewModel.loadPatient("patient-alpha")
-        advanceUntilIdle()
+            viewModel.loadPatient("patient-alpha")
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertEquals("name must match loaded patient", patient.name, state.name)
-        assertEquals("dateOfBirth must match loaded patient", patient.dateOfBirth, state.dateOfBirth)
-        assertEquals("bloodGroup must match loaded patient", patient.bloodGroup, state.bloodGroup)
-        assertEquals("allergies must match loaded patient", patient.allergies.orEmpty(), state.allergies)
-        assertFalse("isLoading must be false after load", state.isLoading)
-    }
+            val state = viewModel.uiState.value
+            assertEquals("name must match loaded patient", patient.name, state.name)
+            assertEquals("dateOfBirth must match loaded patient", patient.dateOfBirth, state.dateOfBirth)
+            assertEquals("bloodGroup must match loaded patient", patient.bloodGroup, state.bloodGroup)
+            assertEquals("allergies must match loaded patient", patient.allergies.orEmpty(), state.allergies)
+            assertFalse("isLoading must be false after load", state.isLoading)
+        }
 
     @Test
-    fun `should leave state blank when loadPatient called with unknown id`() = runTest {
-        viewModel.loadPatient("unknown-id")
-        advanceUntilIdle()
+    fun `should leave state blank when loadPatient called with unknown id`() =
+        runTest {
+            viewModel.loadPatient("unknown-id")
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertEquals("name must be empty for unknown patient", "", state.name)
-        assertFalse("isLoading must be false", state.isLoading)
-    }
+            val state = viewModel.uiState.value
+            assertEquals("name must be empty for unknown patient", "", state.name)
+            assertFalse("isLoading must be false", state.isLoading)
+        }
 
     // -------------------------------------------------------------------------
     // Validation
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should set nameError when name is empty on save`() = runTest {
-        // name is blank by default
-        viewModel.onSaveClicked(null)
-        advanceUntilIdle()
+    fun `should set nameError when name is empty on save`() =
+        runTest {
+            // name is blank by default
+            viewModel.onSaveClicked(null)
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertNotNull("nameError must not be null when name is blank", state.nameError)
-        assertFalse("isSaved must be false when name is blank", state.isSaved)
-    }
+            val state = viewModel.uiState.value
+            assertNotNull("nameError must not be null when name is blank", state.nameError)
+            assertFalse("isSaved must be false when name is blank", state.isSaved)
+        }
 
     // -------------------------------------------------------------------------
     // Save
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should set isSaved true when valid save completes`() = runTest {
-        viewModel.onNameChange("Test Patient Alpha")
-        viewModel.onSaveClicked(null)
-        advanceUntilIdle()
+    fun `should set isSaved true when valid save completes`() =
+        runTest {
+            viewModel.onNameChange("Test Patient Alpha")
+            viewModel.onSaveClicked(null)
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertTrue("isSaved must be true after a valid save", state.isSaved)
-        assertNull("error must be null after a valid save", state.error)
-        assertNull("nameError must be null after a valid save", state.nameError)
-    }
+            val state = viewModel.uiState.value
+            assertTrue("isSaved must be true after a valid save", state.isSaved)
+            assertNull("error must be null after a valid save", state.error)
+            assertNull("nameError must be null after a valid save", state.nameError)
+        }
 
     @Test
-    fun `should update existing patient when patientId is provided`() = runTest {
-        val patient = syntheticPatient()
-        fakeRepository.addPatient(patient)
+    fun `should update existing patient when patientId is provided`() =
+        runTest {
+            val patient = syntheticPatient()
+            fakeRepository.addPatient(patient)
 
-        viewModel.loadPatient("patient-alpha")
-        advanceUntilIdle()
+            viewModel.loadPatient("patient-alpha")
+            advanceUntilIdle()
 
-        viewModel.onNameChange("Test Patient Alpha Updated")
-        viewModel.onSaveClicked("patient-alpha")
-        advanceUntilIdle()
+            viewModel.onNameChange("Test Patient Alpha Updated")
+            viewModel.onSaveClicked("patient-alpha")
+            advanceUntilIdle()
 
-        val saved = fakeRepository.getById("patient-alpha")
-        assertNotNull("saved patient must not be null", saved)
-        assertEquals("name must be updated", "Test Patient Alpha Updated", saved!!.name)
-        assertTrue("isSaved must be true", viewModel.uiState.value.isSaved)
-    }
+            val saved = fakeRepository.getById("patient-alpha")
+            assertNotNull("saved patient must not be null", saved)
+            assertEquals("name must be updated", "Test Patient Alpha Updated", saved!!.name)
+            assertTrue("isSaved must be true", viewModel.uiState.value.isSaved)
+        }
 
     // -------------------------------------------------------------------------
     // Allergy add / remove
     // -------------------------------------------------------------------------
 
     @Test
-    fun `should add allergy to state`() = runTest {
-        viewModel.onAllergyAdded("Synthamol")
-        viewModel.onAllergyAdded("Testocillin")
+    fun `should add allergy to state`() =
+        runTest {
+            viewModel.onAllergyAdded("Synthamol")
+            viewModel.onAllergyAdded("Testocillin")
 
-        val allergies = viewModel.uiState.value.allergies
-        assertEquals("allergies must contain 2 entries", 2, allergies.size)
-        assertTrue("Synthamol must be in the list", "Synthamol" in allergies)
-        assertTrue("Testocillin must be in the list", "Testocillin" in allergies)
-    }
-
-    @Test
-    fun `should remove allergy from state`() = runTest {
-        viewModel.onAllergyAdded("Synthamol")
-        viewModel.onAllergyAdded("Testocillin")
-
-        viewModel.onAllergyRemoved("Synthamol")
-
-        val allergies = viewModel.uiState.value.allergies
-        assertEquals("allergies must contain 1 entry after remove", 1, allergies.size)
-        assertFalse("Synthamol must be removed", "Synthamol" in allergies)
-        assertTrue("Testocillin must remain", "Testocillin" in allergies)
-    }
+            val allergies = viewModel.uiState.value.allergies
+            assertEquals("allergies must contain 2 entries", 2, allergies.size)
+            assertTrue("Synthamol must be in the list", "Synthamol" in allergies)
+            assertTrue("Testocillin must be in the list", "Testocillin" in allergies)
+        }
 
     @Test
-    fun `should not add blank allergy`() = runTest {
-        viewModel.onAllergyAdded("   ")
+    fun `should remove allergy from state`() =
+        runTest {
+            viewModel.onAllergyAdded("Synthamol")
+            viewModel.onAllergyAdded("Testocillin")
 
-        assertEquals("blank allergy must not be added", 0, viewModel.uiState.value.allergies.size)
-    }
+            viewModel.onAllergyRemoved("Synthamol")
+
+            val allergies = viewModel.uiState.value.allergies
+            assertEquals("allergies must contain 1 entry after remove", 1, allergies.size)
+            assertFalse("Synthamol must be removed", "Synthamol" in allergies)
+            assertTrue("Testocillin must remain", "Testocillin" in allergies)
+        }
 
     @Test
-    fun `should not add duplicate allergy`() = runTest {
-        viewModel.onAllergyAdded("Synthamol")
-        viewModel.onAllergyAdded("Synthamol")
+    fun `should not add blank allergy`() =
+        runTest {
+            viewModel.onAllergyAdded("   ")
 
-        assertEquals("duplicate allergy must not be added", 1, viewModel.uiState.value.allergies.size)
-    }
+            assertEquals("blank allergy must not be added", 0, viewModel.uiState.value.allergies.size)
+        }
+
+    @Test
+    fun `should not add duplicate allergy`() =
+        runTest {
+            viewModel.onAllergyAdded("Synthamol")
+            viewModel.onAllergyAdded("Synthamol")
+
+            assertEquals("duplicate allergy must not be added", 1, viewModel.uiState.value.allergies.size)
+        }
 }
 
 // ---------------------------------------------------------------------------
@@ -192,15 +200,13 @@ class PatientViewModelTest {
 // ---------------------------------------------------------------------------
 
 private class FakePatientRepository : PatientRepository {
-
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
 
     fun addPatient(patient: Patient) {
         _patients.update { current -> current + patient }
     }
 
-    override suspend fun getById(patientId: String): Patient? =
-        _patients.value.find { it.id == patientId }
+    override suspend fun getById(patientId: String): Patient? = _patients.value.find { it.id == patientId }
 
     override suspend fun insert(patient: Patient) {
         _patients.update { current -> current + patient }

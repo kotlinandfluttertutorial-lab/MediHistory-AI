@@ -9,7 +9,7 @@ package com.medihistory.ai.ui.auth
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
-    val confirmPassword: String = "",   // only shown in register mode
+    val confirmPassword: String = "", // only shown in register mode
     val isRegisterMode: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,

@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.medihistory.ai.ui.components.PrimaryButton
 import com.medihistory.ai.ui.components.SecondaryButton
 
 /**
@@ -42,11 +41,12 @@ internal fun PermissionDeniedContent(
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = if (isPermanentlyDenied) {
-                    "Camera access has been permanently denied. Please enable it in Settings to capture prescription photos."
-                } else {
-                    "MediHistory AI needs camera access to capture prescription photos."
-                },
+                text =
+                    if (isPermanentlyDenied) {
+                        "Camera access has been permanently denied. Please enable it in Settings to capture prescription photos."
+                    } else {
+                        "MediHistory AI needs camera access to capture prescription photos."
+                    },
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

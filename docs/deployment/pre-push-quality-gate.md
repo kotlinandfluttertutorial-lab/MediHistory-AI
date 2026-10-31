@@ -143,12 +143,11 @@ Required environment variables set automatically:
 | `gradlew.bat` / `gradlew` exists | — | FAIL |
 | Kotlin compilation | `:app:compileDebugKotlin` | FAIL |
 | Android Lint | `:app:lintDebug` | FAIL |
-| ktlint formatting | n/a — not configured | SKIP (permanent) |
+| ktlint formatting | `:app:ktlintCheck` | FAIL |
 | Unit tests | `:app:testDebugUnitTest` | FAIL |
 
-> **Note on ktlint:** The `ktlint` Gradle plugin is not configured in
-> `android/build.gradle.kts`. The check is permanently SKIPped. To enable it,
-> add the `org.jlleitschuh.gradle.ktlint` plugin to the project build file.
+> **Note on ktlint:** Run `:app:ktlintFormat` from `android/` to apply
+> automatic Kotlin formatting, then rerun the quality gate.
 
 > **Note on compileDebugKotlin:** This task is **not** in the CI workflows.
 > The local gate adds it as the first check to catch compile errors that lint
@@ -282,6 +281,7 @@ appropriate repair command separately.
 | `backend-ruff` | `cd backend && python -m ruff check . --fix` |
 | Android compile | Fix Kotlin errors shown in Gradle output |
 | Android lint | Open `android/app/build/reports/lint-results-debug.html` |
+| Android ktlint | Run `:app:ktlintFormat` from `android/`, then rerun the gate |
 | Android tests | Open `android/app/build/reports/tests/testDebugUnitTest/index.html` |
 | Secret scan | Remove the file/value, then `git rm --cached <file>` if already staged |
 
@@ -292,7 +292,6 @@ appropriate repair command separately.
 | SKIP reason | How to resolve |
 |---|---|
 | `backend not yet scaffolded (requirements.txt absent)` | Create `backend/requirements.txt` and scaffold the FastAPI app |
-| `ktlint is not configured` | Add `org.jlleitschuh.gradle.ktlint` plugin to `android/build.gradle.kts` |
 | `DATABASE_URL not set` | Set `DATABASE_URL` in your shell before running, or use `.env` (never commit) |
 | `pip-audit not installed` | `pip install pip-audit` |
 | `safety not installed` | `pip install safety` |
@@ -303,26 +302,22 @@ appropriate repair command separately.
 
 ## 10. Known Limitations
 
-1. **ktlint not configured** — The `ktlint` Gradle plugin is absent from this
-   project. The `android-ktlint` check is permanently SKIPped until the plugin
-   is added.
-
-2. **Backend not yet scaffolded** — `backend/requirements.txt` does not exist.
+1. **Backend not yet scaffolded** — `backend/requirements.txt` does not exist.
    All backend checks (Sections 2 and 3) SKIP automatically and become active
    once the file is created.
 
-3. **No `compileDebugKotlin` in CI** — The CI workflows run `lintDebug` and
+2. **No `compileDebugKotlin` in CI** — The CI workflows run `lintDebug` and
    `testDebugUnitTest` but not `compileDebugKotlin`. The local gate adds this
    check. See `cicd.md` for the recommended CI fix.
 
-4. **No dependency vulnerability scanning in CI** — `pip-audit` and OWASP
+3. **No dependency vulnerability scanning in CI** — `pip-audit` and OWASP
    Gradle dependency-check are not in any CI workflow. The local gate runs them
    optionally (SKIP if not installed, WARN if installed). See `cicd.md`.
 
-5. **pip-audit and safety not in CI** — These are optional local checks only.
+4. **pip-audit and safety not in CI** — These are optional local checks only.
    Vulnerability findings produce WARN, not FAIL.
 
-6. **Local pytest omits `--cov-fail-under=90`** — The local gate runs `pytest tests/ -m "not db"` without a coverage threshold flag, to keep local runs fast. CI runs `pytest --cov=app --cov-fail-under=90`. A developer can push with backend coverage below 90% and the CI coverage gate will catch it on the first push. To check coverage locally before pushing, run: `python -m pytest --cov=app --cov-fail-under=90 tests/ -m "not db"` from the `backend/` directory.
+5. **Local pytest omits `--cov-fail-under=90`** — The local gate runs `pytest tests/ -m "not db"` without a coverage threshold flag, to keep local runs fast. CI runs `pytest --cov=app --cov-fail-under=90`. A developer can push with backend coverage below 90% and the CI coverage gate will catch it on the first push. To check coverage locally before pushing, run: `python -m pytest --cov=app --cov-fail-under=90 tests/ -m "not db"` from the `backend/` directory.
 
 ---
 
@@ -333,7 +328,7 @@ appropriate repair command separately.
 | `android-compile` (`:app:compileDebugKotlin`) | 1 | **none (CI gap)** | — |
 | `android-lint` (`:app:lintDebug`) | 1 | `lint` / `android-ci` | `android-ci.yml`, `pr-checks.yml` |
 | `android-unit-tests` (`:app:testDebugUnitTest`) | 1 | `unit-test` / `android-ci` | `android-ci.yml`, `pr-checks.yml` |
-| `android-ktlint` | 1 | **not configured** | — |
+| `android-ktlint` (`:app:ktlintCheck`) | 1 | `android-ci` | `android-ci.yml`, `pr-checks.yml` |
 | `backend-ruff` | 2 | `lint` (ruff check) | `backend-ci.yml`, `pr-checks.yml` |
 | `backend-black` | 2 | `lint` (black --check) | `backend-ci.yml`, `pr-checks.yml` |
 | `backend-mypy` | 2 | `test` (mypy app/) | `backend-ci.yml` only |

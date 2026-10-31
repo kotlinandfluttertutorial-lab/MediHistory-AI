@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
  * No implementation may return records belonging to a different patient.
  */
 interface DoctorRepository {
-
     /**
      * Emits the live list of doctors for [patientId].
      * The Flow updates automatically when the underlying data changes.
@@ -21,7 +20,10 @@ interface DoctorRepository {
      * Returns the doctor with [doctorId] that belongs to [patientId], or null.
      * Returns null (not an error) when [doctorId] belongs to another patient.
      */
-    suspend fun getById(doctorId: String, patientId: String): Doctor?
+    suspend fun getById(
+        doctorId: String,
+        patientId: String,
+    ): Doctor?
 
     /** Persists a new [doctor] record. */
     suspend fun insert(doctor: Doctor)

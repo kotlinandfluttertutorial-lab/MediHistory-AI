@@ -49,10 +49,11 @@ fun PrescriptionCard(
     modifier: Modifier = Modifier,
 ) {
     val isDoctorRemoved = prescription.doctorName == "Doctor removed"
-    val ocrStatusLabel = prescription.ocrStatus.name
-        .lowercase()
-        .replace('_', ' ')
-        .replaceFirstChar { it.uppercase() }
+    val ocrStatusLabel =
+        prescription.ocrStatus.name
+            .lowercase()
+            .replace('_', ' ')
+            .replaceFirstChar { it.uppercase() }
 
     val cardContentDescription =
         "Prescription from ${prescription.doctorName}, " +
@@ -62,11 +63,12 @@ fun PrescriptionCard(
 
     MediCard(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics(mergeDescendants = true) {
-                contentDescription = cardContentDescription
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) {
+                    contentDescription = cardContentDescription
+                },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -75,8 +77,9 @@ fun PrescriptionCard(
             // Prescription document icon placeholder — decorative, description on the card root.
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(72.dp),
+                modifier =
+                    Modifier
+                        .size(72.dp),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Description,
@@ -94,20 +97,23 @@ fun PrescriptionCard(
             ) {
                 Text(
                     text = prescription.doctorName,
-                    style = MaterialTheme.typography.titleMedium.let { style ->
-                        if (isDoctorRemoved) style.copy(fontStyle = FontStyle.Italic) else style
-                    },
-                    color = if (isDoctorRemoved) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
+                    style =
+                        MaterialTheme.typography.titleMedium.let { style ->
+                            if (isDoctorRemoved) style.copy(fontStyle = FontStyle.Italic) else style
+                        },
+                    color =
+                        if (isDoctorRemoved) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                 )
 
-                val subtitleParts = buildList {
-                    if (prescription.doctorSpecialty.isNotEmpty()) add(prescription.doctorSpecialty)
-                    add(prescription.prescriptionDate)
-                }
+                val subtitleParts =
+                    buildList {
+                        if (prescription.doctorSpecialty.isNotEmpty()) add(prescription.doctorSpecialty)
+                        add(prescription.prescriptionDate)
+                    }
                 Text(
                     text = subtitleParts.joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
@@ -116,11 +122,12 @@ fun PrescriptionCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                val medicineLabel = if (prescription.medicineCount == 1) {
-                    "1 medicine"
-                } else {
-                    "${prescription.medicineCount} medicines"
-                }
+                val medicineLabel =
+                    if (prescription.medicineCount == 1) {
+                        "1 medicine"
+                    } else {
+                        "${prescription.medicineCount} medicines"
+                    }
                 Text(
                     text = medicineLabel,
                     style = MaterialTheme.typography.bodySmall,

@@ -18,7 +18,6 @@ import org.junit.Test
  * Naming convention: `given_[state]_when_[action]_then_[outcome]`
  */
 class ConsentDialogTest {
-
     // -------------------------------------------------------------------------
     // Dialog title contract
     // -------------------------------------------------------------------------

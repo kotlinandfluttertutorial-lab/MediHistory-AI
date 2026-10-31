@@ -25,7 +25,6 @@ import com.medihistory.ai.data.model.Prescription
  * - any clinical recommendation
  */
 object HistoryCompiler {
-
     /**
      * Compiles the three deterministic sections (medicines, doctors, timeline)
      * plus an AI_SUMMARY stub section.
@@ -38,25 +37,28 @@ object HistoryCompiler {
         medicines: List<Medicine>,
         doctors: List<Doctor>,
     ): List<HistorySection> {
-        val reviewed = prescriptions
-            .filter { it.ocrStatus == OcrStatus.REVIEWED }
-            .sortedWith(
-                compareByDescending<Prescription> { it.prescriptionDate }
-                    .thenByDescending { it.createdAt },
-            )
+        val reviewed =
+            prescriptions
+                .filter { it.ocrStatus == OcrStatus.REVIEWED }
+                .sortedWith(
+                    compareByDescending<Prescription> { it.prescriptionDate }
+                        .thenByDescending { it.createdAt },
+                )
 
         val reviewedIds = reviewed.map { it.id }.toSet()
 
         // Only include medicines linked to a reviewed prescription.
-        val reviewedMedicines = medicines
-            .filter { it.prescriptionId in reviewedIds }
-            .sortedBy { it.medicineName }
+        val reviewedMedicines =
+            medicines
+                .filter { it.prescriptionId in reviewedIds }
+                .sortedBy { it.medicineName }
 
         // Doctors referenced by a reviewed prescription.
         val reviewedDoctorIds = reviewed.mapNotNull { it.doctorId }.toSet()
-        val reviewedDoctors = doctors
-            .filter { it.id in reviewedDoctorIds }
-            .sortedBy { it.name }
+        val reviewedDoctors =
+            doctors
+                .filter { it.id in reviewedDoctorIds }
+                .sortedBy { it.name }
 
         return listOf(
             compileMedicinesSection(reviewedMedicines, reviewed),
@@ -82,32 +84,35 @@ object HistoryCompiler {
     ): HistorySection {
         val activeMedicines = medicines.filter { it.status != MedicineStatus.PAST }
 
-        val entries = activeMedicines.map { medicine ->
-            val parts = mutableListOf<String>()
-            parts += medicine.medicineName
-            if (medicine.strength != null) parts += medicine.strength
-            if (medicine.formulation != null) parts += "(${medicine.formulation})"
-            if (medicine.dosageInstructions != null) parts += "— ${medicine.dosageInstructions}"
-            if (medicine.status != MedicineStatus.UNKNOWN) {
-                parts += "[${medicine.status.name.lowercase().replaceFirstChar { it.uppercase() }}]"
-            }
+        val entries =
+            activeMedicines.map { medicine ->
+                val parts = mutableListOf<String>()
+                parts += medicine.medicineName
+                if (medicine.strength != null) parts += medicine.strength
+                if (medicine.formulation != null) parts += "(${medicine.formulation})"
+                if (medicine.dosageInstructions != null) parts += "— ${medicine.dosageInstructions}"
+                if (medicine.status != MedicineStatus.UNKNOWN) {
+                    parts += "[${medicine.status.name.lowercase().replaceFirstChar { it.uppercase() }}]"
+                }
 
-            val contentType = when {
-                reviewed.any { it.id == medicine.prescriptionId } -> ContentType.DOCUMENTED_FACT
-                else -> ContentType.PATIENT_REPORTED
-            }
+                val contentType =
+                    when {
+                        reviewed.any { it.id == medicine.prescriptionId } -> ContentType.DOCUMENTED_FACT
+                        else -> ContentType.PATIENT_REPORTED
+                    }
 
-            HistoryEntry(
-                text = parts.joinToString(" "),
-                contentType = contentType,
-                sourceReferences = listOf(
-                    SourceReference(
-                        prescriptionId = medicine.prescriptionId,
-                        fieldName = "medicineName",
-                    ),
-                ),
-            )
-        }
+                HistoryEntry(
+                    text = parts.joinToString(" "),
+                    contentType = contentType,
+                    sourceReferences =
+                        listOf(
+                            SourceReference(
+                                prescriptionId = medicine.prescriptionId,
+                                fieldName = "medicineName",
+                            ),
+                        ),
+                )
+            }
 
         return HistorySection(
             type = SectionType.MEDICINES,
@@ -127,37 +132,41 @@ object HistoryCompiler {
         doctors: List<Doctor>,
         reviewed: List<Prescription>,
     ): HistorySection {
-        val entries = doctors.map { doctor ->
-            val specialtyLabel = when {
-                doctor.specialty.name == "OTHER" && doctor.specialtyOther != null ->
-                    doctor.specialtyOther
-                else ->
-                    doctor.specialty.name
-                        .lowercase()
-                        .replace('_', ' ')
-                        .replaceFirstChar { it.uppercase() }
+        val entries =
+            doctors.map { doctor ->
+                val specialtyLabel =
+                    when {
+                        doctor.specialty.name == "OTHER" && doctor.specialtyOther != null ->
+                            doctor.specialtyOther
+                        else ->
+                            doctor.specialty.name
+                                .lowercase()
+                                .replace('_', ' ')
+                                .replaceFirstChar { it.uppercase() }
+                    }
+
+                val parts = mutableListOf(doctor.name, "— $specialtyLabel")
+                if (doctor.clinicName != null) parts += "(${doctor.clinicName})"
+
+                // Source: most recent reviewed prescription referencing this doctor.
+                val sourcePrescription =
+                    reviewed
+                        .filter { it.doctorId == doctor.id }
+                        .maxByOrNull { it.createdAt }
+
+                val sourceRefs =
+                    listOfNotNull(
+                        sourcePrescription?.let {
+                            SourceReference(prescriptionId = it.id, fieldName = "doctorId")
+                        },
+                    )
+
+                HistoryEntry(
+                    text = parts.joinToString(" "),
+                    contentType = ContentType.DOCUMENTED_FACT,
+                    sourceReferences = sourceRefs,
+                )
             }
-
-            val parts = mutableListOf(doctor.name, "— $specialtyLabel")
-            if (doctor.clinicName != null) parts += "(${doctor.clinicName})"
-
-            // Source: most recent reviewed prescription referencing this doctor.
-            val sourcePrescription = reviewed
-                .filter { it.doctorId == doctor.id }
-                .maxByOrNull { it.createdAt }
-
-            val sourceRefs = listOfNotNull(
-                sourcePrescription?.let {
-                    SourceReference(prescriptionId = it.id, fieldName = "doctorId")
-                },
-            )
-
-            HistoryEntry(
-                text = parts.joinToString(" "),
-                contentType = ContentType.DOCUMENTED_FACT,
-                sourceReferences = sourceRefs,
-            )
-        }
 
         return HistorySection(
             type = SectionType.DOCTORS,
@@ -172,25 +181,25 @@ object HistoryCompiler {
      * Each entry is a prescription date (when present) and its associated doctor.
      * Missing dates are omitted — never fabricated.
      */
-    private fun compileTimelineSection(
-        reviewed: List<Prescription>,
-    ): HistorySection {
-        val entries = reviewed.mapNotNull { prescription ->
-            val datePart = prescription.prescriptionDate?.toString() ?: return@mapNotNull null
-            val parts = mutableListOf<String>("Prescription: $datePart")
-            if (prescription.notes != null) parts += "— ${prescription.notes}"
+    private fun compileTimelineSection(reviewed: List<Prescription>): HistorySection {
+        val entries =
+            reviewed.mapNotNull { prescription ->
+                val datePart = prescription.prescriptionDate?.toString() ?: return@mapNotNull null
+                val parts = mutableListOf<String>("Prescription: $datePart")
+                if (prescription.notes != null) parts += "— ${prescription.notes}"
 
-            HistoryEntry(
-                text = parts.joinToString(" "),
-                contentType = ContentType.DOCUMENTED_FACT,
-                sourceReferences = listOf(
-                    SourceReference(
-                        prescriptionId = prescription.id,
-                        fieldName = "prescriptionDate",
-                    ),
-                ),
-            )
-        }
+                HistoryEntry(
+                    text = parts.joinToString(" "),
+                    contentType = ContentType.DOCUMENTED_FACT,
+                    sourceReferences =
+                        listOf(
+                            SourceReference(
+                                prescriptionId = prescription.id,
+                                fieldName = "prescriptionDate",
+                            ),
+                        ),
+                )
+            }
 
         return HistorySection(
             type = SectionType.TIMELINE,
@@ -210,12 +219,14 @@ object HistoryCompiler {
      * recommendations, or any fabricated health information.
      */
     private fun compileAiSummaryStub(): HistorySection {
-        val stubEntry = HistoryEntry(
-            text = "AI summary generation requires a configured AI provider. " +
-                "Reviewed records compiled above.",
-            contentType = ContentType.DOCUMENTED_FACT,
-            sourceReferences = emptyList(),
-        )
+        val stubEntry =
+            HistoryEntry(
+                text =
+                    "AI summary generation requires a configured AI provider. " +
+                        "Reviewed records compiled above.",
+                contentType = ContentType.DOCUMENTED_FACT,
+                sourceReferences = emptyList(),
+            )
         return HistorySection(
             type = SectionType.AI_SUMMARY,
             title = "AI Summary",

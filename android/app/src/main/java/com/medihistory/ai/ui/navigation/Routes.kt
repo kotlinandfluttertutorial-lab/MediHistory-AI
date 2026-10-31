@@ -28,10 +28,23 @@ object Routes {
     /** Doctor-grouped prescription timeline. */
     const val DOCTOR_GROUP = "doctor_group/{doctorId}"
 
+    const val DOCTOR_LIST = "doctor_list"
+    const val DOCTOR_EDIT_ROUTE = "doctor_edit/{doctorId}"
+    const val DOCTOR_ADD = "doctor_add"
+    const val PATIENT_PROFILE = "patient_profile"
+    const val CONSENT_MANAGEMENT = "consent_management"
+
     fun prescriptionDetail(id: String) = "prescription/$id"
+
     fun medicineDetail(id: String) = "medicine/$id"
+
     fun duplicateDetail(alertId: String) = "duplicate/$alertId"
+
     fun ocrReview(id: String) = "ocr_review/$id"
+
     fun safetyCenter(patientId: String) = "safety_center/$patientId"
+
     fun doctorGroup(id: String) = "doctor_group/$id"
+
+    fun doctorEdit(id: String) = "doctor_edit/$id"
 }

@@ -43,9 +43,10 @@ fun ThemePreviewDark() {
 @Composable
 private fun ThemePreviewContent(themeName: String) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -87,12 +88,13 @@ private fun ThemePreviewContent(themeName: String) {
                     Spacer(modifier = Modifier.height(4.dp))
                     // OCR review badge
                     Box(
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.extendedColors.warningContainer,
-                                shape = MaterialTheme.shapes.extraSmall,
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier =
+                            Modifier
+                                .background(
+                                    color = MaterialTheme.extendedColors.warningContainer,
+                                    shape = MaterialTheme.shapes.extraSmall,
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
                     ) {
                         Text(
                             text = "Pending review",
@@ -107,15 +109,19 @@ private fun ThemePreviewContent(themeName: String) {
 }
 
 @Composable
-private fun ColorSwatch(color: androidx.compose.ui.graphics.Color, label: String) {
+private fun ColorSwatch(
+    color: androidx.compose.ui.graphics.Color,
+    label: String,
+) {
     Column(
         modifier = Modifier.padding(end = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(color = color, shape = MaterialTheme.shapes.small),
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .background(color = color, shape = MaterialTheme.shapes.small),
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(

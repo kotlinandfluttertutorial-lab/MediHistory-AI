@@ -34,16 +34,16 @@ import java.time.LocalTime
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class ReminderRepositoryTest {
-
     private lateinit var db: MediHistoryDatabase
     private lateinit var repository: ReminderRepository
 
     @Before
     fun setUp() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         repository = RoomReminderRepository(db.reminderDao(), db.doseRecordDao())
     }
 
@@ -95,83 +95,89 @@ class ReminderRepositoryTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `test insert then observeByPatient returns correct reminder`() = runTest {
-        val reminder = syntheticReminder()
-        repository.insert(reminder)
+    fun `test insert then observeByPatient returns correct reminder`() =
+        runTest {
+            val reminder = syntheticReminder()
+            repository.insert(reminder)
 
-        val result = repository.observeByPatient("test-patient-001").first()
+            val result = repository.observeByPatient("test-patient-001").first()
 
-        assertEquals("observeByPatient must return 1 reminder after insert", 1, result.size)
-        assertEquals(reminder.id, result.first().id)
-        assertEquals("Synthamol 500mg", result.first().medicineName)
-    }
-
-    @Test
-    fun `test DoseRecord TAKEN persists correctly`() = runTest {
-        val reminder = syntheticReminder()
-        repository.insert(reminder)
-
-        val dose = syntheticDoseRecord(record = DoseRecord.TAKEN)
-        repository.insertDoseRecord(dose)
-
-        val result = repository.observeDoseRecords("rem-001").first()
-        assertEquals("dose record must be persisted", 1, result.size)
-        assertEquals(DoseRecord.TAKEN, result.first().record)
-    }
-
-    @Test
-    fun `test DoseRecord SKIPPED persists correctly`() = runTest {
-        val reminder = syntheticReminder()
-        repository.insert(reminder)
-
-        val dose = syntheticDoseRecord(record = DoseRecord.SKIPPED)
-        repository.insertDoseRecord(dose)
-
-        val result = repository.observeDoseRecords("rem-001").first()
-        assertEquals("dose record must be persisted", 1, result.size)
-        assertEquals(DoseRecord.SKIPPED, result.first().record)
-    }
-
-    @Test
-    fun `test DoseRecord MISSED persists correctly`() = runTest {
-        val reminder = syntheticReminder()
-        repository.insert(reminder)
-
-        val dose = syntheticDoseRecord(record = DoseRecord.MISSED)
-        repository.insertDoseRecord(dose)
-
-        val result = repository.observeDoseRecords("rem-001").first()
-        assertEquals("dose record must be persisted", 1, result.size)
-        assertEquals(DoseRecord.MISSED, result.first().record)
-    }
-
-    @Test
-    fun `test recordDose stores patientNote WITHOUT copying prescribedInstructions`() = runTest {
-        val reminder = syntheticReminder(prescribedInstructions = "1 tablet after meals")
-        repository.insert(reminder)
-
-        // patientNote is patient-authored text, completely independent of prescribedInstructions
-        val patientOwnNote = "Felt a bit nauseous"
-        val dose = syntheticDoseRecord(
-            record = DoseRecord.TAKEN,
-            patientNote = patientOwnNote,
-        )
-        repository.insertDoseRecord(dose)
-
-        val result = repository.observeDoseRecords("rem-001").first()
-        assertNotNull("dose record must be persisted", result.firstOrNull())
-        assertEquals(
-            "patientNote must be exactly what the patient provided",
-            patientOwnNote,
-            result.first().patientNote,
-        )
-        // Safety assertion: patientNote must not equal prescribedInstructions
-        val storedNote = result.first().patientNote
-        val prescribed = reminder.prescribedInstructions
-        assert(storedNote != prescribed) {
-            "patientNote must NEVER match prescribedInstructions — they are separate data"
+            assertEquals("observeByPatient must return 1 reminder after insert", 1, result.size)
+            assertEquals(reminder.id, result.first().id)
+            assertEquals("Synthamol 500mg", result.first().medicineName)
         }
-    }
+
+    @Test
+    fun `test DoseRecord TAKEN persists correctly`() =
+        runTest {
+            val reminder = syntheticReminder()
+            repository.insert(reminder)
+
+            val dose = syntheticDoseRecord(record = DoseRecord.TAKEN)
+            repository.insertDoseRecord(dose)
+
+            val result = repository.observeDoseRecords("rem-001").first()
+            assertEquals("dose record must be persisted", 1, result.size)
+            assertEquals(DoseRecord.TAKEN, result.first().record)
+        }
+
+    @Test
+    fun `test DoseRecord SKIPPED persists correctly`() =
+        runTest {
+            val reminder = syntheticReminder()
+            repository.insert(reminder)
+
+            val dose = syntheticDoseRecord(record = DoseRecord.SKIPPED)
+            repository.insertDoseRecord(dose)
+
+            val result = repository.observeDoseRecords("rem-001").first()
+            assertEquals("dose record must be persisted", 1, result.size)
+            assertEquals(DoseRecord.SKIPPED, result.first().record)
+        }
+
+    @Test
+    fun `test DoseRecord MISSED persists correctly`() =
+        runTest {
+            val reminder = syntheticReminder()
+            repository.insert(reminder)
+
+            val dose = syntheticDoseRecord(record = DoseRecord.MISSED)
+            repository.insertDoseRecord(dose)
+
+            val result = repository.observeDoseRecords("rem-001").first()
+            assertEquals("dose record must be persisted", 1, result.size)
+            assertEquals(DoseRecord.MISSED, result.first().record)
+        }
+
+    @Test
+    fun `test recordDose stores patientNote WITHOUT copying prescribedInstructions`() =
+        runTest {
+            val reminder = syntheticReminder(prescribedInstructions = "1 tablet after meals")
+            repository.insert(reminder)
+
+            // patientNote is patient-authored text, completely independent of prescribedInstructions
+            val patientOwnNote = "Felt a bit nauseous"
+            val dose =
+                syntheticDoseRecord(
+                    record = DoseRecord.TAKEN,
+                    patientNote = patientOwnNote,
+                )
+            repository.insertDoseRecord(dose)
+
+            val result = repository.observeDoseRecords("rem-001").first()
+            assertNotNull("dose record must be persisted", result.firstOrNull())
+            assertEquals(
+                "patientNote must be exactly what the patient provided",
+                patientOwnNote,
+                result.first().patientNote,
+            )
+            // Safety assertion: patientNote must not equal prescribedInstructions
+            val storedNote = result.first().patientNote
+            val prescribed = reminder.prescribedInstructions
+            assert(storedNote != prescribed) {
+                "patientNote must NEVER match prescribedInstructions — they are separate data"
+            }
+        }
 
     @Test
     fun `test DoseRecord enum has exactly 3 values`() {
@@ -184,26 +190,28 @@ class ReminderRepositoryTest {
     }
 
     @Test
-    fun `test getById with wrong patientId returns null`() = runTest {
-        val reminder = syntheticReminder(patientId = "test-patient-001")
-        repository.insert(reminder)
+    fun `test getById with wrong patientId returns null`() =
+        runTest {
+            val reminder = syntheticReminder(patientId = "test-patient-001")
+            repository.insert(reminder)
 
-        // Security: requesting with a different patientId must return null.
-        val result = repository.getById(reminder.id, "test-patient-002")
+            // Security: requesting with a different patientId must return null.
+            val result = repository.getById(reminder.id, "test-patient-002")
 
-        assertNull(
-            "getById with wrong patientId must return null to prevent cross-patient access",
-            result,
-        )
-    }
+            assertNull(
+                "getById with wrong patientId must return null to prevent cross-patient access",
+                result,
+            )
+        }
 
     @Test
-    fun `test delete removes reminder`() = runTest {
-        val reminder = syntheticReminder()
-        repository.insert(reminder)
-        repository.delete(reminder)
+    fun `test delete removes reminder`() =
+        runTest {
+            val reminder = syntheticReminder()
+            repository.insert(reminder)
+            repository.delete(reminder)
 
-        val result = repository.observeByPatient("test-patient-001").first()
-        assert(result.isEmpty()) { "observeByPatient must return empty list after delete" }
-    }
+            val result = repository.observeByPatient("test-patient-001").first()
+            assert(result.isEmpty()) { "observeByPatient must return empty list after delete" }
+        }
 }

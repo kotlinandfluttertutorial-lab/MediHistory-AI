@@ -43,74 +43,75 @@ data class MedicineListUiState(
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class MedicineListViewModel @Inject constructor(
-    private val repository: MedicineRepository,
-) : ViewModel() {
+class MedicineListViewModel
+    @Inject
+    constructor(
+        private val repository: MedicineRepository,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(MedicineListUiState())
+        val uiState: StateFlow<MedicineListUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(MedicineListUiState())
-    val uiState: StateFlow<MedicineListUiState> = _uiState.asStateFlow()
+        /** Holds the active patientId; null means no load has been initiated yet. */
+        private val _patientId = MutableStateFlow<String?>(null)
 
-    /** Holds the active patientId; null means no load has been initiated yet. */
-    private val _patientId = MutableStateFlow<String?>(null)
+        /** Holds the current search query, kept in sync with [_uiState]. */
+        private val _searchQuery = MutableStateFlow("")
 
-    /** Holds the current search query, kept in sync with [_uiState]. */
-    private val _searchQuery = MutableStateFlow("")
+        init {
+            observeMedicines()
+        }
 
-    init {
-        observeMedicines()
-    }
+        /**
+         * Starts observing medicines for [patientId].
+         *
+         * Safe to call multiple times. Switching [patientId] triggers [flatMapLatest]
+         * to cancel the previous subscription and open a new one.
+         */
+        fun loadMedicines(patientId: String) {
+            _patientId.value = patientId
+        }
 
-    /**
-     * Starts observing medicines for [patientId].
-     *
-     * Safe to call multiple times. Switching [patientId] triggers [flatMapLatest]
-     * to cancel the previous subscription and open a new one.
-     */
-    fun loadMedicines(patientId: String) {
-        _patientId.value = patientId
-    }
+        /**
+         * Updates the search query. An empty string returns the full unfiltered list.
+         * Never passes query text to Logcat.
+         */
+        fun onSearchQueryChange(query: String) {
+            _searchQuery.value = query
+            _uiState.update { it.copy(searchQuery = query) }
+        }
 
-    /**
-     * Updates the search query. An empty string returns the full unfiltered list.
-     * Never passes query text to Logcat.
-     */
-    fun onSearchQueryChange(query: String) {
-        _searchQuery.value = query
-        _uiState.update { it.copy(searchQuery = query) }
-    }
+        private fun observeMedicines() {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true) }
 
-    private fun observeMedicines() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-
-            // Combine patientId and searchQuery so any change triggers flatMapLatest.
-            combine(_patientId, _searchQuery) { patientId, query ->
-                Pair(patientId, query)
+                // Combine patientId and searchQuery so any change triggers flatMapLatest.
+                combine(_patientId, _searchQuery) { patientId, query ->
+                    Pair(patientId, query)
+                }
+                    .flatMapLatest { (patientId, query) ->
+                        when {
+                            patientId == null -> flowOf(emptyList())
+                            query.isBlank() -> repository.observeByPatient(patientId)
+                            else -> repository.searchByPatient(patientId, query)
+                        }
+                    }
+                    .catch { e ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = e.message ?: "Failed to load medicines.",
+                            )
+                        }
+                    }
+                    .collect { medicines ->
+                        _uiState.update {
+                            it.copy(
+                                medicines = medicines,
+                                isLoading = false,
+                                error = null,
+                            )
+                        }
+                    }
             }
-                .flatMapLatest { (patientId, query) ->
-                    when {
-                        patientId == null -> flowOf(emptyList())
-                        query.isBlank()   -> repository.observeByPatient(patientId)
-                        else              -> repository.searchByPatient(patientId, query)
-                    }
-                }
-                .catch { e ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = e.message ?: "Failed to load medicines.",
-                        )
-                    }
-                }
-                .collect { medicines ->
-                    _uiState.update {
-                        it.copy(
-                            medicines = medicines,
-                            isLoading = false,
-                            error = null,
-                        )
-                    }
-                }
         }
     }
-}

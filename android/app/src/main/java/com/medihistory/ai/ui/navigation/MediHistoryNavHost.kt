@@ -1,7 +1,11 @@
 package com.medihistory.ai.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -9,6 +13,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.medihistory.ai.ui.camera.CameraScreen
 import com.medihistory.ai.ui.dashboard.DashboardScreen
+import com.medihistory.ai.ui.doctor.DoctorEditScreen
+import com.medihistory.ai.ui.doctor.DoctorListScreen
+import com.medihistory.ai.ui.doctor.DoctorViewModel
 import com.medihistory.ai.ui.duplicate.DuplicateReviewScreen
 import com.medihistory.ai.ui.history.MedicalHistoryScreen
 import com.medihistory.ai.ui.medicine.MedicineDetailScreen
@@ -16,7 +23,9 @@ import com.medihistory.ai.ui.medicine.MedicineListScreen
 import com.medihistory.ai.ui.more.MoreScreen
 import com.medihistory.ai.ui.newdoctor.NewDoctorModeScreen
 import com.medihistory.ai.ui.ocr.OcrReviewScreen
+import com.medihistory.ai.ui.patient.PatientProfileScreen
 import com.medihistory.ai.ui.picker.ImportScreen
+import com.medihistory.ai.ui.picker.ImportViewModel
 import com.medihistory.ai.ui.prescription.DoctorGroupScreen
 import com.medihistory.ai.ui.prescription.PrescriptionDetailScreen
 import com.medihistory.ai.ui.prescription.PrescriptionListScreen
@@ -52,6 +61,9 @@ fun MediHistoryNavHost(
                 onViewHistory = { navController.navigate(Routes.MEDICAL_HISTORY) },
                 onNewDoctorMode = { navController.navigate(Routes.NEW_DOCTOR_MODE) },
                 onViewPrescriptions = { navController.navigate(Routes.PRESCRIPTIONS) },
+                onViewMedicines = { navController.navigate(Routes.MEDICINE_EXPLORER) },
+                onViewDoctors = { navController.navigate(Routes.DOCTOR_LIST) },
+                onViewProfile = { navController.navigate(Routes.PATIENT_PROFILE) },
             )
         }
 
@@ -73,12 +85,14 @@ fun MediHistoryNavHost(
                 prescriptionId = id,
                 patientId = patientId,
                 onBack = { navController.navigateUp() },
+                onReviewOcr = { navController.navigate(Routes.ocrReview(id)) },
             )
         }
 
         // ── Medicine explorer (was already wired) ────────────────────────────
         composable(Routes.MEDICINE_EXPLORER) {
             MedicineListScreen(
+                patientId = patientId,
                 onMedicineClick = { id -> navController.navigate(Routes.medicineDetail(id)) },
             )
         }
@@ -125,10 +139,10 @@ fun MediHistoryNavHost(
                 prescriptionId = id,
                 onBack = { navController.navigateUp() },
                 onAllReviewed = {
-                    // All fields confirmed — go to the prescriptions list so the
-                    // patient can see the updated card (doctor, date, medicines).
-                    navController.navigate(Routes.PRESCRIPTIONS) {
-                        popUpTo(Routes.PRESCRIPTIONS) { inclusive = true }
+                    // Navigate back to the specific prescription detail so the patient
+                    // sees the updated doctor name, date, and medicines on their record.
+                    navController.navigate(Routes.prescriptionDetail(id)) {
+                        popUpTo(Routes.OCR_REVIEW) { inclusive = true }
                     }
                 },
             )
@@ -145,13 +159,46 @@ fun MediHistoryNavHost(
         // ── Camera ────────────────────────────────────────────────────────────
         composable(Routes.CAMERA) {
             CameraScreen(
-                onImageConfirmed = { _, _ -> navController.navigateUp() },
+                onImageConfirmed = { path, sha256 ->
+                    // Pass the captured image result back to the IMPORT back-stack entry
+                    // via SavedStateHandle — the standard Jetpack pattern for result-passing.
+                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                        "camera_result_path",
+                        path,
+                    )
+                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                        "camera_result_sha256",
+                        sha256,
+                    )
+                    navController.navigateUp()
+                },
                 onDismiss = { navController.navigateUp() },
             )
         }
 
         // ── Import (file/photo picker) ────────────────────────────────────────
-        composable(Routes.IMPORT) {
+        composable(Routes.IMPORT) { backStackEntry ->
+            val importViewModel: ImportViewModel = hiltViewModel()
+
+            // Observe camera results passed back from the CAMERA destination.
+            val cameraResultPath by backStackEntry.savedStateHandle
+                .getStateFlow("camera_result_path", "")
+                .collectAsStateWithLifecycle()
+            val cameraResultSha by backStackEntry.savedStateHandle
+                .getStateFlow("camera_result_sha256", "")
+                .collectAsStateWithLifecycle()
+
+            LaunchedEffect(cameraResultPath, cameraResultSha) {
+                if (cameraResultPath.isNotEmpty() && cameraResultSha.isNotEmpty()) {
+                    // Clear the keys synchronously BEFORE calling onCameraImageConfirmed so
+                    // any concurrent recomposition (including process-death restore) sees empty
+                    // values and does not fire a second prescription insert for the same image.
+                    backStackEntry.savedStateHandle["camera_result_path"] = ""
+                    backStackEntry.savedStateHandle["camera_result_sha256"] = ""
+                    importViewModel.onCameraImageConfirmed(cameraResultPath, cameraResultSha)
+                }
+            }
+
             ImportScreen(
                 onFileImported = { prescriptionId ->
                     // OCR worker is already enqueued by ImportViewModel.
@@ -163,6 +210,7 @@ fun MediHistoryNavHost(
                 },
                 onDismiss = { navController.navigateUp() },
                 onOpenCamera = { navController.navigate(Routes.CAMERA) },
+                viewModel = importViewModel,
             )
         }
 
@@ -196,6 +244,7 @@ fun MediHistoryNavHost(
                     }
                 },
                 onBack = { navController.navigateUp() },
+                onManageConsent = { navController.navigate(Routes.CONSENT_MANAGEMENT) },
             )
         }
 
@@ -218,6 +267,57 @@ fun MediHistoryNavHost(
                 patientId = patientId,
                 onBack = { navController.navigateUp() },
                 onViewPrescription = { rxId -> navController.navigate(Routes.prescriptionDetail(rxId)) },
+            )
+        }
+
+        // ── Gap 4: Doctor list ────────────────────────────────────────────────
+        composable(Routes.DOCTOR_LIST) {
+            DoctorListScreen(
+                patientId = patientId,
+                onAddClick = { navController.navigate(Routes.DOCTOR_ADD) },
+                onDoctorClick = { doctor -> navController.navigate(Routes.doctorEdit(doctor.id)) },
+            )
+        }
+
+        // ── Gap 4: Add doctor ────────────────────────────────────────────────
+        composable(Routes.DOCTOR_ADD) {
+            DoctorEditScreen(
+                patientId = patientId,
+                onSaveSuccess = { navController.navigateUp() },
+                onNavigateUp = { navController.navigateUp() },
+            )
+        }
+
+        // ── Gap 4: Edit doctor ────────────────────────────────────────────────
+        composable(
+            route = Routes.DOCTOR_EDIT_ROUTE,
+            arguments = listOf(navArgument("doctorId") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val doctorId = backStackEntry.arguments?.getString("doctorId").orEmpty()
+            val doctorViewModel: DoctorViewModel = hiltViewModel()
+            LaunchedEffect(doctorId) {
+                doctorViewModel.loadDoctor(doctorId, patientId)
+            }
+            DoctorEditScreen(
+                patientId = patientId,
+                onSaveSuccess = { navController.navigateUp() },
+                onNavigateUp = { navController.navigateUp() },
+                viewModel = doctorViewModel,
+            )
+        }
+
+        // ── Gap 5: Patient profile ────────────────────────────────────────────
+        composable(Routes.PATIENT_PROFILE) {
+            PatientProfileScreen(
+                patientId = patientId,
+                onSaveSuccess = { navController.navigateUp() },
+                onNavigateUp = { navController.navigateUp() },
+            )
+        }
+        // -- Gap 6: Consent management
+        composable(Routes.CONSENT_MANAGEMENT) {
+            com.medihistory.ai.ui.privacy.ConsentManagementScreen(
+                onBack = { navController.navigateUp() },
             )
         }
     }

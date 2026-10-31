@@ -34,7 +34,6 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeAuthRepository
     private lateinit var fakePatientRepository: FakePatientRepository
@@ -60,17 +59,18 @@ class LoginViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `given valid credentials when sign-in then isAuthenticated is true`() = runTest {
-        viewModel.onEmailChange("test@synthetic.medihistory")
-        viewModel.onPasswordChange("SyntheticTest123!")
-        viewModel.onPrimaryAction()
-        advanceUntilIdle()
+    fun `given valid credentials when sign-in then isAuthenticated is true`() =
+        runTest {
+            viewModel.onEmailChange("test@synthetic.medihistory")
+            viewModel.onPasswordChange("SyntheticTest123!")
+            viewModel.onPrimaryAction()
+            advanceUntilIdle()
 
-        assertTrue(
-            "isAuthenticated must be true after successful login",
-            viewModel.uiState.value.isAuthenticated,
-        )
-    }
+            assertTrue(
+                "isAuthenticated must be true after successful login",
+                viewModel.uiState.value.isAuthenticated,
+            )
+        }
 
     @Test
     fun `given invalid credentials when sign-in then error is set and isAuthenticated is false`() =
@@ -137,66 +137,70 @@ class LoginViewModelTest {
         }
 
     @Test
-    fun `given successful login then password field is cleared from state`() = runTest {
-        viewModel.onEmailChange("test@synthetic.medihistory")
-        viewModel.onPasswordChange("SyntheticTest123!")
-        viewModel.onPrimaryAction()
-        advanceUntilIdle()
+    fun `given successful login then password field is cleared from state`() =
+        runTest {
+            viewModel.onEmailChange("test@synthetic.medihistory")
+            viewModel.onPasswordChange("SyntheticTest123!")
+            viewModel.onPrimaryAction()
+            advanceUntilIdle()
 
-        assertEquals(
-            "Password must be cleared after successful login",
-            "",
-            viewModel.uiState.value.password,
-        )
-    }
+            assertEquals(
+                "Password must be cleared after successful login",
+                "",
+                viewModel.uiState.value.password,
+            )
+        }
 
     // -------------------------------------------------------------------------
     // Register flow
     // -------------------------------------------------------------------------
 
     @Test
-    fun `given register mode when valid credentials then isAuthenticated is true`() = runTest {
-        viewModel.onToggleMode() // switch to register
-        viewModel.onEmailChange("new@synthetic.medihistory")
-        viewModel.onPasswordChange("SyntheticTest123!")
-        viewModel.onConfirmPasswordChange("SyntheticTest123!")
-        viewModel.onPrimaryAction()
-        advanceUntilIdle()
+    fun `given register mode when valid credentials then isAuthenticated is true`() =
+        runTest {
+            viewModel.onToggleMode() // switch to register
+            viewModel.onEmailChange("new@synthetic.medihistory")
+            viewModel.onPasswordChange("SyntheticTest123!")
+            viewModel.onConfirmPasswordChange("SyntheticTest123!")
+            viewModel.onPrimaryAction()
+            advanceUntilIdle()
 
-        assertTrue(
-            "isAuthenticated must be true after successful registration",
-            viewModel.uiState.value.isAuthenticated,
-        )
-    }
-
-    @Test
-    fun `given register mode when passwords do not match then error is shown`() = runTest {
-        viewModel.onToggleMode()
-        viewModel.onEmailChange("new@synthetic.medihistory")
-        viewModel.onPasswordChange("SyntheticTest123!")
-        viewModel.onConfirmPasswordChange("DifferentPassword!")
-        viewModel.onPrimaryAction()
-        advanceUntilIdle()
-
-        assertNotNull("error must be set when passwords mismatch", viewModel.uiState.value.error)
-        assertEquals("register must not be called", 0, fakeRepository.registerCallCount)
-    }
+            assertTrue(
+                "isAuthenticated must be true after successful registration",
+                viewModel.uiState.value.isAuthenticated,
+            )
+        }
 
     @Test
-    fun `given register mode when password too short then error is shown`() = runTest {
-        viewModel.onToggleMode()
-        viewModel.onEmailChange("new@synthetic.medihistory")
-        viewModel.onPasswordChange("abc")
-        viewModel.onConfirmPasswordChange("abc")
-        viewModel.onPrimaryAction()
-        advanceUntilIdle()
+    fun `given register mode when passwords do not match then error is shown`() =
+        runTest {
+            viewModel.onToggleMode()
+            viewModel.onEmailChange("new@synthetic.medihistory")
+            viewModel.onPasswordChange("SyntheticTest123!")
+            viewModel.onConfirmPasswordChange("DifferentPassword!")
+            viewModel.onPrimaryAction()
+            advanceUntilIdle()
 
-        assertNotNull(
-            "error must be set for password shorter than 6 chars",
-            viewModel.uiState.value.error,
-        )
-        assertEquals("register must not be called", 0, fakeRepository.registerCallCount)
-    }
+            assertNotNull("error must be set when passwords mismatch", viewModel.uiState.value.error)
+            assertEquals("register must not be called", 0, fakeRepository.registerCallCount)
+        }
+
+    @Test
+    fun `given register mode when password too short then error is shown`() =
+        runTest {
+            viewModel.onToggleMode()
+            viewModel.onEmailChange("new@synthetic.medihistory")
+            viewModel.onPasswordChange("abc")
+            viewModel.onConfirmPasswordChange("abc")
+            viewModel.onPrimaryAction()
+            advanceUntilIdle()
+
+            assertNotNull(
+                "error must be set for password shorter than 6 chars",
+                viewModel.uiState.value.error,
+            )
+            assertEquals("register must not be called", 0, fakeRepository.registerCallCount)
+        }
 
     @Test
     fun `given toggle mode when called then fields are cleared`() {
@@ -236,26 +240,33 @@ class LoginViewModelTest {
 // ---------------------------------------------------------------------------
 
 private class FakeAuthRepository : AuthRepository {
-
     var loginResult: Result<Unit> = Result.success(Unit)
     var registerResult: Result<Unit> = Result.success(Unit)
     var loginCallCount = 0
     var registerCallCount = 0
     private var signedIn = false
 
-    override suspend fun login(email: String, password: String): Result<Unit> {
+    override suspend fun login(
+        email: String,
+        password: String,
+    ): Result<Unit> {
         loginCallCount++
         if (loginResult.isSuccess) signedIn = true
         return loginResult
     }
 
-    override suspend fun register(email: String, password: String): Result<Unit> {
+    override suspend fun register(
+        email: String,
+        password: String,
+    ): Result<Unit> {
         registerCallCount++
         if (registerResult.isSuccess) signedIn = true
         return registerResult
     }
 
-    override suspend fun logout() { signedIn = false }
+    override suspend fun logout() {
+        signedIn = false
+    }
 
     override fun isLoggedIn(): Boolean = signedIn
 
@@ -267,8 +278,7 @@ private class FakeAuthRepository : AuthRepository {
 private class FakePatientRepository : PatientRepository {
     private val _patients = MutableStateFlow<List<Patient>>(emptyList())
 
-    override suspend fun getById(patientId: String): Patient? =
-        _patients.value.find { it.id == patientId }
+    override suspend fun getById(patientId: String): Patient? = _patients.value.find { it.id == patientId }
 
     override suspend fun insert(patient: Patient) {
         _patients.update { it + patient }
@@ -286,11 +296,25 @@ private class FakePatientRepository : PatientRepository {
 }
 
 private class FakeSessionManager : SessionManager(
-    securePreferences = object : SecurePreferencesStore {
-        private val store = mutableMapOf<String, String>()
-        override fun getString(key: String): String? = store[key]
-        override fun putString(key: String, value: String) { store[key] = value }
-        override fun remove(key: String) { store.remove(key) }
-        override fun clear() { store.clear() }
-    }
+    securePreferences =
+        object : SecurePreferencesStore {
+            private val store = mutableMapOf<String, String>()
+
+            override fun getString(key: String): String? = store[key]
+
+            override fun putString(
+                key: String,
+                value: String,
+            ) {
+                store[key] = value
+            }
+
+            override fun remove(key: String) {
+                store.remove(key)
+            }
+
+            override fun clear() {
+                store.clear()
+            }
+        },
 )

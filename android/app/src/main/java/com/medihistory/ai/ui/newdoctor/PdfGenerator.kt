@@ -24,9 +24,8 @@ import java.io.FileOutputStream
  * The caller is responsible for sharing via FileProvider (never direct file URI).
  */
 object PdfGenerator {
-
-    private const val PAGE_WIDTH = 595   // A4 points (72 dpi)
-    private const val PAGE_HEIGHT = 842  // A4 points
+    private const val PAGE_WIDTH = 595 // A4 points (72 dpi)
+    private const val PAGE_HEIGHT = 842 // A4 points
     private const val MARGIN = 40f
     private const val LINE_HEIGHT = 18f
     private const val DISCLAIMER =
@@ -82,14 +81,16 @@ object PdfGenerator {
         } else {
             selectedRecords.forEachIndexed { index, record ->
                 contentLines += PdfLine("Prescription ${index + 1}", headingPaint)
-                contentLines += PdfLine(
-                    "Doctor: ${record.doctorName.ifBlank { "Not recorded" }}",
-                    bodyPaint,
-                )
-                contentLines += PdfLine(
-                    "Date: ${record.prescriptionDate.ifBlank { "Not recorded" }}",
-                    bodyPaint,
-                )
+                contentLines +=
+                    PdfLine(
+                        "Doctor: ${record.doctorName.ifBlank { "Not recorded" }}",
+                        bodyPaint,
+                    )
+                contentLines +=
+                    PdfLine(
+                        "Date: ${record.prescriptionDate.ifBlank { "Not recorded" }}",
+                        bodyPaint,
+                    )
                 val medLabel = if (record.medicineCount == 1) "1 medicine" else "${record.medicineCount} medicines"
                 contentLines += PdfLine("Medicines: $medLabel", bodyPaint)
                 contentLines += PdfLine("", bodyPaint) // spacer between records
@@ -144,13 +145,21 @@ object PdfGenerator {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private fun drawFooter(canvas: Canvas, paint: Paint, pageNumber: Int) {
+    private fun drawFooter(
+        canvas: Canvas,
+        paint: Paint,
+        pageNumber: Int,
+    ) {
         val footerY = (PAGE_HEIGHT - MARGIN / 2).toFloat()
         canvas.drawText(FOOTER_DISCLAIMER, MARGIN, footerY, paint)
         canvas.drawText("Page $pageNumber", (PAGE_WIDTH - MARGIN - 40).toFloat(), footerY, paint)
     }
 
-    private fun buildPaint(textSize: Float, style: Int, color: Int): Paint =
+    private fun buildPaint(
+        textSize: Float,
+        style: Int,
+        color: Int,
+    ): Paint =
         Paint().apply {
             this.textSize = textSize
             this.typeface = Typeface.create(Typeface.DEFAULT, style)

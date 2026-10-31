@@ -12,17 +12,17 @@ import org.junit.Test
  * Naming convention: `should_[outcome]_when_[condition]`
  */
 class PrescriptionSummaryTest {
-
     @Test
     fun `should construct without error when doctorName is Doctor removed`() {
-        val summary = PrescriptionSummary(
-            id = "test-id",
-            doctorName = "Doctor removed",
-            doctorSpecialty = "",
-            prescriptionDate = "01 Jan 2024",
-            medicineCount = 0,
-            ocrStatus = OcrStatus.ERROR,
-        )
+        val summary =
+            PrescriptionSummary(
+                id = "test-id",
+                doctorName = "Doctor removed",
+                doctorSpecialty = "",
+                prescriptionDate = "01 Jan 2024",
+                medicineCount = 0,
+                ocrStatus = OcrStatus.ERROR,
+            )
 
         assertNotNull("PrescriptionSummary must not be null", summary)
         assertEquals("Doctor removed", summary.doctorName)

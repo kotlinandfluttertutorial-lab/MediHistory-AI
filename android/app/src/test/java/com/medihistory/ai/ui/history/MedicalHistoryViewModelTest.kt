@@ -1,9 +1,10 @@
 package com.medihistory.ai.ui.history
 
+import com.medihistory.ai.data.ai.GeminiService
+import com.medihistory.ai.data.ai.MedicineHistoryNarratorAgent
 import com.medihistory.ai.data.history.ContentType
 import com.medihistory.ai.data.history.SectionType
 import com.medihistory.ai.data.model.Doctor
-import com.medihistory.ai.data.model.DoctorSpecialty
 import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.model.OcrStatus
@@ -41,7 +42,6 @@ import java.time.LocalDate
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MedicalHistoryViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakePrescriptionRepository: FakePrescriptionRepository
     private lateinit var fakeMedicineRepository: FakeMedicineRepository
@@ -54,11 +54,18 @@ class MedicalHistoryViewModelTest {
         fakePrescriptionRepository = FakePrescriptionRepository()
         fakeMedicineRepository = FakeMedicineRepository()
         fakeDoctorRepository = FakeDoctorRepository()
-        viewModel = MedicalHistoryViewModel(
-            prescriptionRepository = fakePrescriptionRepository,
-            medicineRepository = fakeMedicineRepository,
-            doctorRepository = fakeDoctorRepository,
-        )
+        viewModel =
+            MedicalHistoryViewModel(
+                prescriptionRepository = fakePrescriptionRepository,
+                medicineRepository = fakeMedicineRepository,
+                doctorRepository = fakeDoctorRepository,
+                narratorAgent =
+                    MedicineHistoryNarratorAgent(
+                        object : GeminiService() {
+                            override suspend fun generate(prompt: String): String? = null
+                        },
+                    ),
+            )
     }
 
     @After
@@ -113,143 +120,154 @@ class MedicalHistoryViewModelTest {
     }
 
     @Test
-    fun given_reviewed_prescription_when_generateHistory_then_sections_populated() = runTest {
-        val prescription = syntheticPrescription()
-        fakePrescriptionRepository.add(prescription)
-        fakeMedicineRepository.add(syntheticMedicine(prescriptionId = prescription.id))
+    fun given_reviewed_prescription_when_generateHistory_then_sections_populated() =
+        runTest {
+            val prescription = syntheticPrescription()
+            fakePrescriptionRepository.add(prescription)
+            fakeMedicineRepository.add(syntheticMedicine(prescriptionId = prescription.id))
 
-        viewModel.generateHistory(syntheticPatientId)
-        advanceUntilIdle()
+            viewModel.generateHistory(syntheticPatientId)
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertTrue("Sections must be populated after generateHistory", state.sections.isNotEmpty())
-        assertFalse("isGenerating must be false after completion", state.isGenerating)
-        assertNull("Error must be null after successful compile", state.error)
-    }
-
-    @Test
-    fun given_generateHistory_called_when_running_then_isGenerating_is_true() = runTest {
-        fakePrescriptionRepository.add(syntheticPrescription())
-
-        // Capture state before advanceUntilIdle
-        viewModel.generateHistory(syntheticPatientId)
-
-        // Immediately after launch, before coroutines execute, isGenerating should have been true
-        // We verify the final state is not generating (settled)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertFalse(
-            "isGenerating must be false after completion",
-            state.isGenerating,
-        )
-        assertEquals(
-            "generationProgress must be reset to 0 after completion",
-            0f,
-            state.generationProgress,
-        )
-    }
+            val state = viewModel.uiState.value
+            assertTrue("Sections must be populated after generateHistory", state.sections.isNotEmpty())
+            assertFalse("isGenerating must be false after completion", state.isGenerating)
+            assertNull("Error must be null after successful compile", state.error)
+        }
 
     @Test
-    fun given_successful_compile_when_generateHistory_then_lastUpdated_is_set() = runTest {
-        fakePrescriptionRepository.add(syntheticPrescription())
+    fun given_generateHistory_called_when_running_then_isGenerating_is_true() =
+        runTest {
+            fakePrescriptionRepository.add(syntheticPrescription())
 
-        viewModel.generateHistory(syntheticPatientId)
-        advanceUntilIdle()
+            // Capture state before advanceUntilIdle
+            viewModel.generateHistory(syntheticPatientId)
 
-        assertNotNull(
-            "lastUpdated must be set after a successful compile",
-            viewModel.uiState.value.lastUpdated,
-        )
-    }
+            // Immediately after launch, before coroutines execute, isGenerating should have been true
+            // We verify the final state is not generating (settled)
+            advanceUntilIdle()
 
-    @Test
-    fun given_compiled_sections_when_ai_summary_section_checked_then_isAiGenerated_true() = runTest {
-        fakePrescriptionRepository.add(syntheticPrescription())
-
-        viewModel.generateHistory(syntheticPatientId)
-        advanceUntilIdle()
-
-        val aiSection = viewModel.uiState.value.sections
-            .firstOrNull { it.type == SectionType.AI_SUMMARY }
-
-        assertNotNull("AI_SUMMARY section must be present", aiSection)
-        assertTrue(
-            "AI_SUMMARY section must have isAiGenerated = true",
-            aiSection!!.isAiGenerated,
-        )
-    }
+            val state = viewModel.uiState.value
+            assertFalse(
+                "isGenerating must be false after completion",
+                state.isGenerating,
+            )
+            assertEquals(
+                "generationProgress must be reset to 0 after completion",
+                0f,
+                state.generationProgress,
+            )
+        }
 
     @Test
-    fun given_ai_summary_stub_when_checked_then_no_clinical_advice() = runTest {
-        fakePrescriptionRepository.add(syntheticPrescription())
+    fun given_successful_compile_when_generateHistory_then_lastUpdated_is_set() =
+        runTest {
+            fakePrescriptionRepository.add(syntheticPrescription())
 
-        viewModel.generateHistory(syntheticPatientId)
-        advanceUntilIdle()
+            viewModel.generateHistory(syntheticPatientId)
+            advanceUntilIdle()
 
-        val aiSection = viewModel.uiState.value.sections
-            .first { it.type == SectionType.AI_SUMMARY }
+            assertNotNull(
+                "lastUpdated must be set after a successful compile",
+                viewModel.uiState.value.lastUpdated,
+            )
+        }
 
-        val forbiddenTerms = listOf("diagnos", "treatment", "recommend", "prescrib", "stop", "start")
-        aiSection.entries.forEach { entry ->
-            forbiddenTerms.forEach { term ->
-                assertFalse(
-                    "AI stub must not contain clinical advice term '$term': '${entry.text}'",
-                    entry.text.lowercase().contains(term),
+    @Test
+    fun given_compiled_sections_when_ai_summary_section_checked_then_isAiGenerated_true() =
+        runTest {
+            fakePrescriptionRepository.add(syntheticPrescription())
+
+            viewModel.generateHistory(syntheticPatientId)
+            advanceUntilIdle()
+
+            val aiSection =
+                viewModel.uiState.value.sections
+                    .firstOrNull { it.type == SectionType.AI_SUMMARY }
+
+            assertNotNull("AI_SUMMARY section must be present", aiSection)
+            assertTrue(
+                "AI_SUMMARY section must have isAiGenerated = true",
+                aiSection!!.isAiGenerated,
+            )
+        }
+
+    @Test
+    fun given_ai_summary_stub_when_checked_then_no_clinical_advice() =
+        runTest {
+            fakePrescriptionRepository.add(syntheticPrescription())
+
+            viewModel.generateHistory(syntheticPatientId)
+            advanceUntilIdle()
+
+            val aiSection =
+                viewModel.uiState.value.sections
+                    .first { it.type == SectionType.AI_SUMMARY }
+
+            val forbiddenTerms = listOf("diagnos", "treatment", "recommend", "prescrib", "stop", "start")
+            aiSection.entries.forEach { entry ->
+                forbiddenTerms.forEach { term ->
+                    assertFalse(
+                        "AI stub must not contain clinical advice term '$term': '${entry.text}'",
+                        entry.text.lowercase().contains(term),
+                    )
+                }
+            }
+        }
+
+    @Test
+    fun given_sections_present_when_ai_summary_entry_checked_then_contentType_not_ai_generated() =
+        runTest {
+            // The stub entry is DOCUMENTED_FACT because it's not actual AI output
+            fakePrescriptionRepository.add(syntheticPrescription())
+
+            viewModel.generateHistory(syntheticPatientId)
+            advanceUntilIdle()
+
+            val aiSection =
+                viewModel.uiState.value.sections
+                    .first { it.type == SectionType.AI_SUMMARY }
+
+            aiSection.entries.forEach { entry ->
+                assertEquals(
+                    "Stub entry in AI_SUMMARY must have ContentType.DOCUMENTED_FACT",
+                    ContentType.DOCUMENTED_FACT,
+                    entry.contentType,
                 )
             }
         }
-    }
 
     @Test
-    fun given_sections_present_when_ai_summary_entry_checked_then_contentType_not_ai_generated() = runTest {
-        // The stub entry is DOCUMENTED_FACT because it's not actual AI output
-        fakePrescriptionRepository.add(syntheticPrescription())
+    fun given_refresh_called_when_sections_exist_then_sections_repopulated() =
+        runTest {
+            fakePrescriptionRepository.add(syntheticPrescription())
 
-        viewModel.generateHistory(syntheticPatientId)
-        advanceUntilIdle()
+            viewModel.generateHistory(syntheticPatientId)
+            advanceUntilIdle()
 
-        val aiSection = viewModel.uiState.value.sections
-            .first { it.type == SectionType.AI_SUMMARY }
+            val firstCompile = viewModel.uiState.value.sections.size
 
-        aiSection.entries.forEach { entry ->
+            viewModel.refresh(syntheticPatientId)
+            advanceUntilIdle()
+
             assertEquals(
-                "Stub entry in AI_SUMMARY must have ContentType.DOCUMENTED_FACT",
-                ContentType.DOCUMENTED_FACT,
-                entry.contentType,
+                "Refresh must repopulate sections with same count",
+                firstCompile,
+                viewModel.uiState.value.sections.size,
             )
         }
-    }
 
     @Test
-    fun given_refresh_called_when_sections_exist_then_sections_repopulated() = runTest {
-        fakePrescriptionRepository.add(syntheticPrescription())
+    fun given_empty_repositories_when_generateHistory_then_sections_not_null() =
+        runTest {
+            viewModel.generateHistory(syntheticPatientId)
+            advanceUntilIdle()
 
-        viewModel.generateHistory(syntheticPatientId)
-        advanceUntilIdle()
-
-        val firstCompile = viewModel.uiState.value.sections.size
-
-        viewModel.refresh(syntheticPatientId)
-        advanceUntilIdle()
-
-        assertEquals(
-            "Refresh must repopulate sections with same count",
-            firstCompile,
-            viewModel.uiState.value.sections.size,
-        )
-    }
-
-    @Test
-    fun given_empty_repositories_when_generateHistory_then_sections_not_null() = runTest {
-        viewModel.generateHistory(syntheticPatientId)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertNotNull("Sections must not be null even with empty repositories", state.sections)
-        assertFalse("isGenerating must be false after empty compile", state.isGenerating)
-        assertNull("Error must be null for empty compile", state.error)
-    }
+            val state = viewModel.uiState.value
+            assertNotNull("Sections must not be null even with empty repositories", state.sections)
+            assertFalse("isGenerating must be false after empty compile", state.isGenerating)
+            assertNull("Error must be null for empty compile", state.error)
+        }
 }
 
 // -------------------------------------------------------------------------
@@ -257,18 +275,18 @@ class MedicalHistoryViewModelTest {
 // -------------------------------------------------------------------------
 
 private class FakePrescriptionRepository : PrescriptionRepository {
-
     private val _prescriptions = MutableStateFlow<List<Prescription>>(emptyList())
 
     fun add(prescription: Prescription) {
         _prescriptions.update { it + prescription }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Prescription>> =
-        _prescriptions.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Prescription>> = _prescriptions.map { list -> list.filter { it.patientId == patientId } }
 
-    override suspend fun getById(id: String, patientId: String): Prescription? =
-        _prescriptions.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Prescription? = _prescriptions.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insert(prescription: Prescription) {
         _prescriptions.update { it + prescription }
@@ -299,27 +317,32 @@ private class FakePrescriptionRepository : PrescriptionRepository {
 }
 
 private class FakeMedicineRepository : MedicineRepository {
-
     private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
 
     fun add(medicine: Medicine) {
         _medicines.update { it + medicine }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Medicine>> =
-        _medicines.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = _medicines.map { list -> list.filter { it.patientId == patientId } }
 
-    override fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>> =
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> =
         _medicines.map { list ->
             list.filter { m ->
                 m.patientId == patientId &&
-                    (m.medicineName.contains(query, ignoreCase = true) ||
-                        m.activeIngredient?.contains(query, ignoreCase = true) == true)
+                    (
+                        m.medicineName.contains(query, ignoreCase = true) ||
+                            m.activeIngredient?.contains(query, ignoreCase = true) == true
+                    )
             }
         }
 
-    override suspend fun getById(id: String, patientId: String): Medicine? =
-        _medicines.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? = _medicines.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insertAll(medicines: List<Medicine>) {
         _medicines.update { it + medicines }
@@ -344,18 +367,18 @@ private class FakeMedicineRepository : MedicineRepository {
 }
 
 private class FakeDoctorRepository : DoctorRepository {
-
     private val _doctors = MutableStateFlow<List<Doctor>>(emptyList())
 
     fun add(doctor: Doctor) {
         _doctors.update { it + doctor }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Doctor>> =
-        _doctors.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Doctor>> = _doctors.map { list -> list.filter { it.patientId == patientId } }
 
-    override suspend fun getById(doctorId: String, patientId: String): Doctor? =
-        _doctors.value.find { it.id == doctorId && it.patientId == patientId }
+    override suspend fun getById(
+        doctorId: String,
+        patientId: String,
+    ): Doctor? = _doctors.value.find { it.id == doctorId && it.patientId == patientId }
 
     override suspend fun insert(doctor: Doctor) {
         _doctors.update { it + doctor }

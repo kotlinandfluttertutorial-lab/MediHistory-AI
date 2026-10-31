@@ -14,7 +14,6 @@ import org.junit.Test
  * Naming convention: `should_[outcome]_when_[condition]`
  */
 class MedicineDetailScreenTest {
-
     @Test
     fun should_have_isLoading_false_in_default_state() {
         val state = MedicineDetailUiState()

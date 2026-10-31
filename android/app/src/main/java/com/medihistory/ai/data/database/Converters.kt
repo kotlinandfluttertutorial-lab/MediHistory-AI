@@ -11,21 +11,18 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 class Converters {
-
     // --- LocalDate <-> Long (epoch day) ---
 
     @TypeConverter
     fun localDateToEpochDay(date: LocalDate?): Long? = date?.toEpochDay()
 
     @TypeConverter
-    fun epochDayToLocalDate(value: Long?): LocalDate? =
-        value?.let { LocalDate.ofEpochDay(it) }
+    fun epochDayToLocalDate(value: Long?): LocalDate? = value?.let { LocalDate.ofEpochDay(it) }
 
     // --- List<String> <-> String (comma-delimited, backslash-escaped) ---
 
     @TypeConverter
-    fun stringListToString(list: List<String>?): String? =
-        list?.joinToString(",") { it.escape() }
+    fun stringListToString(list: List<String>?): String? = list?.joinToString(",") { it.escape() }
 
     @TypeConverter
     fun stringToStringList(value: String?): List<String>? {

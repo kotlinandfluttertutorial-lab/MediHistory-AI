@@ -9,12 +9,16 @@ package com.medihistory.ai.data.model
 enum class OcrStatus {
     /** Document has been added but OCR has not been queued yet. */
     PENDING,
+
     /** OCR WorkManager job is running. */
     PROCESSING,
+
     /** OCR completed; one or more fields require patient review. */
     NEEDS_REVIEW,
+
     /** All extracted fields have been reviewed by the patient. */
     REVIEWED,
+
     /** OCR service returned an error or the job failed. */
     ERROR,
 }

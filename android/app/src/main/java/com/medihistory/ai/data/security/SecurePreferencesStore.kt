@@ -9,9 +9,15 @@ package com.medihistory.ai.data.security
  * The only production implementation is [SecurePreferences].
  */
 interface SecurePreferencesStore {
-    fun putString(key: String, value: String)
+    fun putString(
+        key: String,
+        value: String,
+    )
+
     fun getString(key: String): String?
+
     fun remove(key: String)
+
     /** Clears all stored values. Called during account deletion. */
     fun clear()
 }

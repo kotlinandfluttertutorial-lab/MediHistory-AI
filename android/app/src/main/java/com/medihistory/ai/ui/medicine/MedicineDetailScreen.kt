@@ -16,7 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -25,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -103,9 +103,10 @@ fun MedicineDetailScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Navigate back"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Navigate back"
+                            },
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -119,9 +120,10 @@ fun MedicineDetailScreen(
         when {
             uiState.isLoading -> {
                 LoadingIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                     contentDescription = "Loading medicine details",
                 )
             }
@@ -130,51 +132,58 @@ fun MedicineDetailScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 24.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(horizontal = 24.dp),
                 ) {
                     Text(
                         text = uiState.error ?: "An error occurred.",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Error: ${uiState.error}"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Error: ${uiState.error}"
+                            },
                     )
                 }
             }
 
             uiState.medicine != null -> {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 ) {
                     // Duplicate alert banner — safety critical, shown first
                     if (uiState.hasDuplicateAlert) {
                         androidx.compose.material3.Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp, MaterialTheme.colorScheme.error
-                            )
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                            colors =
+                                androidx.compose.material3.CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                ),
+                            border =
+                                androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.error,
+                                ),
                         ) {
                             Row(
                                 modifier = Modifier.padding(16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
                                     Icons.Outlined.Warning,
                                     contentDescription = "Duplicate alert",
                                     tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -220,11 +229,12 @@ internal const val DISCLAIMER_TEXT =
  * Both enums mirror each other intentionally; keeping them in separate packages
  * prevents the UI from depending on Room annotations.
  */
-private fun MedicineStatus.toUiStatus(): UiMedicineStatus = when (this) {
-    MedicineStatus.CURRENT -> UiMedicineStatus.CURRENT
-    MedicineStatus.PAST    -> UiMedicineStatus.PAST
-    MedicineStatus.UNKNOWN -> UiMedicineStatus.UNKNOWN
-}
+private fun MedicineStatus.toUiStatus(): UiMedicineStatus =
+    when (this) {
+        MedicineStatus.CURRENT -> UiMedicineStatus.CURRENT
+        MedicineStatus.PAST -> UiMedicineStatus.PAST
+        MedicineStatus.UNKNOWN -> UiMedicineStatus.UNKNOWN
+    }
 
 @Composable
 private fun MedicineDetailContent(
@@ -233,22 +243,25 @@ private fun MedicineDetailContent(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // ── 1. Header card ────────────────────────────────────────────────
         ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = "Medicine header: ${medicine.medicineName}" },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Medicine header: ${medicine.medicineName}" },
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
@@ -307,9 +320,10 @@ private fun MedicineDetailContent(
             Spacer(modifier = Modifier.height(8.dp))
             ElevatedButton(
                 onClick = { onViewPrescription(medicine.prescriptionId) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "View source prescription" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "View source prescription" },
             ) {
                 Text(text = "View prescription")
             }
@@ -320,10 +334,11 @@ private fun MedicineDetailContent(
             text = DISCLAIMER_TEXT,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp)
-                .semantics { contentDescription = DISCLAIMER_TEXT },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+                    .semantics { contentDescription = DISCLAIMER_TEXT },
         )
     }
 }
@@ -337,9 +352,10 @@ private fun SectionCard(
     content: @Composable () -> Unit,
 ) {
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { this.contentDescription = contentDescription },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { this.contentDescription = contentDescription },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -361,12 +377,13 @@ private fun LabeledRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .semantics(mergeDescendants = true) {
-                contentDescription = "$label: ${value ?: NOT_AVAILABLE}"
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .semantics(mergeDescendants = true) {
+                    contentDescription = "$label: ${value ?: NOT_AVAILABLE}"
+                },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {

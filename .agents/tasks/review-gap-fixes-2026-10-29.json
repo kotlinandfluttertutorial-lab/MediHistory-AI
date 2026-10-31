@@ -1,0 +1,9 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Duplicate alert accumulation — DuplicateDetector.detect() runs on every PostReviewProcessor.process() call regardless of whether any medicines were inserted. Each alert gets a new UUID.randomUUID() id so OnConflictStrategy.IGNORE never fires, causing repeated reviews to accumulate growing rows for the same medicine pair. Fix: guard the detection block inside if (medicines.isNotEmpty()), or deduplicate on (medicineAId, medicineBId) before inserting. Confidence: confirmed.",
+    "LaunchedEffect double-fire on process-death restore (camera) — LaunchedEffect(cameraResultPath, cameraResultSha) removes both savedStateHandle keys after calling onCameraImageConfirmed, but on process-death restoration the effect body can execute again with the original non-empty captured values before the removes take effect, creating a second Prescription row for the same image. Fix: write \"\" to both keys before calling onCameraImageConfirmed. Confidence: likely.",
+    "onExtractText absent from PrescriptionDetailScreen public signature — the plan required onExtractText: () -> Unit = {} as an injectable parameter; the implementation wires it inline and omits the parameter, removing the composable-level test seam for stubbing OCR triggering without a real WorkManager. Confidence: confirmed."
+  ],
+  "reviewDoc": "j:\\Android\\AndroidStudioProjects\\Kiro\\MediHistory-AI\\.agents\\tasks\\review-gap-fixes-2026-10-29.md"
+}

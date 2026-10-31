@@ -57,7 +57,7 @@ def client() -> TestClient:
 def auth_token(client: TestClient) -> str:
     """Obtain a valid JWT for the synthetic patient."""
     response = client.post(
-        "/auth/login",
+        "/api/v1/auth/login",
         json={"email": SYNTHETIC_EMAIL, "password": SYNTHETIC_PASSWORD},
     )
     assert response.status_code == 200, f"Setup login failed: {response.text}"
@@ -152,6 +152,10 @@ def test_rate_limit_exceeded_returns_429() -> None:
         json={"email": SYNTHETIC_EMAIL, "password": "wrong-password"},
     )
     assert resp.status_code == 429, f"Expected 429 on request 4; got {resp.status_code}"
+
+    # Note: this isolated test app mounts auth.router directly without a prefix,
+    # so login is at /auth/login (no /api/v1 prefix) — this is intentional for
+    # the rate limit isolation test.
 
 
 # ---------------------------------------------------------------------------

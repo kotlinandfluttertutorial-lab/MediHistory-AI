@@ -47,8 +47,9 @@ fun ConsentDialog(
         text = {
             Column {
                 Text(
-                    text = "You are about to share a patient-compiled summary with " +
-                        "$selectedCount $prescriptionWord.",
+                    text =
+                        "You are about to share a patient-compiled summary with " +
+                            "$selectedCount $prescriptionWord.",
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
@@ -58,8 +59,9 @@ fun ConsentDialog(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Disclaimer: Patient-compiled record. Not a clinical report. " +
-                        "Please verify all information with your doctor.",
+                    text =
+                        "Disclaimer: Patient-compiled record. Not a clinical report. " +
+                            "Please verify all information with your doctor.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,8 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.medihistory.ai.BuildConfig
 import com.medihistory.ai.data.ocr.ReviewState
 import com.medihistory.ai.ui.components.LoadingIndicator
 import com.medihistory.ai.ui.theme.extendedColors
@@ -75,15 +76,34 @@ fun OcrReviewScreen(
     onAllReviewed: () -> Unit = {},
     viewModel: OcrReviewViewModel = hiltViewModel(),
 ) {
-    LaunchedEffect(prescriptionId) {
-        viewModel.load(prescriptionId)
+    val uiState by viewModel.uiState.collectAsState()
+    val geminiConsentState by viewModel.geminiConsentState.collectAsState()
+
+    // Show consent dialog when feature is enabled and consent is not yet recorded.
+    // After the patient responds, the consentResolved flag flips and load() fires.
+    if (BuildConfig.ENABLE_GEMINI_OCR && geminiConsentState == GeminiConsentState.UNKNOWN) {
+        GeminiConsentDialog(
+            onAccept = { viewModel.onGeminiConsentGranted() },
+            onDecline = { viewModel.onGeminiConsentDeclined() },
+        )
     }
 
-    val uiState by viewModel.uiState.collectAsState()
+    // Load only after consent is known (or when the feature flag is off).
+    val consentResolved =
+        !BuildConfig.ENABLE_GEMINI_OCR ||
+            geminiConsentState != GeminiConsentState.UNKNOWN
+    LaunchedEffect(prescriptionId, consentResolved) {
+        if (consentResolved) {
+            viewModel.load(prescriptionId)
+        }
+    }
 
-    // Navigate away once all fields are done and the processor has written doctor/medicines.
-    LaunchedEffect(uiState.allReviewed) {
-        if (uiState.allReviewed && uiState.fields.isNotEmpty()) {
+    // Auto-navigate only after the patient has actually interacted and reviewed all fields.
+    // Guarding with hasUserInteracted prevents navigating away when:
+    //  - the OCR worker finishes before the screen opens (empty list → allReviewed = false now)
+    //  - the screen recomposes before fields load
+    LaunchedEffect(uiState.allReviewed, uiState.hasUserInteracted) {
+        if (uiState.allReviewed && uiState.hasUserInteracted && uiState.fields.isNotEmpty()) {
             onAllReviewed()
         }
     }
@@ -97,13 +117,14 @@ fun OcrReviewScreen(
                 title = { Text("Review Prescription") },
                 navigationIcon = {
                     IconButton(
-                        onClick  = onBack,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Navigate back"
-                        },
+                        onClick = onBack,
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Navigate back"
+                            },
                     ) {
                         Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
                         )
                     }
@@ -127,9 +148,10 @@ fun OcrReviewScreen(
             uiState.isLoading -> {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier         = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
                 ) {
                     LoadingIndicator(
                         contentDescription = "Loading extracted fields",
@@ -140,12 +162,13 @@ fun OcrReviewScreen(
             uiState.error != null -> {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier         = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
                 ) {
                     Text(
-                        text  = uiState.error ?: "An error occurred.",
+                        text = uiState.error ?: "An error occurred.",
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
@@ -153,10 +176,10 @@ fun OcrReviewScreen(
 
             else -> {
                 LazyColumn(
-                    state           = listState,
-                    contentPadding  = paddingValues,
+                    state = listState,
+                    contentPadding = paddingValues,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier        = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     // ── Original document placeholder ─────────────────────────
                     item {
@@ -166,54 +189,92 @@ fun OcrReviewScreen(
                                     snackbarHostState.showSnackbar("Document viewer coming soon")
                                 }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .padding(top = 8.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .padding(top = 8.dp),
                         )
                     }
 
-                    // ── Pending / all-reviewed banners ────────────────────────
-                    item {
-                        StatusBanner(
-                            pendingCount = uiState.pendingCount,
-                            allReviewed  = uiState.allReviewed,
-                            modifier     = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                        )
-                    }
+                    // ── OCR still processing — no fields yet ──────────────────
+                    if (uiState.fields.isEmpty()) {
+                        item {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(32.dp),
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    androidx.compose.material3.CircularProgressIndicator()
+                                    Text(
+                                        text = "Extracting fields from your prescription…",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    )
+                                    Text(
+                                        text = "This usually takes a few seconds.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // ── Pending / all-reviewed banners ────────────────────
+                        item {
+                            StatusBanner(
+                                pendingCount = uiState.pendingCount,
+                                allReviewed = uiState.allReviewed,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                            )
+                        }
 
-                    // ── Section header ────────────────────────────────────────
-                    item {
-                        Text(
-                            text     = "EXTRACTED FIELDS",
-                            style    = MaterialTheme.typography.labelSmall,
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
-                    }
+                        // ── Section header ────────────────────────────────────
+                        item {
+                            Text(
+                                text = "EXTRACTED FIELDS",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                        }
 
-                    // ── Field cards ───────────────────────────────────────────
-                    itemsIndexed(
-                        items = uiState.fields,
-                        key   = { _, field -> field.fieldId },
-                    ) { _, field ->
-                        ExtractedFieldCard(
-                            field            = field,
-                            onConfirm        = { viewModel.onConfirmField(field.fieldId) },
-                            onEdit           = { viewModel.onEditField(field.fieldId) },
-                            onReject         = { viewModel.onRejectField(field.fieldId) },
-                            onUnreview       = { viewModel.onUnreviewField(field.fieldId) },
-                            onEditTextChange = { text -> viewModel.onEditTextChange(field.fieldId, text) },
-                            onSaveEdit       = { viewModel.onSaveEdit(field.fieldId) },
-                            onCancelEdit     = { viewModel.onCancelEdit(field.fieldId) },
-                            modifier         = Modifier.padding(horizontal = 16.dp),
-                        )
-                    }
+                        // ── Field cards ───────────────────────────────────────
+                        itemsIndexed(
+                            items = uiState.fields,
+                            key = { _, field -> field.fieldId },
+                        ) { _, field ->
+                            ExtractedFieldCard(
+                                field = field,
+                                onConfirm = { viewModel.onConfirmField(field.fieldId) },
+                                onEdit = { viewModel.onEditField(field.fieldId) },
+                                onReject = { viewModel.onRejectField(field.fieldId) },
+                                onUnreview = { viewModel.onUnreviewField(field.fieldId) },
+                                onEditTextChange = { text -> viewModel.onEditTextChange(field.fieldId, text) },
+                                onSaveEdit = { viewModel.onSaveEdit(field.fieldId) },
+                                onCancelEdit = { viewModel.onCancelEdit(field.fieldId) },
+                                suggestion = uiState.suggestedValues[field.fieldId],
+                                onApplySuggestion = { suggestion ->
+                                    viewModel.onApplySuggestion(field.fieldId, suggestion)
+                                },
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                        }
 
-                    // Trailing spacer so last card isn't hidden behind bottom bar.
-                    item { Spacer(Modifier.height(16.dp)) }
+                        // Trailing spacer
+                        item { Spacer(Modifier.height(16.dp)) }
+                    }
                 }
             }
         }
@@ -238,28 +299,29 @@ private fun DocumentPlaceholder(
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier         = modifier
-            .height(180.dp)
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.medium,
-            )
-            .clickable(
-                onClickLabel = "Open original document",
-                onClick      = onTap,
-            )
-            .semantics { contentDescription = "Original document preserved. Tap to view." },
+        modifier =
+            modifier
+                .height(180.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = MaterialTheme.shapes.medium,
+                )
+                .clickable(
+                    onClickLabel = "Open original document",
+                    onClick = onTap,
+                )
+                .semantics { contentDescription = "Original document preserved. Tap to view." },
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                imageVector        = Icons.Outlined.Description,
+                imageVector = Icons.Outlined.Description,
                 contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier           = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(48.dp),
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text  = "Original document preserved",
+                text = "Original document preserved",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -285,16 +347,17 @@ private fun StatusBanner(
     when {
         pendingCount > 0 -> {
             Surface(
-                color    = MaterialTheme.extendedColors.warningContainer,
-                shape    = MaterialTheme.shapes.small,
-                modifier = modifier.semantics {
-                    contentDescription = "$pendingCount field(s) need your review"
-                },
+                color = MaterialTheme.extendedColors.warningContainer,
+                shape = MaterialTheme.shapes.small,
+                modifier =
+                    modifier.semantics {
+                        contentDescription = "$pendingCount field(s) need your review"
+                    },
             ) {
                 Text(
-                    text     = "$pendingCount field(s) need your review",
-                    style    = MaterialTheme.typography.bodyMedium,
-                    color    = MaterialTheme.extendedColors.onWarningContainer,
+                    text = "$pendingCount field(s) need your review",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.extendedColors.onWarningContainer,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
@@ -302,16 +365,17 @@ private fun StatusBanner(
 
         allReviewed -> {
             Surface(
-                color    = MaterialTheme.colorScheme.tertiaryContainer,
-                shape    = MaterialTheme.shapes.small,
-                modifier = modifier.semantics {
-                    contentDescription = "All fields reviewed. Thank you."
-                },
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = MaterialTheme.shapes.small,
+                modifier =
+                    modifier.semantics {
+                        contentDescription = "All fields reviewed. Thank you."
+                    },
             ) {
                 Text(
-                    text     = "All fields reviewed. Thank you.",
-                    style    = MaterialTheme.typography.bodyMedium,
-                    color    = MaterialTheme.colorScheme.onTertiaryContainer,
+                    text = "All fields reviewed. Thank you.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
@@ -334,19 +398,21 @@ private fun ReviewNextButton(
 ) {
     Surface(
         tonalElevation = 3.dp,
-        modifier       = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             horizontalArrangement = Arrangement.Center,
-            modifier              = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Button(
-                onClick  = onClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "Review next field" },
+                onClick = onClick,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "Review next field" },
             ) {
                 Text("Review next field")
             }
@@ -369,9 +435,10 @@ private suspend fun scrollToFirstPending(
     fields: List<FieldReviewState>,
 ) {
     val headerItemCount = 3
-    val firstPendingIndex = fields.indexOfFirst {
-        it.reviewState == ReviewState.PENDING_REVIEW && it.rawValue != null
-    }
+    val firstPendingIndex =
+        fields.indexOfFirst {
+            it.reviewState == ReviewState.PENDING_REVIEW && it.rawValue != null
+        }
     if (firstPendingIndex >= 0) {
         listState.animateScrollToItem(headerItemCount + firstPendingIndex)
     }

@@ -23,11 +23,12 @@ import kotlin.math.roundToInt
  * - 0.55–0.69 → "Medium"
  * - < 0.55 → "Low"
  */
-internal fun getConfidenceLevel(confidence: Float): String = when {
-    confidence >= 0.70f -> "High"
-    confidence >= 0.55f -> "Medium"
-    else                -> "Low"
-}
+internal fun getConfidenceLevel(confidence: Float): String =
+    when {
+        confidence >= 0.70f -> "High"
+        confidence >= 0.55f -> "Medium"
+        else -> "Low"
+    }
 
 /**
  * A chip that displays an OCR field's [confidence] score as both a percentage and a level label.
@@ -48,24 +49,27 @@ fun ConfidenceBadge(
     val level = getConfidenceLevel(confidence)
     val displayText = "$pct% \u2022 $level"
 
-    val containerColor = when (level) {
-        "High"   -> MaterialTheme.colorScheme.tertiaryContainer
-        "Medium" -> MaterialTheme.extendedColors.warningContainer
-        else     -> MaterialTheme.colorScheme.errorContainer
-    }
+    val containerColor =
+        when (level) {
+            "High" -> MaterialTheme.colorScheme.tertiaryContainer
+            "Medium" -> MaterialTheme.extendedColors.warningContainer
+            else -> MaterialTheme.colorScheme.errorContainer
+        }
 
-    val labelColor = when (level) {
-        "High"   -> MaterialTheme.colorScheme.onTertiaryContainer
-        "Medium" -> MaterialTheme.extendedColors.onWarningContainer
-        else     -> MaterialTheme.colorScheme.onErrorContainer
-    }
+    val labelColor =
+        when (level) {
+            "High" -> MaterialTheme.colorScheme.onTertiaryContainer
+            "Medium" -> MaterialTheme.extendedColors.onWarningContainer
+            else -> MaterialTheme.colorScheme.onErrorContainer
+        }
 
     AssistChip(
         onClick = {},
         label = { Text(text = displayText, color = labelColor) },
         colors = AssistChipDefaults.assistChipColors(containerColor = containerColor),
-        modifier = modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .semantics { contentDescription = "Confidence: $pct%, $level" },
+        modifier =
+            modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = "Confidence: $pct%, $level" },
     )
 }

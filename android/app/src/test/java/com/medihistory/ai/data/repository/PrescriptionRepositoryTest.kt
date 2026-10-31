@@ -31,16 +31,16 @@ import java.time.LocalDate
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class PrescriptionRepositoryTest {
-
     private lateinit var db: MediHistoryDatabase
     private lateinit var repository: PrescriptionRepository
 
     @Before
     fun setUp() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         runBlocking {
             listOf("test-patient-001", "test-patient-002", "test-patient-999").forEach { id ->
                 db.patientDao().insert(
@@ -90,99 +90,108 @@ class PrescriptionRepositoryTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `test_insert_and_getById_returns_inserted_prescription`() = runTest {
-        val prescription = syntheticPrescription()
-        repository.insert(prescription)
+    fun `test_insert_and_getById_returns_inserted_prescription`() =
+        runTest {
+            val prescription = syntheticPrescription()
+            repository.insert(prescription)
 
-        val result = repository.getById(prescription.id, prescription.patientId)
+            val result = repository.getById(prescription.id, prescription.patientId)
 
-        assertNotNull("getById must return the inserted prescription", result)
-        assertEquals(prescription.id, result!!.id)
-        assertEquals(prescription.patientId, result.patientId)
-        assertEquals(prescription.ocrStatus, result.ocrStatus)
-    }
-
-    @Test
-    fun `test_getById_scoped_to_patientId`() = runTest {
-        val prescription = syntheticPrescription(
-            id = "rx-test-001",
-            patientId = "test-patient-001",
-        )
-        repository.insert(prescription)
-
-        // Requesting with a different patientId must return null — no cross-patient access.
-        val result = repository.getById("rx-test-001", "test-patient-002")
-
-        assertNull(
-            "getById with wrong patientId must return null to prevent cross-patient access",
-            result,
-        )
-    }
+            assertNotNull("getById must return the inserted prescription", result)
+            assertEquals(prescription.id, result!!.id)
+            assertEquals(prescription.patientId, result.patientId)
+            assertEquals(prescription.ocrStatus, result.ocrStatus)
+        }
 
     @Test
-    fun `test_updateOcrStatus_changes_status_correctly`() = runTest {
-        val prescription = syntheticPrescription(ocrStatus = OcrStatus.PENDING)
-        repository.insert(prescription)
+    fun `test_getById_scoped_to_patientId`() =
+        runTest {
+            val prescription =
+                syntheticPrescription(
+                    id = "rx-test-001",
+                    patientId = "test-patient-001",
+                )
+            repository.insert(prescription)
 
-        repository.updateOcrStatus(
-            id = prescription.id,
-            patientId = prescription.patientId,
-            status = OcrStatus.NEEDS_REVIEW,
-            updatedAt = 1_700_000_001_000L,
-        )
+            // Requesting with a different patientId must return null — no cross-patient access.
+            val result = repository.getById("rx-test-001", "test-patient-002")
 
-        val updated = repository.getById(prescription.id, prescription.patientId)
-        assertNotNull("Updated prescription must still exist", updated)
-        assertEquals(
-            "OcrStatus must be updated to NEEDS_REVIEW",
-            OcrStatus.NEEDS_REVIEW,
-            updated!!.ocrStatus,
-        )
-    }
+            assertNull(
+                "getById with wrong patientId must return null to prevent cross-patient access",
+                result,
+            )
+        }
 
     @Test
-    fun `test_delete_removes_prescription`() = runTest {
-        val prescription = syntheticPrescription()
-        repository.insert(prescription)
+    fun `test_updateOcrStatus_changes_status_correctly`() =
+        runTest {
+            val prescription = syntheticPrescription(ocrStatus = OcrStatus.PENDING)
+            repository.insert(prescription)
 
-        repository.delete(prescription)
+            repository.updateOcrStatus(
+                id = prescription.id,
+                patientId = prescription.patientId,
+                status = OcrStatus.NEEDS_REVIEW,
+                updatedAt = 1_700_000_001_000L,
+            )
 
-        val result = repository.getById(prescription.id, prescription.patientId)
-        assertNull("Prescription must be null after deletion", result)
-    }
-
-    @Test
-    fun `test_observeByPatient_scoped_to_patientId`() = runTest {
-        val prescriptionAlpha = syntheticPrescription(
-            id = "rx-test-001",
-            patientId = "test-patient-001",
-        )
-        val prescriptionBeta = syntheticPrescription(
-            id = "rx-test-002",
-            patientId = "test-patient-002",
-        )
-        repository.insert(prescriptionAlpha)
-        repository.insert(prescriptionBeta)
-
-        val alphaList = repository.observeByPatient("test-patient-001").first()
-        val betaList = repository.observeByPatient("test-patient-002").first()
-
-        assertEquals("test-patient-001 must have exactly 1 prescription", 1, alphaList.size)
-        assertEquals("test-patient-002 must have exactly 1 prescription", 1, betaList.size)
-        assertEquals(prescriptionAlpha.id, alphaList.first().id)
-        assertEquals(prescriptionBeta.id, betaList.first().id)
-    }
+            val updated = repository.getById(prescription.id, prescription.patientId)
+            assertNotNull("Updated prescription must still exist", updated)
+            assertEquals(
+                "OcrStatus must be updated to NEEDS_REVIEW",
+                OcrStatus.NEEDS_REVIEW,
+                updated!!.ocrStatus,
+            )
+        }
 
     @Test
-    fun `test_getById_wrong_patientId_returns_null`() = runTest {
-        val prescription = syntheticPrescription(patientId = "test-patient-001")
-        repository.insert(prescription)
+    fun `test_delete_removes_prescription`() =
+        runTest {
+            val prescription = syntheticPrescription()
+            repository.insert(prescription)
 
-        val result = repository.getById(prescription.id, "test-patient-999")
+            repository.delete(prescription)
 
-        assertNull(
-            "getById with wrong patientId must return null",
-            result,
-        )
-    }
+            val result = repository.getById(prescription.id, prescription.patientId)
+            assertNull("Prescription must be null after deletion", result)
+        }
+
+    @Test
+    fun `test_observeByPatient_scoped_to_patientId`() =
+        runTest {
+            val prescriptionAlpha =
+                syntheticPrescription(
+                    id = "rx-test-001",
+                    patientId = "test-patient-001",
+                )
+            val prescriptionBeta =
+                syntheticPrescription(
+                    id = "rx-test-002",
+                    patientId = "test-patient-002",
+                )
+            repository.insert(prescriptionAlpha)
+            repository.insert(prescriptionBeta)
+
+            val alphaList = repository.observeByPatient("test-patient-001").first()
+            val betaList = repository.observeByPatient("test-patient-002").first()
+
+            assertEquals("test-patient-001 must have exactly 1 prescription", 1, alphaList.size)
+            assertEquals("test-patient-002 must have exactly 1 prescription", 1, betaList.size)
+            assertEquals(prescriptionAlpha.id, alphaList.first().id)
+            assertEquals(prescriptionBeta.id, betaList.first().id)
+        }
+
+    @Test
+    fun `test_getById_wrong_patientId_returns_null`() =
+        runTest {
+            val prescription = syntheticPrescription(patientId = "test-patient-001")
+            repository.insert(prescription)
+
+            val result = repository.getById(prescription.id, "test-patient-999")
+
+            assertNull(
+                "getById with wrong patientId must return null",
+                result,
+            )
+        }
 }

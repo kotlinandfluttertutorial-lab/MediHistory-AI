@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
  * Never log prescription text, document content, or document paths.
  */
 interface PrescriptionRepository {
-
     /**
      * Emits the live list of prescriptions for [patientId], ordered by
      * prescription date descending then creation time descending.
@@ -25,7 +24,10 @@ interface PrescriptionRepository {
      * Returns null (not an error) when [id] belongs to another patient, preventing
      * cross-patient data exposure (equivalent to HTTP 404 at the data layer).
      */
-    suspend fun getById(id: String, patientId: String): Prescription?
+    suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Prescription?
 
     /** Persists a new [prescription] record. */
     suspend fun insert(prescription: Prescription)
@@ -46,5 +48,10 @@ interface PrescriptionRepository {
      * Does not touch other fields or document content.
      * Security invariant: scoped to [patientId] — does not update records of other patients.
      */
-    suspend fun updateOcrStatus(id: String, patientId: String, status: OcrStatus, updatedAt: Long = System.currentTimeMillis())
+    suspend fun updateOcrStatus(
+        id: String,
+        patientId: String,
+        status: OcrStatus,
+        updatedAt: Long = System.currentTimeMillis(),
+    )
 }

@@ -11,39 +11,41 @@ import org.junit.Test
  * Naming convention: `should_[outcome]_when_[condition]`
  */
 class ExtractedFieldTest {
-
     // --- confidence range validation ---
 
     @Test
     fun `should construct without error when confidence is 0_5f`() {
-        val field = ExtractedField(
-            fieldName = "medicine_name",
-            rawValue = "Synthamol 500mg",
-            patientValue = null,
-            confidence = 0.5f,
-        )
+        val field =
+            ExtractedField(
+                fieldName = "medicine_name",
+                rawValue = "Synthamol 500mg",
+                patientValue = null,
+                confidence = 0.5f,
+            )
         assertEquals(0.5f, field.confidence)
     }
 
     @Test
     fun `should construct without error when confidence is 1_0f`() {
-        val field = ExtractedField(
-            fieldName = "doctor_name",
-            rawValue = "Dr. Synthetic",
-            patientValue = null,
-            confidence = 1.0f,
-        )
+        val field =
+            ExtractedField(
+                fieldName = "doctor_name",
+                rawValue = "Dr. Synthetic",
+                patientValue = null,
+                confidence = 1.0f,
+            )
         assertEquals(1.0f, field.confidence)
     }
 
     @Test
     fun `should construct without error when confidence is 0_0f`() {
-        val field = ExtractedField(
-            fieldName = "dose",
-            rawValue = null,
-            patientValue = null,
-            confidence = 0.0f,
-        )
+        val field =
+            ExtractedField(
+                fieldName = "dose",
+                rawValue = null,
+                patientValue = null,
+                confidence = 0.0f,
+            )
         assertEquals(0.0f, field.confidence)
     }
 
@@ -71,12 +73,13 @@ class ExtractedFieldTest {
 
     @Test
     fun `should have null rawValue when field was not found in document`() {
-        val field = ExtractedField(
-            fieldName = "frequency",
-            rawValue = null,
-            patientValue = null,
-            confidence = 0.0f,
-        )
+        val field =
+            ExtractedField(
+                fieldName = "frequency",
+                rawValue = null,
+                patientValue = null,
+                confidence = 0.0f,
+            )
         // null rawValue means the field was absent — never fabricate a value.
         assertNull("rawValue must be null for an absent field", field.rawValue)
     }
@@ -85,12 +88,13 @@ class ExtractedFieldTest {
 
     @Test
     fun `should default to PENDING_REVIEW when no reviewState is provided`() {
-        val field = ExtractedField(
-            fieldName = "prescription_date",
-            rawValue = "2025-07-01",
-            patientValue = null,
-            confidence = 0.9f,
-        )
+        val field =
+            ExtractedField(
+                fieldName = "prescription_date",
+                rawValue = "2025-07-01",
+                patientValue = null,
+                confidence = 0.9f,
+            )
         assertEquals(ReviewState.PENDING_REVIEW, field.reviewState)
     }
 

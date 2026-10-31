@@ -10,9 +10,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SessionModule {
-
     @Provides
     @Singleton
-    fun provideSessionManager(securePreferences: SecurePreferencesStore): SessionManager =
-        SessionManager(securePreferences)
+    fun provideSessionManager(securePreferences: SecurePreferencesStore): SessionManager = SessionManager(securePreferences)
 }

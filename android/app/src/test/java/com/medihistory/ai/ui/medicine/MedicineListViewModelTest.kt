@@ -31,7 +31,6 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MedicineListViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeMedicineRepository
     private lateinit var viewModel: MedicineListViewModel
@@ -76,56 +75,59 @@ class MedicineListViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun should_populate_medicines_when_loadMedicines_called() = runTest {
-        val medicine = syntheticMedicine()
-        fakeRepository.add(medicine)
+    fun should_populate_medicines_when_loadMedicines_called() =
+        runTest {
+            val medicine = syntheticMedicine()
+            fakeRepository.add(medicine)
 
-        viewModel.loadMedicines("test-patient-001")
-        advanceUntilIdle()
+            viewModel.loadMedicines("test-patient-001")
+            advanceUntilIdle()
 
-        val medicines = viewModel.uiState.value.medicines
-        assertEquals("medicines list must contain the inserted medicine", 1, medicines.size)
-        assertEquals(medicine.id, medicines.first().id)
-    }
-
-    @Test
-    fun should_filter_results_when_onSearchQueryChange_called() = runTest {
-        fakeRepository.add(syntheticMedicine(id = "med-001", medicineName = "Synthamol 500mg"))
-        fakeRepository.add(
-            syntheticMedicine(
-                id = "med-002",
-                medicineName = "Testocillin 250mg",
-                activeIngredient = "Testocillinide",
-            ),
-        )
-
-        viewModel.loadMedicines("test-patient-001")
-        advanceUntilIdle()
-
-        viewModel.onSearchQueryChange("Synthamol")
-        advanceUntilIdle()
-
-        val medicines = viewModel.uiState.value.medicines
-        assertEquals("search must return only matching medicines", 1, medicines.size)
-        assertEquals("med-001", medicines.first().id)
-    }
+            val medicines = viewModel.uiState.value.medicines
+            assertEquals("medicines list must contain the inserted medicine", 1, medicines.size)
+            assertEquals(medicine.id, medicines.first().id)
+        }
 
     @Test
-    fun should_handle_null_activeIngredient_without_crash() = runTest {
-        // Medicine with null activeIngredient must not cause a crash.
-        val medicine = syntheticMedicine(activeIngredient = null)
-        fakeRepository.add(medicine)
+    fun should_filter_results_when_onSearchQueryChange_called() =
+        runTest {
+            fakeRepository.add(syntheticMedicine(id = "med-001", medicineName = "Synthamol 500mg"))
+            fakeRepository.add(
+                syntheticMedicine(
+                    id = "med-002",
+                    medicineName = "Testocillin 250mg",
+                    activeIngredient = "Testocillinide",
+                ),
+            )
 
-        viewModel.loadMedicines("test-patient-001")
-        advanceUntilIdle()
+            viewModel.loadMedicines("test-patient-001")
+            advanceUntilIdle()
 
-        val medicines = viewModel.uiState.value.medicines
-        assertEquals("medicines list must contain the medicine with null activeIngredient", 1, medicines.size)
-        assertNull(
-            "activeIngredient must be null in the returned medicine",
-            medicines.first().activeIngredient,
-        )
-    }
+            viewModel.onSearchQueryChange("Synthamol")
+            advanceUntilIdle()
+
+            val medicines = viewModel.uiState.value.medicines
+            assertEquals("search must return only matching medicines", 1, medicines.size)
+            assertEquals("med-001", medicines.first().id)
+        }
+
+    @Test
+    fun should_handle_null_activeIngredient_without_crash() =
+        runTest {
+            // Medicine with null activeIngredient must not cause a crash.
+            val medicine = syntheticMedicine(activeIngredient = null)
+            fakeRepository.add(medicine)
+
+            viewModel.loadMedicines("test-patient-001")
+            advanceUntilIdle()
+
+            val medicines = viewModel.uiState.value.medicines
+            assertEquals("medicines list must contain the medicine with null activeIngredient", 1, medicines.size)
+            assertNull(
+                "activeIngredient must be null in the returned medicine",
+                medicines.first().activeIngredient,
+            )
+        }
 
     @Test
     fun should_have_exactly_3_values_when_MedicineStatus_values_queried() {
@@ -137,26 +139,28 @@ class MedicineListViewModelTest {
     }
 
     @Test
-    fun should_update_searchQuery_in_uiState_when_onSearchQueryChange_called() = runTest {
-        viewModel.onSearchQueryChange("Testocillin")
-        advanceUntilIdle()
+    fun should_update_searchQuery_in_uiState_when_onSearchQueryChange_called() =
+        runTest {
+            viewModel.onSearchQueryChange("Testocillin")
+            advanceUntilIdle()
 
-        assertEquals(
-            "searchQuery in uiState must reflect the change",
-            "Testocillin",
-            viewModel.uiState.value.searchQuery,
-        )
-    }
+            assertEquals(
+                "searchQuery in uiState must reflect the change",
+                "Testocillin",
+                viewModel.uiState.value.searchQuery,
+            )
+        }
 
     @Test
-    fun should_return_empty_list_when_no_patientId_loaded() = runTest {
-        // No call to loadMedicines — ViewModel should stay with empty list, no error.
-        advanceUntilIdle()
+    fun should_return_empty_list_when_no_patientId_loaded() =
+        runTest {
+            // No call to loadMedicines — ViewModel should stay with empty list, no error.
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertTrue("medicines must be empty when no patientId loaded", state.medicines.isEmpty())
-        assertNull("error must be null when no patientId loaded", state.error)
-    }
+            val state = viewModel.uiState.value
+            assertTrue("medicines must be empty when no patientId loaded", state.medicines.isEmpty())
+            assertNull("error must be null when no patientId loaded", state.error)
+        }
 }
 
 // ---------------------------------------------------------------------------
@@ -164,27 +168,32 @@ class MedicineListViewModelTest {
 // ---------------------------------------------------------------------------
 
 private class FakeMedicineRepository : MedicineRepository {
-
     private val _medicines = MutableStateFlow<List<Medicine>>(emptyList())
 
     fun add(medicine: Medicine) {
         _medicines.update { current -> current + medicine }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Medicine>> =
-        _medicines.map { list -> list.filter { it.patientId == patientId } }
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = _medicines.map { list -> list.filter { it.patientId == patientId } }
 
-    override fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>> =
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> =
         _medicines.map { list ->
             list.filter { m ->
                 m.patientId == patientId &&
-                    (m.medicineName.contains(query, ignoreCase = true) ||
-                        m.activeIngredient?.contains(query, ignoreCase = true) == true)
+                    (
+                        m.medicineName.contains(query, ignoreCase = true) ||
+                            m.activeIngredient?.contains(query, ignoreCase = true) == true
+                    )
             }
         }
 
-    override suspend fun getById(id: String, patientId: String): Medicine? =
-        _medicines.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? = _medicines.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insertAll(medicines: List<Medicine>) {
         _medicines.update { current -> current + medicines }

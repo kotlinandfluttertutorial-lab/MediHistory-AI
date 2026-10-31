@@ -36,7 +36,6 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class DataDeletionTest {
-
     private lateinit var db: MediHistoryDatabase
     private lateinit var fakePrefs: FakeSecurePreferences
     private lateinit var context: Context
@@ -46,9 +45,10 @@ class DataDeletionTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         fakePrefs = FakeSecurePreferences()
 
         kotlinx.coroutines.runBlocking {
@@ -138,150 +138,164 @@ class DataDeletionTest {
     // ── Tests ────────────────────────────────────────────────────────────────
 
     @Test
-    fun `test_deleteAllData_returns_DeletionResult_with_correct_counts`() = runTest {
-        val result = DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
+    fun `test_deleteAllData_returns_DeletionResult_with_correct_counts`() =
+        runTest {
+            val result =
+                DataDeletion.deleteAllData(
+                    context = context,
+                    patientId = syntheticPatientId,
+                    database = db,
+                    securePreferences = fakePrefs,
+                )
 
-        assertEquals("prescriptionsDeleted must equal 2", 2, result.prescriptionsDeleted)
-        assertEquals("medicinesDeleted must equal 2", 2, result.medicinesDeleted)
-        assertTrue("preferencesCleared must be true", result.preferencesCleared)
-    }
-
-    @Test
-    fun `test_deleteAllData_removes_patient_from_database`() = runTest {
-        DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
-
-        val patient = db.patientDao().getById(syntheticPatientId)
-        assertNull("Patient record must be null after deletion", patient)
-    }
+            assertEquals("prescriptionsDeleted must equal 2", 2, result.prescriptionsDeleted)
+            assertEquals("medicinesDeleted must equal 2", 2, result.medicinesDeleted)
+            assertTrue("preferencesCleared must be true", result.preferencesCleared)
+        }
 
     @Test
-    fun `test_deleteAllData_removes_prescriptions_from_database`() = runTest {
-        DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
+    fun `test_deleteAllData_removes_patient_from_database`() =
+        runTest {
+            DataDeletion.deleteAllData(
+                context = context,
+                patientId = syntheticPatientId,
+                database = db,
+                securePreferences = fakePrefs,
+            )
 
-        val prescriptions = db.prescriptionDao()
-            .observeByPatient(syntheticPatientId)
-            .first()
-        assertTrue("No prescriptions must remain after deletion", prescriptions.isEmpty())
-    }
-
-    @Test
-    fun `test_deleteAllData_removes_medicines_via_cascade`() = runTest {
-        DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
-
-        val medicines = db.medicineDao()
-            .observeByPatient(syntheticPatientId)
-            .first()
-        assertTrue("No medicines must remain after deletion", medicines.isEmpty())
-    }
+            val patient = db.patientDao().getById(syntheticPatientId)
+            assertNull("Patient record must be null after deletion", patient)
+        }
 
     @Test
-    fun `test_deleteAllData_clears_SecurePreferences`() = runTest {
-        DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
+    fun `test_deleteAllData_removes_prescriptions_from_database`() =
+        runTest {
+            DataDeletion.deleteAllData(
+                context = context,
+                patientId = syntheticPatientId,
+                database = db,
+                securePreferences = fakePrefs,
+            )
 
-        assertTrue("SecurePreferences must be cleared after deletion", fakePrefs.isCleared)
-    }
-
-    @Test
-    fun `test_DeletionResult_preferencesCleared_is_true`() = runTest {
-        val result = DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
-
-        assertTrue(
-            "DeletionResult.preferencesCleared must be true",
-            result.preferencesCleared,
-        )
-    }
+            val prescriptions =
+                db.prescriptionDao()
+                    .observeByPatient(syntheticPatientId)
+                    .first()
+            assertTrue("No prescriptions must remain after deletion", prescriptions.isEmpty())
+        }
 
     @Test
-    fun `test_deleteAllData_deletes_files_in_prescriptions_dir`() = runTest {
-        // Create a synthetic file in filesDir/prescriptions/
-        val prescriptionsDir = File(context.filesDir, "prescriptions")
-        prescriptionsDir.mkdirs()
-        val syntheticFile = File(prescriptionsDir, "synthetic_prescription_test.jpg")
-        syntheticFile.writeText("synthetic content")
-        assertTrue("Test file must exist before deletion", syntheticFile.exists())
+    fun `test_deleteAllData_removes_medicines_via_cascade`() =
+        runTest {
+            DataDeletion.deleteAllData(
+                context = context,
+                patientId = syntheticPatientId,
+                database = db,
+                securePreferences = fakePrefs,
+            )
 
-        val result = DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
-
-        assertEquals("filesDeleted count must be 1", 1, result.filesDeleted)
-        assertTrue(
-            "Synthetic file must be deleted from prescriptions dir",
-            !syntheticFile.exists(),
-        )
-    }
+            val medicines =
+                db.medicineDao()
+                    .observeByPatient(syntheticPatientId)
+                    .first()
+            assertTrue("No medicines must remain after deletion", medicines.isEmpty())
+        }
 
     @Test
-    fun `test_deleteAllData_does_not_affect_other_patient_records`() = runTest {
-        // Insert data for a second patient
-        val otherPatientId = "test-patient-deletion-beta"
-        db.patientDao().insert(
-            Patient(
-                id = otherPatientId,
-                name = "Synthetic Test Patient Beta",
-                createdAt = 1_700_000_000_000L,
-                updatedAt = 1_700_000_000_000L,
-            ),
-        )
-        db.prescriptionDao().insert(
-            Prescription(
-                id = "rx-other-001",
-                patientId = otherPatientId,
-                ocrStatus = OcrStatus.PENDING,
-                createdAt = 1_700_000_003_000L,
-                updatedAt = 1_700_000_003_000L,
-            ),
-        )
+    fun `test_deleteAllData_clears_SecurePreferences`() =
+        runTest {
+            DataDeletion.deleteAllData(
+                context = context,
+                patientId = syntheticPatientId,
+                database = db,
+                securePreferences = fakePrefs,
+            )
 
-        DataDeletion.deleteAllData(
-            context = context,
-            patientId = syntheticPatientId,
-            database = db,
-            securePreferences = fakePrefs,
-        )
+            assertTrue("SecurePreferences must be cleared after deletion", fakePrefs.isCleared)
+        }
 
-        val otherPrescriptions = db.prescriptionDao()
-            .observeByPatient(otherPatientId)
-            .first()
-        assertEquals(
-            "Other patient prescriptions must not be deleted",
-            1,
-            otherPrescriptions.size,
-        )
-    }
+    @Test
+    fun `test_DeletionResult_preferencesCleared_is_true`() =
+        runTest {
+            val result =
+                DataDeletion.deleteAllData(
+                    context = context,
+                    patientId = syntheticPatientId,
+                    database = db,
+                    securePreferences = fakePrefs,
+                )
+
+            assertTrue(
+                "DeletionResult.preferencesCleared must be true",
+                result.preferencesCleared,
+            )
+        }
+
+    @Test
+    fun `test_deleteAllData_deletes_files_in_prescriptions_dir`() =
+        runTest {
+            // Create a synthetic file in filesDir/prescriptions/
+            val prescriptionsDir = File(context.filesDir, "prescriptions")
+            prescriptionsDir.mkdirs()
+            val syntheticFile = File(prescriptionsDir, "synthetic_prescription_test.jpg")
+            syntheticFile.writeText("synthetic content")
+            assertTrue("Test file must exist before deletion", syntheticFile.exists())
+
+            val result =
+                DataDeletion.deleteAllData(
+                    context = context,
+                    patientId = syntheticPatientId,
+                    database = db,
+                    securePreferences = fakePrefs,
+                )
+
+            assertEquals("filesDeleted count must be 1", 1, result.filesDeleted)
+            assertTrue(
+                "Synthetic file must be deleted from prescriptions dir",
+                !syntheticFile.exists(),
+            )
+        }
+
+    @Test
+    fun `test_deleteAllData_does_not_affect_other_patient_records`() =
+        runTest {
+            // Insert data for a second patient
+            val otherPatientId = "test-patient-deletion-beta"
+            db.patientDao().insert(
+                Patient(
+                    id = otherPatientId,
+                    name = "Synthetic Test Patient Beta",
+                    createdAt = 1_700_000_000_000L,
+                    updatedAt = 1_700_000_000_000L,
+                ),
+            )
+            db.prescriptionDao().insert(
+                Prescription(
+                    id = "rx-other-001",
+                    patientId = otherPatientId,
+                    ocrStatus = OcrStatus.PENDING,
+                    createdAt = 1_700_000_003_000L,
+                    updatedAt = 1_700_000_003_000L,
+                ),
+            )
+
+            DataDeletion.deleteAllData(
+                context = context,
+                patientId = syntheticPatientId,
+                database = db,
+                securePreferences = fakePrefs,
+            )
+
+            val otherPrescriptions =
+                db.prescriptionDao()
+                    .observeByPatient(otherPatientId)
+                    .first()
+            assertEquals(
+                "Other patient prescriptions must not be deleted",
+                1,
+                otherPrescriptions.size,
+            )
+        }
 }
 
 // ── Fake SecurePreferences ─────────────────────────────────────────────────────
@@ -297,7 +311,10 @@ private class FakeSecurePreferences : com.medihistory.ai.data.security.SecurePre
     var isCleared = false
         private set
 
-    override fun putString(key: String, value: String) {
+    override fun putString(
+        key: String,
+        value: String,
+    ) {
         store[key] = value
     }
 

@@ -1,0 +1,32 @@
+{
+  "project_type": "Android application (Kotlin, Jetpack Compose, MVVM, Hilt)",
+  "language": "Kotlin 1.9.24",
+  "build_system": "Gradle 8.4.2 with KSP, version catalog at android/gradle/libs.versions.toml. IMPORTANT: working directory for all Gradle commands is android/ (contains the settings.gradle.kts). Run ./gradlew from android/, not from the workspace root. On Windows use .\\gradlew or gradle wrapper directly.",
+  "test_framework": "JUnit 4.13.2 + Robolectric 4.12.2 + kotlinx-coroutines-test 1.8.1 for unit tests. Run with: cd android && ./gradlew :app:testDebugUnitTest",
+  "build_command": "cd android && ./gradlew :app:assembleDebug",
+  "test_command": "cd android && ./gradlew :app:testDebugUnitTest",
+  "verification_instructions": "1. cd android  2. ./gradlew :app:compileDebugKotlin (fast compile check)  3. ./gradlew :app:testDebugUnitTest (all unit tests)  4. ./gradlew :app:jacocoTestCoverageVerification (coverage gate). All must return BUILD SUCCESSFUL.",
+  "snapshot_or_generated_files": "android/app/gradle.lockfile — regenerate after adding dependencies with: cd android && ./gradlew :app:dependencies --write-locks",
+  "environment_constraints": "Windows PowerShell. Path separator is backslash. Use .\\gradlew in PowerShell. GEMINI_API_KEY must be in android/local.properties as gemini.api.key=YOUR_KEY or set as CI env var. For tests, ENABLE_GEMINI_OCR BuildConfig field is false by default so no real key needed. Do NOT push to remote. Commit only locally on the current branch.",
+  "contribution_requirements": "All secrets via local.properties (git-ignored) or env vars, never hardcoded. Synthetic test data only (no real medicine/patient names). Test naming: should_[outcome]_when_[condition]. Every new behaviour must have tests. Privacy: never log rawValue, medicine names, or document content.",
+  "key_patterns": "OcrService interface: extract(documentPath, mimeType, prescriptionId): OcrResult. OcrResult has .fields: List<ExtractedField>, .isSuccess, .pendingReviewCount. ExtractedField has fieldName, rawValue, patientValue, confidence (0-1), reviewState=PENDING_REVIEW, sourceReference. ReviewState enum: PENDING_REVIEW, REVIEWED, REJECTED. Hilt @HiltViewModel with @Inject constructor. ViewModel StateFlow pattern: private MutableStateFlow + public asStateFlow(). SecurePreferencesStore interface with putString/getString/remove/clear. BuildConfig fields read as BuildConfig.FIELD_NAME.",
+  "relevant_files": [
+    "android/gradle/libs.versions.toml",
+    "android/app/build.gradle.kts",
+    "android/app/src/main/java/com/medihistory/ai/data/ocr/OcrService.kt",
+    "android/app/src/main/java/com/medihistory/ai/data/ocr/OcrResult.kt",
+    "android/app/src/main/java/com/medihistory/ai/data/ocr/ExtractedField.kt",
+    "android/app/src/main/java/com/medihistory/ai/data/ocr/MlKitOcrService.kt",
+    "android/app/src/main/java/com/medihistory/ai/data/ocr/OcrModule.kt",
+    "android/app/src/main/java/com/medihistory/ai/data/ocr/PrescriptionFieldParser.kt",
+    "android/app/src/main/java/com/medihistory/ai/data/security/SecurePreferences.kt",
+    "android/app/src/main/java/com/medihistory/ai/data/security/SecurePreferencesStore.kt",
+    "android/app/src/main/java/com/medihistory/ai/ui/ocr/OcrReviewViewModel.kt",
+    "android/app/src/main/java/com/medihistory/ai/ui/ocr/OcrReviewScreen.kt",
+    "android/app/src/main/java/com/medihistory/ai/worker/OcrWorker.kt",
+    "android/app/src/test/java/com/medihistory/ai/data/ocr/OcrResultTest.kt",
+    "android/app/src/test/java/com/medihistory/ai/worker/OcrWorkerTest.kt",
+    "android/app/gradle.lockfile"
+  ],
+  "directory_structure": "android/ — Gradle project root (settings.gradle.kts here). android/app/ — main app module. android/app/src/main/java/com/medihistory/ai/data/ocr/ — OCR services, models, parser. android/app/src/main/java/com/medihistory/ai/data/security/ — SecurePreferences. android/app/src/main/java/com/medihistory/ai/ui/ocr/ — OCR review screen, ViewModel, components. android/app/src/test/java/ — unit tests (mirror of main). android/gradle/ — version catalog. .agents/tasks/gemini-ocr/ — FEAT artifacts (NOT inside the android/ worktree)."
+}

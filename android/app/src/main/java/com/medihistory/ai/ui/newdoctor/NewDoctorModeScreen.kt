@@ -46,7 +46,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medihistory.ai.ui.components.EmptyStateView
 import com.medihistory.ai.ui.components.LoadingIndicator
-import com.medihistory.ai.ui.components.PrimaryButton
 
 /**
  * New Doctor Mode screen — feature F07.
@@ -87,15 +86,16 @@ fun NewDoctorModeScreen(
     // Once the PDF is ready and consent has been confirmed, open the share sheet
     LaunchedEffect(pdfUri) {
         val uri = pdfUri ?: return@LaunchedEffect
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(
-                Intent.EXTRA_SUBJECT,
-                "Medical Summary — MediHistory AI",
-            )
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val shareIntent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(
+                    Intent.EXTRA_SUBJECT,
+                    "Medical Summary — MediHistory AI",
+                )
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
         context.startActivity(Intent.createChooser(shareIntent, "Share Medical Summary"))
         pdfUri = null // reset so the effect doesn't re-fire
     }
@@ -139,23 +139,26 @@ fun NewDoctorModeScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
                     Button(
                         onClick = { showConsentDialog = true },
                         enabled = uiState.canProceed,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics {
-                                contentDescription = if (uiState.canProceed) {
-                                    "Prepare summary with ${uiState.selectedCount} prescriptions selected"
-                                } else {
-                                    "Prepare summary, disabled, select at least one prescription"
-                                }
-                            },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription =
+                                        if (uiState.canProceed) {
+                                            "Prepare summary with ${uiState.selectedCount} prescriptions selected"
+                                        } else {
+                                            "Prepare summary, disabled, select at least one prescription"
+                                        }
+                                },
                     ) {
                         Text(text = "Prepare summary")
                     }
@@ -166,9 +169,10 @@ fun NewDoctorModeScreen(
         when {
             uiState.isLoading -> {
                 LoadingIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                     contentDescription = "Loading prescriptions",
                 )
             }
@@ -178,9 +182,10 @@ fun NewDoctorModeScreen(
                     message = uiState.error ?: "An error occurred.",
                     actionLabel = "Retry",
                     onAction = { viewModel.loadRecords(patientId) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -189,9 +194,10 @@ fun NewDoctorModeScreen(
                     message = "No reviewed prescriptions found",
                     actionLabel = "Go back",
                     onAction = onBack,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                 )
             }
 
@@ -199,9 +205,10 @@ fun NewDoctorModeScreen(
                 LazyColumn(
                     contentPadding = innerPadding,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
                 ) {
                     // Explanation card
                     item {
@@ -262,12 +269,14 @@ fun NewDoctorModeScreen(
 @Composable
 private fun ExplanationCard() {
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -280,8 +289,9 @@ private fun ExplanationCard() {
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Prepare a summary for a new doctor appointment. " +
-                    "Select the prescriptions you want to include.",
+                text =
+                    "Prepare a summary for a new doctor appointment. " +
+                        "Select the prescriptions you want to include.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
@@ -333,9 +343,10 @@ private fun RecordSelectionCard(
 
     Card(
         onClick = onToggle,
-        modifier = modifier.semantics(mergeDescendants = true) {
-            contentDescription = cardContentDescription
-        },
+        modifier =
+            modifier.semantics(mergeDescendants = true) {
+                contentDescription = cardContentDescription
+            },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -343,17 +354,19 @@ private fun RecordSelectionCard(
         ) {
             // Checkbox indicator — decorative; full description is on the card root
             Icon(
-                imageVector = if (record.isSelected) {
-                    Icons.Outlined.CheckBox
-                } else {
-                    Icons.Outlined.CheckBoxOutlineBlank
-                },
+                imageVector =
+                    if (record.isSelected) {
+                        Icons.Outlined.CheckBox
+                    } else {
+                        Icons.Outlined.CheckBoxOutlineBlank
+                    },
                 contentDescription = null,
-                tint = if (record.isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                tint =
+                    if (record.isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
 
             Spacer(modifier = Modifier.width(12.dp))

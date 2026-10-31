@@ -1,7 +1,19 @@
 package com.medihistory.ai.ui.prescription
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.work.WorkManager
+import androidx.work.testing.WorkManagerTestInitHelper
+import com.medihistory.ai.data.ai.GeminiService
+import com.medihistory.ai.data.ai.PrescriptionUnderstandingAgent
+import com.medihistory.ai.data.dao.ExtractedFieldDao
+import com.medihistory.ai.data.model.Doctor
+import com.medihistory.ai.data.model.ExtractedFieldEntity
+import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.model.Prescription
+import com.medihistory.ai.data.ocr.ReviewState
+import com.medihistory.ai.data.repository.DoctorRepository
+import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,28 +33,47 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /**
  * Unit tests for [PrescriptionDetailViewModel].
  *
- * Uses [FakePrescriptionRepository] — no Room or real storage is accessed.
+ * Uses [FakePrescriptionRepository] and [FakeDoctorRepository] — no Room or real storage
+ * is accessed. Uses Robolectric so [WorkManager] can be initialised with
+ * [WorkManagerTestInitHelper] (no-op executor, no actual workers run).
+ *
  * All fixtures use synthetic data only (no real patient or medicine names).
  *
  * Naming convention: `given_[state]_when_[action]_then_[outcome]`
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
 class PrescriptionDetailViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakePrescriptionRepository
+    private lateinit var workManager: WorkManager
     private lateinit var viewModel: PrescriptionDetailViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakePrescriptionRepository()
-        viewModel = PrescriptionDetailViewModel(fakeRepository)
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        workManager = WorkManager.getInstance(context)
+        viewModel =
+            PrescriptionDetailViewModel(
+                repository = fakeRepository,
+                doctorRepository = FakeDetailDoctorRepository(),
+                medicineRepository = FakeDetailMedicineRepository(),
+                extractedFieldDao = FakeDetailExtractedFieldDao(),
+                workManager = workManager,
+                prescriptionUnderstandingAgent = PrescriptionUnderstandingAgent(GeminiService()),
+            )
     }
 
     @After
@@ -88,34 +119,36 @@ class PrescriptionDetailViewModelTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `given existing prescription when load called then state has prescription`() = runTest {
-        val prescription = syntheticPrescription()
-        fakeRepository.add(prescription)
+    fun `given existing prescription when load called then state has prescription`() =
+        runTest {
+            val prescription = syntheticPrescription()
+            fakeRepository.add(prescription)
 
-        viewModel.load(prescription.id, prescription.patientId)
-        advanceUntilIdle()
+            viewModel.load(prescription.id, prescription.patientId)
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertFalse("isLoading must be false after load", state.isLoading)
-        assertNull("error must be null when prescription is found", state.error)
-        assertNotNull("prescription must not be null", state.prescription)
-        assertEquals("prescription id must match", prescription.id, state.prescription!!.id)
-    }
+            val state = viewModel.uiState.value
+            assertFalse("isLoading must be false after load", state.isLoading)
+            assertNull("error must be null when prescription is found", state.error)
+            assertNotNull("prescription must not be null", state.prescription)
+            assertEquals("prescription id must match", prescription.id, state.prescription!!.id)
+        }
 
     // -------------------------------------------------------------------------
     // Load — not found
     // -------------------------------------------------------------------------
 
     @Test
-    fun `given unknown prescription id when load called then state has error`() = runTest {
-        viewModel.load("rx-unknown-999", "test-patient-001")
-        advanceUntilIdle()
+    fun `given unknown prescription id when load called then state has error`() =
+        runTest {
+            viewModel.load("rx-unknown-999", "test-patient-001")
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertFalse("isLoading must be false after failed load", state.isLoading)
-        assertNotNull("error must not be null when prescription is not found", state.error)
-        assertNull("prescription must be null when not found", state.prescription)
-    }
+            val state = viewModel.uiState.value
+            assertFalse("isLoading must be false after failed load", state.isLoading)
+            assertNotNull("error must not be null when prescription is not found", state.error)
+            assertNull("prescription must be null when not found", state.prescription)
+        }
 
     // -------------------------------------------------------------------------
     // Load — patientId scoping
@@ -144,18 +177,18 @@ class PrescriptionDetailViewModelTest {
 // ---------------------------------------------------------------------------
 
 private class FakePrescriptionRepository : PrescriptionRepository {
-
     private val _prescriptions = MutableStateFlow<List<Prescription>>(emptyList())
 
     fun add(prescription: Prescription) {
         _prescriptions.update { current -> current + prescription }
     }
 
-    override fun observeByPatient(patientId: String): Flow<List<Prescription>> =
-        MutableStateFlow(_prescriptions.value.filter { it.patientId == patientId })
+    override fun observeByPatient(patientId: String): Flow<List<Prescription>> = MutableStateFlow(_prescriptions.value.filter { it.patientId == patientId })
 
-    override suspend fun getById(id: String, patientId: String): Prescription? =
-        _prescriptions.value.find { it.id == id && it.patientId == patientId }
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Prescription? = _prescriptions.value.find { it.id == id && it.patientId == patientId }
 
     override suspend fun insert(prescription: Prescription) {
         _prescriptions.update { current -> current + prescription }
@@ -187,4 +220,60 @@ private class FakePrescriptionRepository : PrescriptionRepository {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Fake doctor repository — no-op, always returns null / empty
+// ---------------------------------------------------------------------------
+
+private class FakeDetailDoctorRepository : DoctorRepository {
+    override fun observeByPatient(patientId: String): Flow<List<Doctor>> = MutableStateFlow(emptyList())
+
+    override suspend fun getById(
+        doctorId: String,
+        patientId: String,
+    ): Doctor? = null
+
+    override suspend fun insert(doctor: Doctor) = Unit
+
+    override suspend fun update(doctor: Doctor) = Unit
+
+    override suspend fun delete(doctor: Doctor) = Unit
+}
+
+private class FakeDetailMedicineRepository : MedicineRepository {
+    override fun observeByPatient(patientId: String): Flow<List<Medicine>> = MutableStateFlow(emptyList())
+
+    override fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>> = MutableStateFlow(emptyList())
+
+    override suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine? = null
+
+    override suspend fun insertAll(medicines: List<Medicine>) = Unit
+
+    override suspend fun update(medicine: Medicine) = Unit
+
+    override suspend fun delete(medicine: Medicine) = Unit
+
+    override fun observeActiveIngredients(patientId: String): Flow<List<String>> = MutableStateFlow(emptyList())
+}
+
+private class FakeDetailExtractedFieldDao : ExtractedFieldDao {
+    override fun observeByPrescription(prescriptionId: String): Flow<List<ExtractedFieldEntity>> = MutableStateFlow(emptyList())
+
+    override suspend fun insertAll(fields: List<ExtractedFieldEntity>) = Unit
+
+    override suspend fun updateReview(
+        id: String,
+        state: ReviewState,
+        patientValue: String?,
+        ts: Long,
+    ) = Unit
+
+    override suspend fun deleteByPrescription(prescriptionId: String) = Unit
 }

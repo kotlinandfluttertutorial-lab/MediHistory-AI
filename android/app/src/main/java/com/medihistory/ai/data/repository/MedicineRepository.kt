@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
  * It never infers, fabricates, or modifies field values.
  */
 interface MedicineRepository {
-
     /**
      * Emits the live list of medicines for [patientId], ordered by name.
      * The Flow updates automatically when the underlying data changes.
@@ -26,13 +25,19 @@ interface MedicineRepository {
      *
      * Returns the full unfiltered list when [query] is blank.
      */
-    fun searchByPatient(patientId: String, query: String): Flow<List<Medicine>>
+    fun searchByPatient(
+        patientId: String,
+        query: String,
+    ): Flow<List<Medicine>>
 
     /**
      * Returns the medicine with [id] that belongs to [patientId], or null.
      * Returns null (not an error) when [id] belongs to another patient.
      */
-    suspend fun getById(id: String, patientId: String): Medicine?
+    suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Medicine?
 
     /** Inserts or replaces a batch of medicine records. */
     suspend fun insertAll(medicines: List<Medicine>)

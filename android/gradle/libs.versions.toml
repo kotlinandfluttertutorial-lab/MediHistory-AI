@@ -1,6 +1,7 @@
 [versions]
 agp                = "8.4.2"
 kotlin             = "1.9.24"
+ktlint-gradle      = "12.1.1"
 compose-bom        = "2024.06.00"
 compose-compiler   = "1.5.14"
 core-ktx           = "1.13.1"
@@ -17,6 +18,11 @@ work               = "2.9.0"
 security-crypto    = "1.1.0-alpha06"
 timber             = "5.0.1"
 firebase-bom       = "33.1.2"
+mlkit-text-recognition = "16.0.1"
+google-genai-kotlin   = "1.8.0"
+
+appcompat               = "1.7.0"
+generativeai            = "0.9.0"
 junit              = "4.13.2"
 junit-ext          = "1.1.5"
 espresso           = "3.5.1"
@@ -96,6 +102,16 @@ androidx-test-core              = { group = "androidx.test",               name 
 androidx-junit                  = { group = "androidx.test.ext",           name = "junit",                           version.ref = "junit-ext" }
 androidx-espresso-core          = { group = "androidx.test.espresso",      name = "espresso-core",                   version.ref = "espresso" }
 
+# ML Kit — on-device text recognition (bundled, no API key, offline-capable)
+mlkit-text-recognition          = { group = "com.google.mlkit",            name = "text-recognition",                version.ref = "mlkit-text-recognition" }
+
+# AppCompat — required to resolve resources transitively needed by ML Kit
+androidx-appcompat              = { group = "androidx.appcompat",          name = "appcompat",                       version.ref = "appcompat" }
+
+# Google Generative AI (Gemini) SDK for Android
+google-genai-kotlin             = { group = "com.google.genai",            name = "google-genai-kotlin",             version.ref = "google-genai-kotlin" }
+generativeai                    = { group = "com.google.ai.client.generativeai", name = "generativeai",              version.ref = "generativeai" }
+
 # Firebase — version managed by BOM
 firebase-bom                    = { group = "com.google.firebase",         name = "firebase-bom",                    version.ref = "firebase-bom" }
 firebase-auth                   = { group = "com.google.firebase",         name = "firebase-auth-ktx" }
@@ -107,3 +123,4 @@ kotlin-android      = { id = "org.jetbrains.kotlin.android",   version.ref = "ko
 hilt                = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp                 = { id = "com.google.devtools.ksp",        version = "1.9.24-1.0.20" }
 google-services     = { id = "com.google.gms.google-services", version = "4.4.2" }
+ktlint              = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-gradle" }

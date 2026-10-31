@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Alarm
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.MedicalServices
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.ElevatedCard
@@ -56,6 +58,22 @@ fun MoreScreen(
             verticalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(horizontal = 8.dp),
         ) {
+            item {
+                MoreRow(
+                    icon = Icons.Outlined.AccountCircle,
+                    title = "My Profile",
+                    subtitle = "View and edit your profile",
+                    onClick = { onNavigate(Routes.PATIENT_PROFILE) },
+                )
+            }
+            item {
+                MoreRow(
+                    icon = Icons.Outlined.MedicalServices,
+                    title = "My Doctors",
+                    subtitle = "Manage your doctors",
+                    onClick = { onNavigate(Routes.DOCTOR_LIST) },
+                )
+            }
             item {
                 MoreRow(
                     icon = Icons.Outlined.Shield,
@@ -111,11 +129,12 @@ private fun MoreRow(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = modifier
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .semantics(mergeDescendants = true) {
-                contentDescription = "$title. $subtitle"
-            },
+        modifier =
+            modifier
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .semantics(mergeDescendants = true) {
+                    contentDescription = "$title. $subtitle"
+                },
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

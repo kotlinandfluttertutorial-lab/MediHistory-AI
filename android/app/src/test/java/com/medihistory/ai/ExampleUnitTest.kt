@@ -10,7 +10,6 @@ import org.junit.Test
  * Uses synthetic values only; no real patient or medicine data.
  */
 class ExampleUnitTest {
-
     @Test
     fun `scaffold test configuration is working`() {
         // Verify that the unit test runtime is correctly set up.

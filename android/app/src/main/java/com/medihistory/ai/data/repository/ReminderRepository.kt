@@ -1,6 +1,5 @@
 package com.medihistory.ai.data.repository
 
-import com.medihistory.ai.data.model.DoseRecord
 import com.medihistory.ai.data.model.DoseRecordEntity
 import com.medihistory.ai.data.model.Reminder
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
  * - A dose record's [patientNote] must NEVER copy or include prescribed instruction text.
  */
 interface ReminderRepository {
-
     /**
      * Emits the live list of reminders for [patientId], newest first.
      * The Flow updates automatically when the underlying data changes.
@@ -30,7 +28,10 @@ interface ReminderRepository {
      * Returns the reminder with [id] belonging to [patientId], or null.
      * Returns null (not an error) when [id] belongs to another patient.
      */
-    suspend fun getById(id: String, patientId: String): Reminder?
+    suspend fun getById(
+        id: String,
+        patientId: String,
+    ): Reminder?
 
     /**
      * Inserts a new reminder.

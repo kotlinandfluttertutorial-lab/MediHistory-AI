@@ -18,7 +18,6 @@ package com.medihistory.ai.duplicate
  * canonical form (lowercase). The canonical form is the most widely used INN name.
  */
 object IngredientNormalizer {
-
     /**
      * Synonym map: alternative name (lowercase) → canonical INN name (lowercase).
      *
@@ -26,54 +25,44 @@ object IngredientNormalizer {
      * e.g. "acetaminophen" → "paracetamol" (canonical is paracetamol per INN),
      *      "paracetamol"   → "paracetamol" (identity mapping for direct lookups).
      */
-    private val synonyms: Map<String, String> = mapOf(
-        // Paracetamol / acetaminophen
-        "paracetamol" to "paracetamol",
-        "acetaminophen" to "paracetamol",
-
-        // Metoprolol salt forms — distinct salts, each maps to itself
-        "metoprolol succinate" to "metoprolol succinate",
-        "metoprolol tartrate" to "metoprolol tartrate",
-
-        // Ibuprofen
-        "ibuprofen" to "ibuprofen",
-
-        // Metformin
-        "metformin" to "metformin",
-        "metformin hydrochloride" to "metformin",
-
-        // Amlodipine
-        "amlodipine" to "amlodipine",
-        "amlodipine besylate" to "amlodipine",
-        "amlodipine maleate" to "amlodipine",
-
-        // Atorvastatin
-        "atorvastatin" to "atorvastatin",
-        "atorvastatin calcium" to "atorvastatin",
-
-        // Omeprazole
-        "omeprazole" to "omeprazole",
-        "omeprazole magnesium" to "omeprazole",
-
-        // Pantoprazole
-        "pantoprazole" to "pantoprazole",
-        "pantoprazole sodium" to "pantoprazole",
-
-        // Aspirin
-        "aspirin" to "aspirin",
-        "acetylsalicylic acid" to "aspirin",
-
-        // Cetirizine
-        "cetirizine" to "cetirizine",
-        "cetirizine hydrochloride" to "cetirizine",
-
-        // Levothyroxine
-        "levothyroxine" to "levothyroxine",
-        "levothyroxine sodium" to "levothyroxine",
-
-        // Lisinopril
-        "lisinopril" to "lisinopril",
-    )
+    private val synonyms: Map<String, String> =
+        mapOf(
+            // Paracetamol / acetaminophen
+            "paracetamol" to "paracetamol",
+            "acetaminophen" to "paracetamol",
+            // Metoprolol salt forms — distinct salts, each maps to itself
+            "metoprolol succinate" to "metoprolol succinate",
+            "metoprolol tartrate" to "metoprolol tartrate",
+            // Ibuprofen
+            "ibuprofen" to "ibuprofen",
+            // Metformin
+            "metformin" to "metformin",
+            "metformin hydrochloride" to "metformin",
+            // Amlodipine
+            "amlodipine" to "amlodipine",
+            "amlodipine besylate" to "amlodipine",
+            "amlodipine maleate" to "amlodipine",
+            // Atorvastatin
+            "atorvastatin" to "atorvastatin",
+            "atorvastatin calcium" to "atorvastatin",
+            // Omeprazole
+            "omeprazole" to "omeprazole",
+            "omeprazole magnesium" to "omeprazole",
+            // Pantoprazole
+            "pantoprazole" to "pantoprazole",
+            "pantoprazole sodium" to "pantoprazole",
+            // Aspirin
+            "aspirin" to "aspirin",
+            "acetylsalicylic acid" to "aspirin",
+            // Cetirizine
+            "cetirizine" to "cetirizine",
+            "cetirizine hydrochloride" to "cetirizine",
+            // Levothyroxine
+            "levothyroxine" to "levothyroxine",
+            "levothyroxine sodium" to "levothyroxine",
+            // Lisinopril
+            "lisinopril" to "lisinopril",
+        )
 
     /**
      * Returns the canonical form of [ingredient].
@@ -94,5 +83,8 @@ object IngredientNormalizer {
      * This establishes naming equivalence only. It does NOT imply clinical
      * interchangeability or that a combination of these ingredients is safe.
      */
-    fun isSynonym(a: String, b: String): Boolean = normalize(a) == normalize(b)
+    fun isSynonym(
+        a: String,
+        b: String,
+    ): Boolean = normalize(a) == normalize(b)
 }

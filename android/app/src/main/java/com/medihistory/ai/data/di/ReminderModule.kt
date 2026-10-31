@@ -23,23 +23,17 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class ReminderModule {
-
     @Binds
     @Singleton
-    abstract fun bindReminderRepository(
-        impl: RoomReminderRepository,
-    ): ReminderRepository
+    abstract fun bindReminderRepository(impl: RoomReminderRepository): ReminderRepository
 
     companion object {
+        @Provides
+        @Singleton
+        fun provideReminderDao(database: MediHistoryDatabase): ReminderDao = database.reminderDao()
 
         @Provides
         @Singleton
-        fun provideReminderDao(database: MediHistoryDatabase): ReminderDao =
-            database.reminderDao()
-
-        @Provides
-        @Singleton
-        fun provideDoseRecordDao(database: MediHistoryDatabase): DoseRecordDao =
-            database.doseRecordDao()
+        fun provideDoseRecordDao(database: MediHistoryDatabase): DoseRecordDao = database.doseRecordDao()
     }
 }

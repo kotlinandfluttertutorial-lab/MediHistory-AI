@@ -9,12 +9,27 @@ PRODUCTION NOTE: Replace this in-process dict with a Redis-backed limiter
 store does not share state across multiple worker processes.
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from typing import ClassVar
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+
+
+def reset_rate_limit_state() -> None:
+    """
+    Clear all tracked request timestamps in every live RateLimitMiddleware instance.
+
+    Call this in test fixtures between test functions to prevent accumulated
+    request counts from previous tests from triggering 429 responses.
+    Never call this in production code.
+    """
+    for instance in list(RateLimitMiddleware._instances):
+        instance._requests.clear()
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -32,11 +47,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         Sliding window size in seconds. Defaults to 60.
     """
 
+    # Class-level registry of all live instances so reset_rate_limit_state()
+    # can clear them all.  Uses a list to avoid holding strong references that
+    # would prevent garbage collection; tests that build throw-away apps will
+    # still be cleaned up when those apps go out of scope if we used weakrefs,
+    # but a plain list is fine for the number of instances in this project.
+    _instances: ClassVar[list[RateLimitMiddleware]] = []
+
     def __init__(self, app, max_requests: int = 100, window_seconds: int = 60) -> None:
         super().__init__(app)
         self._requests: dict[str, list[datetime]] = defaultdict(list)
         self._max = max_requests
         self._window = window_seconds
+        RateLimitMiddleware._instances.append(self)
 
     async def dispatch(self, request: Request, call_next) -> Response:
         client_ip: str = request.client.host if request.client else "unknown"

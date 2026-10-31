@@ -36,7 +36,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class PrivacyViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: PrivacyViewModel
     private lateinit var db: MediHistoryDatabase
@@ -49,15 +48,17 @@ class PrivacyViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        db =
+            Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
+                .allowMainThreadQueries()
+                .build()
         fakePrefs = FakeSecurePreferencesStore()
-        viewModel = PrivacyViewModel(
-            database = db,
-            securePreferences = fakePrefs,
-            context = context,
-        )
+        viewModel =
+            PrivacyViewModel(
+                database = db,
+                securePreferences = fakePrefs,
+                context = context,
+            )
     }
 
     @After
@@ -135,35 +136,37 @@ class PrivacyViewModelTest {
     // ── Delete Step 2 confirmed ──────────────────────────────────────────────
 
     @Test
-    fun `given step2 when onDeleteStep2Confirmed then deletionResult is set`() = runTest {
-        viewModel.onDeleteStep1Clicked()
-        viewModel.onDeleteStep2Triggered()
-        viewModel.onDeleteStep2Confirmed(syntheticPatientId)
-        viewModel.uiState.first {
-            !it.isDeleting && (it.deletionResult != null || it.error != null)
+    fun `given step2 when onDeleteStep2Confirmed then deletionResult is set`() =
+        runTest {
+            viewModel.onDeleteStep1Clicked()
+            viewModel.onDeleteStep2Triggered()
+            viewModel.onDeleteStep2Confirmed(syntheticPatientId)
+            viewModel.uiState.first {
+                !it.isDeleting && (it.deletionResult != null || it.error != null)
+            }
+
+            assertNotNull(
+                "deletionResult must be set after confirmed deletion",
+                viewModel.uiState.value.deletionResult,
+            )
         }
 
-        assertNotNull(
-            "deletionResult must be set after confirmed deletion",
-            viewModel.uiState.value.deletionResult,
-        )
-    }
-
     @Test
-    fun `given step2 when onDeleteStep2Confirmed then dialogs are dismissed`() = runTest {
-        viewModel.onDeleteStep1Clicked()
-        viewModel.onDeleteStep2Triggered()
-        viewModel.onDeleteStep2Confirmed(syntheticPatientId)
+    fun `given step2 when onDeleteStep2Confirmed then dialogs are dismissed`() =
+        runTest {
+            viewModel.onDeleteStep1Clicked()
+            viewModel.onDeleteStep2Triggered()
+            viewModel.onDeleteStep2Confirmed(syntheticPatientId)
 
-        assertFalse(
-            "showDeleteStep1 must be false after deletion",
-            viewModel.uiState.value.showDeleteStep1,
-        )
-        assertFalse(
-            "showDeleteStep2 must be false after deletion",
-            viewModel.uiState.value.showDeleteStep2,
-        )
-    }
+            assertFalse(
+                "showDeleteStep1 must be false after deletion",
+                viewModel.uiState.value.showDeleteStep1,
+            )
+            assertFalse(
+                "showDeleteStep2 must be false after deletion",
+                viewModel.uiState.value.showDeleteStep2,
+            )
+        }
 
     @Test
     fun `given initial state when onDeleteStep2Confirmed without step1 then deletionResult is set`() =
@@ -251,17 +254,18 @@ class PrivacyViewModelTest {
         }
 
     @Test
-    fun `given exportFile set when onExportFileConsumed then exportFile is null`() = runTest {
-        viewModel.onExportClicked(syntheticPatientId)
-        viewModel.uiState.first { !it.isExporting }
+    fun `given exportFile set when onExportFileConsumed then exportFile is null`() =
+        runTest {
+            viewModel.onExportClicked(syntheticPatientId)
+            viewModel.uiState.first { !it.isExporting }
 
-        viewModel.onExportFileConsumed()
+            viewModel.onExportFileConsumed()
 
-        assertNull(
-            "exportFile must be null after it has been consumed",
-            viewModel.uiState.value.exportFile,
-        )
-    }
+            assertNull(
+                "exportFile must be null after it has been consumed",
+                viewModel.uiState.value.exportFile,
+            )
+        }
 
     @Test
     fun `given initial state when no action then deletionResult is null`() {
@@ -285,7 +289,10 @@ internal class FakeSecurePreferencesStore : SecurePreferencesStore {
     var isCleared = false
         private set
 
-    override fun putString(key: String, value: String) {
+    override fun putString(
+        key: String,
+        value: String,
+    ) {
         store[key] = value
     }
 

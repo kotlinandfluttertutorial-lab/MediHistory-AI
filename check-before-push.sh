@@ -215,7 +215,7 @@ else
 
     # 1.1 -- Compile
     print_info "Running :app:compileDebugKotlin (not in CI -- local gate adds this check)..."
-    (cd "$ANDROID_DIR" && ./gradlew :app:compileDebugKotlin --no-daemon)
+    (cd "$ANDROID_DIR" && ./gradlew :app:compileDebugKotlin --no-daemon -PskipGoogleServices=true)
     ANDROID_COMPILE_EXIT=$?
     if [ $ANDROID_COMPILE_EXIT -eq 0 ]; then
         check_result "android-compile" "PASS" "(:app:compileDebugKotlin -- note: not in CI)"
@@ -225,7 +225,7 @@ else
 
     # 1.2 -- Lint
     print_info "Running :app:lintDebug..."
-    (cd "$ANDROID_DIR" && ./gradlew :app:lintDebug --no-daemon)
+    (cd "$ANDROID_DIR" && ./gradlew :app:lintDebug --no-daemon -PskipGoogleServices=true)
     ANDROID_LINT_EXIT=$?
     if [ $ANDROID_LINT_EXIT -eq 0 ]; then
         check_result "android-lint" "PASS"
@@ -233,12 +233,19 @@ else
         check_result "android-lint" "FAIL" ":app:lintDebug exited $ANDROID_LINT_EXIT -- see android/app/build/reports/lint-results-debug.html"
     fi
 
-    # 1.3 -- ktlint (not configured)
-    check_result "android-ktlint" "SKIP" "ktlint not configured (no ktlint plugin in android/build.gradle.kts)"
+    # 1.3 -- ktlint
+    print_info "Running :app:ktlintCheck..."
+    (cd "$ANDROID_DIR" && ./gradlew :app:ktlintCheck --no-daemon -PskipGoogleServices=true)
+    ANDROID_KTLINT_EXIT=$?
+    if [ $ANDROID_KTLINT_EXIT -eq 0 ]; then
+        check_result "android-ktlint" "PASS"
+    else
+        check_result "android-ktlint" "FAIL" ":app:ktlintCheck exited $ANDROID_KTLINT_EXIT -- run :app:ktlintFormat to apply formatting"
+    fi
 
     # 1.4 -- Unit tests
     print_info "Running :app:testDebugUnitTest..."
-    (cd "$ANDROID_DIR" && ./gradlew :app:testDebugUnitTest --no-daemon)
+    (cd "$ANDROID_DIR" && ./gradlew :app:testDebugUnitTest --no-daemon -PskipGoogleServices=true)
     ANDROID_TEST_EXIT=$?
     if [ $ANDROID_TEST_EXIT -eq 0 ]; then
         check_result "android-unit-tests" "PASS"
@@ -332,7 +339,7 @@ else
             check_result "backend-pytest" "FAIL" "pytest not installed -- run: pip install -r requirements.txt"
         else
             print_info "Running pytest tests/ -m not db ..."
-            export DATABASE_URL="sqlite:///:memory:"
+            export DATABASE_URL="sqlite+aiosqlite:///:memory:"
             export JWT_SECRET_KEY="test-jwt-secret-for-ci-only-not-a-real-secret"
             export TESTING="true"
             # NOTE: CI runs pytest --cov=app --cov-fail-under=90; the local gate omits

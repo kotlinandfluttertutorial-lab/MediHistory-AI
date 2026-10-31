@@ -256,7 +256,7 @@ if (-not (Test-Path $GRADLEW_BAT)) {
     # 1.1 -- Compile
     Write-Info "Running :app:compileDebugKotlin (not in CI -- local gate adds this check)..."
     Set-Location $ANDROID_DIR
-    & ".\gradlew.bat" ":app:compileDebugKotlin" "--no-daemon"
+    & ".\gradlew.bat" ":app:compileDebugKotlin" "--no-daemon" "-PskipGoogleServices=true"
     $exitCode = $LASTEXITCODE
     Set-Location $REPO_ROOT
     if ($exitCode -eq 0) {
@@ -268,7 +268,7 @@ if (-not (Test-Path $GRADLEW_BAT)) {
     # 1.2 -- Lint
     Write-Info "Running :app:lintDebug..."
     Set-Location $ANDROID_DIR
-    & ".\gradlew.bat" ":app:lintDebug" "--no-daemon"
+    & ".\gradlew.bat" ":app:lintDebug" "--no-daemon" "-PskipGoogleServices=true"
     $exitCode = $LASTEXITCODE
     Set-Location $REPO_ROOT
     if ($exitCode -eq 0) {
@@ -277,13 +277,22 @@ if (-not (Test-Path $GRADLEW_BAT)) {
         Write-CheckResult "android-lint" "FAIL" ":app:lintDebug exited $exitCode -- see android/app/build/reports/lint-results-debug.html"
     }
 
-    # 1.3 -- ktlint (not configured)
-    Write-CheckResult "android-ktlint" "SKIP" "ktlint not configured (no ktlint plugin in android/build.gradle.kts)"
+    # 1.3 -- ktlint
+    Write-Info "Running :app:ktlintCheck..."
+    Set-Location $ANDROID_DIR
+    & ".\gradlew.bat" ":app:ktlintCheck" "--no-daemon" "-PskipGoogleServices=true"
+    $exitCode = $LASTEXITCODE
+    Set-Location $REPO_ROOT
+    if ($exitCode -eq 0) {
+        Write-CheckResult "android-ktlint" "PASS"
+    } else {
+        Write-CheckResult "android-ktlint" "FAIL" ":app:ktlintCheck exited $exitCode -- run :app:ktlintFormat to apply formatting"
+    }
 
     # 1.4 -- Unit tests
     Write-Info "Running :app:testDebugUnitTest..."
     Set-Location $ANDROID_DIR
-    & ".\gradlew.bat" ":app:testDebugUnitTest" "--no-daemon"
+    & ".\gradlew.bat" ":app:testDebugUnitTest" "--no-daemon" "-PskipGoogleServices=true"
     $exitCode = $LASTEXITCODE
     Set-Location $REPO_ROOT
     if ($exitCode -eq 0) {
@@ -377,7 +386,7 @@ if (-not (Test-Path $REQUIREMENTS_FILE)) {
             Write-CheckResult "backend-pytest" "FAIL" "pytest not installed -- run: pip install -r requirements.txt"
         } else {
             Write-Info "Running pytest tests/ -m not db ..."
-            $env:DATABASE_URL  = "sqlite:///:memory:"
+            $env:DATABASE_URL  = "sqlite+aiosqlite:///:memory:"
             $env:JWT_SECRET_KEY = "test-jwt-secret-for-ci-only-not-a-real-secret"
             $env:TESTING       = "true"
             Set-Location $BACKEND_DIR

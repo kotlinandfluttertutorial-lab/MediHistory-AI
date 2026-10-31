@@ -31,7 +31,6 @@ import com.medihistory.ai.data.model.MedicineStatus
  * (medicineAId, medicineBId).
  */
 object DuplicateDetector {
-
     /**
      * Detects potential duplicate active ingredients across [medicines].
      *
@@ -48,10 +47,15 @@ object DuplicateDetector {
      */
     fun detect(medicines: List<Medicine>): List<DuplicateCandidate> {
         // Filter to active medicines with a known ingredient, sorted deterministically
-        val active = medicines
-            .filter { it.status != MedicineStatus.PAST }
-            .filter { !it.activeIngredient.isNullOrBlank() }
-            .sortedBy { it.id }
+        val active =
+            medicines
+                .filter { it.status != MedicineStatus.PAST }
+                .mapNotNull { medicine ->
+                    medicine.activeIngredient
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { ingredient -> ActiveMedicine(medicine, ingredient) }
+                }
+                .sortedBy { it.medicine.id }
 
         val candidates = mutableListOf<DuplicateCandidate>()
 
@@ -65,6 +69,11 @@ object DuplicateDetector {
         return candidates.sortedWith(compareBy({ it.medicineAId }, { it.medicineBId }))
     }
 
+    private data class ActiveMedicine(
+        val medicine: Medicine,
+        val ingredient: String,
+    )
+
     /**
      * Checks one pair of medicines for a potential duplicate ingredient.
      *
@@ -75,9 +84,14 @@ object DuplicateDetector {
      * 2. PARTIAL: one or more ingredient tokens in a split ("+", "/", ",") overlap after
      *    normalisation. Produces a lower-confidence candidate with a combination note.
      */
-    private fun checkPair(a: Medicine, b: Medicine): DuplicateCandidate? {
-        val ingA = a.activeIngredient ?: return null
-        val ingB = b.activeIngredient ?: return null
+    private fun checkPair(
+        activeA: ActiveMedicine,
+        activeB: ActiveMedicine,
+    ): DuplicateCandidate? {
+        val a = activeA.medicine
+        val b = activeB.medicine
+        val ingA = activeA.ingredient
+        val ingB = activeB.ingredient
 
         // --- EXACT match (including synonym equivalence) ---
         if (IngredientNormalizer.isSynonym(ingA, ingB)) {
@@ -111,11 +125,12 @@ object DuplicateDetector {
             matchingIngredient = matchingIng,
             matchType = MatchType.PARTIAL,
             confidence = 0.70f,
-            combinationNote = buildCombinationNote(
-                medicineAName = a.medicineName,
-                medicineBName = b.medicineName,
-                matchingIngredient = matchingIng,
-            ),
+            combinationNote =
+                buildCombinationNote(
+                    medicineAName = a.medicineName,
+                    medicineBName = b.medicineName,
+                    matchingIngredient = matchingIng,
+                ),
         )
     }
 
@@ -125,8 +140,7 @@ object DuplicateDetector {
      *
      * Single-ingredient strings return a one-element list.
      */
-    private fun splitIngredients(ingredient: String): List<String> =
-        ingredient.split("+", "/", ",").map { it.trim() }.filter { it.isNotEmpty() }
+    private fun splitIngredients(ingredient: String): List<String> = ingredient.split("+", "/", ",").map { it.trim() }.filter { it.isNotEmpty() }
 
     /**
      * Builds the combination note that accompanies a PARTIAL match.
