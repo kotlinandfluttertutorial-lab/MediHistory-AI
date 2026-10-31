@@ -39,6 +39,7 @@ import androidx.lifecycle.viewModelScope
 import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.OcrStatus
 import com.medihistory.ai.data.repository.DoctorRepository
+import com.medihistory.ai.data.repository.MedicineRepository
 import com.medihistory.ai.data.repository.PrescriptionRepository
 import com.medihistory.ai.ui.components.EmptyStateView
 import com.medihistory.ai.ui.components.LoadingIndicator
@@ -85,6 +86,7 @@ class DoctorGroupViewModel
     constructor(
         private val prescriptionRepository: PrescriptionRepository,
         private val doctorRepository: DoctorRepository,
+        private val medicineRepository: MedicineRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(DoctorGroupUiState(isLoading = true))
         val uiState: StateFlow<DoctorGroupUiState> = _uiState.asStateFlow()
@@ -97,8 +99,10 @@ class DoctorGroupViewModel
                 combine(
                     prescriptionRepository.observeByPatient(patientId),
                     doctorRepository.observeByPatient(patientId),
-                ) { prescriptions, doctors ->
+                    medicineRepository.observeByPatient(patientId),
+                ) { prescriptions, doctors, medicines ->
                     val doctor = doctors.firstOrNull { it.id == doctorId }
+                    val medicineCountByRx = medicines.groupingBy { it.prescriptionId }.eachCount()
                     val filtered =
                         prescriptions
                             .filter { it.doctorId == doctorId }
@@ -115,7 +119,7 @@ class DoctorGroupViewModel
                                                 .replaceFirstChar { it.uppercase() }
                                         },
                                     prescriptionDate = prescription.prescriptionDate?.toString() ?: "Date unknown",
-                                    medicineCount = 0, // resolved separately in a future ticket
+                                    medicineCount = medicineCountByRx[prescription.id] ?: 0,
                                     ocrStatus = prescription.ocrStatus.toUiOcrStatus(),
                                 )
                             }

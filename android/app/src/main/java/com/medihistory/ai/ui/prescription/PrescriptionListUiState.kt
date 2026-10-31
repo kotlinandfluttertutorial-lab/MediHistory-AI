@@ -26,6 +26,8 @@ data class DoctorGroup(
 data class PrescriptionListUiState(
     val prescriptions: List<PrescriptionSummary> = emptyList(),
     val doctorGroups: List<DoctorGroup> = emptyList(),
+    val searchQuery: String = "",
+    val isSearchActive: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
 )

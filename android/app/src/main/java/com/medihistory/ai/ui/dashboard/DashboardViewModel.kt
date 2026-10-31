@@ -65,13 +65,15 @@ class DashboardViewModel @Inject constructor(
                 val pendingOcrCount = prescriptions.count {
                     it.ocrStatus == OcrStatus.PENDING || it.ocrStatus == OcrStatus.NEEDS_REVIEW
                 }
+                // Count medicines per prescription — mirrors the logic in PrescriptionListViewModel.
+                val medicineCountByRx = medicines.groupingBy { it.prescriptionId }.eachCount()
                 val recentSummaries = prescriptions.take(3).map { prescription ->
                     PrescriptionSummary(
                         id = prescription.id,
                         doctorName = prescription.doctorId ?: "Unknown doctor",
                         doctorSpecialty = "",
                         prescriptionDate = prescription.prescriptionDate?.toString() ?: "Date unknown",
-                        medicineCount = 0,
+                        medicineCount = medicineCountByRx[prescription.id] ?: 0,
                         ocrStatus = prescription.ocrStatus.toUiOcrStatus(),
                     )
                 }

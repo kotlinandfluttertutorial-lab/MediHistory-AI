@@ -325,6 +325,53 @@ fun PrescriptionDetailScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // ── Medicines on this prescription ────────────────────────
+                    Text(
+                        text = "Medicines",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    if (uiState.medicines.isEmpty()) {
+                        Text(
+                            text = when (prescription.ocrStatus) {
+                                OcrStatus.PENDING, OcrStatus.PROCESSING ->
+                                    "Extract text to see medicines on this prescription."
+                                OcrStatus.NEEDS_REVIEW ->
+                                    "Review OCR fields to confirm medicines."
+                                else -> "No medicines recorded for this prescription."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        uiState.medicines.forEach { medicine ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.Top,
+                            ) {
+                                Text("•", style = MaterialTheme.typography.bodyMedium)
+                                Column {
+                                    Text(
+                                        text = medicine.medicineName +
+                                            (medicine.strength?.let { " $it" } ?: ""),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    if (!medicine.dosageInstructions.isNullOrBlank()) {
+                                        Text(
+                                            text = medicine.dosageInstructions,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // OCR status badge
                     Text(
                         text = "OCR Status",

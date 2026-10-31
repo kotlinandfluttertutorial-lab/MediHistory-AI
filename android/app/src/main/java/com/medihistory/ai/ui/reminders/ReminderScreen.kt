@@ -18,6 +18,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -279,6 +281,7 @@ private fun MedicinePickerDialog(
  * @param onDismiss  Called when the patient cancels or dismisses the dialog.
  */
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun ReminderAdvisorDialog(
     medicine: Medicine,
     suggestion: ReminderSuggestion?,
@@ -286,21 +289,42 @@ private fun ReminderAdvisorDialog(
     onDismiss: () -> Unit,
 ) {
     val initialTimes = suggestion?.times ?: listOf(LocalTime.of(8, 0))
-    // For MVP: times are displayed read-only. Full time-picker is future work.
     var times by rememberSaveable { mutableStateOf(initialTimes) }
-
+    var editingIndex by rememberSaveable { mutableStateOf(-1) }
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    // Time picker sub-dialog for the slot at editingIndex
+    if (editingIndex >= 0 && editingIndex < times.size) {
+        val current = times[editingIndex]
+        val timePickerState = rememberTimePickerState(
+            initialHour = current.hour,
+            initialMinute = current.minute,
+            is24Hour = true,
+        )
+        AlertDialog(
+            onDismissRequest = { editingIndex = -1 },
+            title = { Text("Set reminder time") },
+            text = { TimePicker(state = timePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val updated = times.toMutableList()
+                    updated[editingIndex] = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                    times = updated
+                    editingIndex = -1
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingIndex = -1 }) { Text("Cancel") }
+            },
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Suggested reminder times") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Medicine: ${medicine.medicineName}",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-
+                Text(text = "Medicine: ${medicine.medicineName}", style = MaterialTheme.typography.bodyMedium)
                 if (!medicine.dosageInstructions.isNullOrBlank()) {
                     Text(
                         text = "Prescribed: ${medicine.dosageInstructions}",
@@ -308,72 +332,50 @@ private fun ReminderAdvisorDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-
                 Spacer(Modifier.height(4.dp))
-
-                if (suggestion != null) {
-                    Text(
-                        text = "Suggested times:",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    times.forEach { time ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors =
-                                CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                ),
+                Text(
+                    text = if (suggestion != null) "Tap a time to edit it:" else "Set your reminder time:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                times.forEachIndexed { idx, time ->
+                    Card(
+                        onClick = { editingIndex = idx },
+                        modifier = Modifier.fillMaxWidth().semantics {
+                            contentDescription = "Reminder time ${time.format(formatter)}, tap to edit"
+                        },
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    text = time.format(formatter),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                )
-                                Text(
-                                    text = "Tap to change time (coming soon)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                )
-                            }
+                            Text(
+                                text = time.format(formatter),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                            Text("Edit", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                         }
                     }
-                } else {
-                    Text(
-                        text = "No automatic suggestion available for these instructions. Please set a time manually.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
-
                 Spacer(Modifier.height(4.dp))
-
-                // Always-visible disclaimer
                 Text(
-                    text = "AI-generated — always verify timing with your doctor or pharmacist.",
+                    text = "AI-generated � always verify timing with your doctor or pharmacist.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = { onConfirm(times) },
-                modifier =
-                    Modifier.semantics {
-                        contentDescription = "Set reminders for ${medicine.medicineName}"
-                    },
-            ) {
-                Text("Set reminders")
-            }
+            TextButton(onClick = { onConfirm(times) }) { Text("Set ${times.size} reminder(s)") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
+}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

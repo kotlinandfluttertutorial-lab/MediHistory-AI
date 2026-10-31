@@ -15,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,6 +34,7 @@ import javax.inject.Inject
 data class PrescriptionDetailUiState(
     val prescription: Prescription? = null,
     val doctorName: String? = null,
+    val medicines: List<com.medihistory.ai.data.model.Medicine> = emptyList(),
     val understanding: List<com.medihistory.ai.data.ai.MedicineUnderstanding> = emptyList(),
     val isUnderstandingLoading: Boolean = false,
     val understandingError: String? = null,
@@ -65,25 +67,31 @@ class PrescriptionDetailViewModel
          * Sets [PrescriptionDetailUiState.error] if the record does not exist.
          * When a doctorId is present, also resolves the doctor name.
          */
-        fun load(
-            id: String,
-            patientId: String,
-        ) {
+        fun load(id: String, patientId: String) {
             viewModelScope.launch {
-                val prescription = repository.getById(id, patientId)
-                if (prescription != null) {
-                    val doctorName =
-                        prescription.doctorId?.let { doctorId ->
-                            doctorRepository.getById(doctorId, patientId)?.name
+                combine(
+                    repository.observeByPatient(patientId),
+                    medicineRepository.observeByPatient(patientId),
+                ) { prescriptions, allMedicines ->
+                    val prescription = prescriptions.firstOrNull { it.id == id }
+                    if (prescription != null) {
+                        val doctorName = prescription.doctorId?.let { did ->
+                            doctorRepository.getById(did, patientId)?.name
                         }
-                    _uiState.value =
+                        val medicines = allMedicines.filter { it.prescriptionId == id }
                         PrescriptionDetailUiState(
                             prescription = prescription,
                             doctorName = doctorName,
+                            medicines = medicines,
                         )
-                } else {
-                    _uiState.value = PrescriptionDetailUiState(error = "Prescription not found")
+                    } else {
+                        PrescriptionDetailUiState(error = "Prescription not found")
+                    }
                 }
+                    .catch { _ ->
+                        _uiState.value = PrescriptionDetailUiState(error = "Failed to load prescription.")
+                    }
+                    .collect { state -> _uiState.value = state }
             }
         }
 

@@ -244,6 +244,7 @@ fun MediHistoryNavHost(
                     }
                 },
                 onBack = { navController.navigateUp() },
+                onManageConsent = { navController.navigate(Routes.CONSENT_MANAGEMENT) },
             )
         }
 
@@ -311,6 +312,12 @@ fun MediHistoryNavHost(
                 patientId = patientId,
                 onSaveSuccess = { navController.navigateUp() },
                 onNavigateUp = { navController.navigateUp() },
+            )
+        }
+        // -- Gap 6: Consent management
+        composable(Routes.CONSENT_MANAGEMENT) {
+            com.medihistory.ai.ui.privacy.ConsentManagementScreen(
+                onBack = { navController.navigateUp() },
             )
         }
     }

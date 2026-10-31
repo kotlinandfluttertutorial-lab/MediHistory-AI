@@ -32,6 +32,7 @@ object Routes {
     const val DOCTOR_EDIT_ROUTE = "doctor_edit/{doctorId}"
     const val DOCTOR_ADD = "doctor_add"
     const val PATIENT_PROFILE = "patient_profile"
+    const val CONSENT_MANAGEMENT = "consent_management"
 
     fun prescriptionDetail(id: String) = "prescription/$id"
 

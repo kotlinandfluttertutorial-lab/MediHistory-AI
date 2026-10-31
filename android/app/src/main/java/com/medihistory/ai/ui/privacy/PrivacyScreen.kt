@@ -66,6 +66,7 @@ fun PrivacyScreen(
     patientId: String,
     onDataDeleted: () -> Unit,
     onBack: () -> Unit,
+    onManageConsent: () -> Unit = {},
     viewModel: PrivacyViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -149,7 +150,7 @@ fun PrivacyScreen(
                     CloudBackupCard()
 
                     // ── Consent and sharing ────────────────────────────────────────────
-                    ConsentCard(onManageConsent = { /* TODO: navigate to consent management */ })
+                    ConsentCard(onManageConsent = onManageConsent)
 
                     // ── Deletion section ───────────────────────────────────────────────
                     DeleteCard(

@@ -105,6 +105,64 @@ class PrescriptionListViewModel
             observePrescriptions()
         }
 
+        fun onSearchQueryChange(query: String) {
+            _uiState.update { state ->
+                val groups = if (query.isBlank()) {
+                    groupFromSummaries(state.prescriptions, state.doctorGroups)
+                } else {
+                    val filtered = state.prescriptions.filter { rx ->
+                        rx.doctorName.contains(query, ignoreCase = true) ||
+                            rx.doctorSpecialty.contains(query, ignoreCase = true) ||
+                            rx.prescriptionDate.contains(query, ignoreCase = true)
+                    }
+                    groupFromSummaries(filtered, state.doctorGroups)
+                }
+                state.copy(searchQuery = query, doctorGroups = groups)
+            }
+        }
+
+        fun onToggleSearch() {
+            _uiState.update { state ->
+                if (state.isSearchActive) {
+                    // Closing — restore all groups unfiltered
+                    val allGroups = groupFromSummaries(state.prescriptions, state.doctorGroups)
+                    state.copy(isSearchActive = false, searchQuery = "", doctorGroups = allGroups)
+                } else {
+                    state.copy(isSearchActive = true)
+                }
+            }
+        }
+
+        fun onSortNewestFirst() {
+            _uiState.update { state ->
+                val sorted = state.prescriptions.sortedByDescending { it.prescriptionDate }
+                state.copy(prescriptions = sorted, doctorGroups = groupFromSummaries(sorted, state.doctorGroups))
+            }
+        }
+
+        fun onSortOldestFirst() {
+            _uiState.update { state ->
+                val sorted = state.prescriptions.sortedBy { it.prescriptionDate }
+                state.copy(prescriptions = sorted, doctorGroups = groupFromSummaries(sorted, state.doctorGroups))
+            }
+        }
+
+        private fun groupFromSummaries(
+            summaries: List<PrescriptionSummary>,
+            existing: List<DoctorGroup>,
+        ): List<DoctorGroup> =
+            summaries
+                .groupBy { it.doctorName }
+                .map { (doctorName, rxList) ->
+                    val existingExpanded = existing.firstOrNull { it.doctorName == doctorName }?.isExpanded ?: true
+                    DoctorGroup(
+                        doctorName   = doctorName,
+                        specialty    = rxList.firstOrNull()?.doctorSpecialty ?: "",
+                        prescriptions = rxList,
+                        isExpanded   = existingExpanded,
+                    )
+                }
+
         fun onToggleGroup(doctorName: String) {
             _uiState.update { state ->
                 state.copy(
