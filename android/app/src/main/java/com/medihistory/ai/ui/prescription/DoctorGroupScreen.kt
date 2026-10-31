@@ -107,8 +107,13 @@ class DoctorGroupViewModel
                                     id = prescription.id,
                                     doctorName = doctor?.name ?: "Unknown doctor",
                                     doctorSpecialty =
-                                        doctor?.specialty?.name?.lowercase()
-                                            ?.replaceFirstChar { it.uppercase() } ?: "",
+                                        when {
+                                            doctor == null -> ""
+                                            doctor.specialty == com.medihistory.ai.data.model.DoctorSpecialty.OTHER ->
+                                                doctor.specialtyOther ?: "Other"
+                                            else -> doctor.specialty.name.lowercase()
+                                                .replaceFirstChar { it.uppercase() }
+                                        },
                                     prescriptionDate = prescription.prescriptionDate?.toString() ?: "Date unknown",
                                     medicineCount = 0, // resolved separately in a future ticket
                                     ocrStatus = prescription.ocrStatus.toUiOcrStatus(),
@@ -298,10 +303,11 @@ private fun DoctorSummaryCard(
     prescriptionCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    val specialtyLabel =
-        doctor.specialty.name
-            .lowercase()
-            .replaceFirstChar { it.uppercase() }
+    val specialtyLabel = when {
+        doctor.specialty == com.medihistory.ai.data.model.DoctorSpecialty.OTHER ->
+            doctor.specialtyOther ?: "Other"
+        else -> doctor.specialty.name.lowercase().replaceFirstChar { it.uppercase() }
+    }
 
     ElevatedCard(
         modifier =
