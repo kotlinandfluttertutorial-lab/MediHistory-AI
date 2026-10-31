@@ -5,16 +5,8 @@ import com.medihistory.ai.ui.prescription.PrescriptionSummary
 /**
  * UI state for [DashboardScreen].
  *
- * All counts default to 0 so the screen renders correctly before data loads.
- *
- * @param prescriptionCount    Total prescriptions for the current patient.
- * @param doctorCount          Total doctors recorded for the current patient.
- * @param medicineCount        Total medicines recorded for the current patient.
- * @param pendingAlertCount    Unreviewed potential duplicate alerts.
- * @param pendingOcrCount      Prescriptions with OCR status PENDING or NEEDS_REVIEW.
- * @param recentPrescriptions  The 3 most recent prescriptions shown in "Recent activity".
- * @param isLoading            True while any data is being fetched.
- * @param error                Non-null when a fetch error occurred.
+ * @param visitSummary  Pre-visit summary from [PrepareForVisitAgent] (F12). Null until generated.
+ * @param isVisitSummaryLoading True while the agent is running.
  */
 data class DashboardUiState(
     // Greeting section
@@ -28,6 +20,9 @@ data class DashboardUiState(
     val pendingAlertCount: Int = 0,
     val pendingOcrCount: Int = 0,
     val recentPrescriptions: List<PrescriptionSummary> = emptyList(),
+    // Visit preparation (F12)
+    val visitSummary: com.medihistory.ai.data.ai.VisitSummary? = null,
+    val isVisitSummaryLoading: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
 )

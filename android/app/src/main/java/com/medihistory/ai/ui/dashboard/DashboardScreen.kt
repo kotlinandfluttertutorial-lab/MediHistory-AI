@@ -40,6 +40,9 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -49,17 +52,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -114,6 +122,8 @@ fun DashboardScreen(
     val isFabExpanded by remember {
         derivedStateOf { listState.firstVisibleItemIndex == 0 }
     }
+    var showVisitSheet by rememberSaveable { mutableStateOf(false) }
+    val visitSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -217,7 +227,19 @@ fun DashboardScreen(
                         )
                     }
 
-                    // ── 4. Recent activity ─────────────────────────────────────
+                    // ── 4. Prepare for visit card (F12) ────────────────────────
+                    item {
+                        PrepareForVisitCard(
+                            isLoading  = uiState.isVisitSummaryLoading,
+                            hasSummary = uiState.visitSummary != null,
+                            onPrepare  = {
+                                viewModel.prepareForVisit(patientId)
+                                showVisitSheet = true
+                            },
+                        )
+                    }
+
+                    // ── 5. Recent activity ─────────────────────────────────────
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -261,6 +283,19 @@ fun DashboardScreen(
                     item { Spacer(Modifier.height(96.dp)) }
                 }
             }
+        }
+    }
+
+    // ── Visit preparation bottom sheet (F12) ─────────────────────────────────
+    if (showVisitSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showVisitSheet = false },
+            sheetState = visitSheetState,
+        ) {
+            VisitSummarySheetContent(
+                uiState   = uiState,
+                onDismiss = { showVisitSheet = false },
+            )
         }
     }
 }
@@ -827,5 +862,205 @@ private fun DashboardSkeleton(modifier: Modifier = Modifier) {
                         .background(shimmerColor),
             ) {}
         }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Prepare for Visit card (F12)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Dashboard card that offers to generate a pre-visit summary (F12).
+ *
+ * Always visible. Shows a loading spinner while the agent is running.
+ * Tapping "Prepare for visit" calls the agent and opens the bottom sheet.
+ */
+@Composable
+private fun PrepareForVisitCard(
+    isLoading: Boolean,
+    hasSummary: Boolean,
+    onPrepare: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "Prepare for your next doctor visit" },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Prepare for your visit",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = if (hasSummary)
+                        "Your pre-visit summary is ready"
+                    else
+                        "Get a summary of medicines and questions for your doctor",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            } else {
+                FilledTonalButton(
+                    onClick = onPrepare,
+                    modifier = Modifier.semantics {
+                        contentDescription = "Prepare for visit"
+                    },
+                ) {
+                    Text(text = if (hasSummary) "View" else "Prepare")
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Visit summary bottom sheet content (F12)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Content of the "Prepare for visit" bottom sheet.
+ *
+ * Sections:
+ * 1. Non-dismissible AI disclaimer
+ * 2. Current medicines list
+ * 3. Open duplicate alerts to discuss
+ * 4. Suggested questions
+ *
+ * Medical safety: all content is derived from confirmed patient data.
+ * The disclaimer is always the first visible element.
+ */
+@Composable
+private fun VisitSummarySheetContent(
+    uiState: DashboardUiState,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val summary = uiState.visitSummary
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = "Prepare for your visit",
+            style = MaterialTheme.typography.titleLarge,
+        )
+
+        // Non-dismissible disclaimer
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "AI-generated summary — always verify with your doctor or pharmacist.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.padding(12.dp),
+            )
+        }
+
+        if (summary == null) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else {
+            // ── Current medicines ──────────────────────────────────────────
+            if (summary.currentMedicines.isNotEmpty()) {
+                Text(
+                    text = "Current medicines (${summary.currentMedicines.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                summary.currentMedicines.forEach { med ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("•", style = MaterialTheme.typography.bodyMedium)
+                        Column {
+                            Text(
+                                text = med.medicineName +
+                                    (med.strength?.let { " $it" } ?: ""),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (!med.dosageInstructions.isNullOrBlank()) {
+                                Text(
+                                    text = med.dosageInstructions,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+                HorizontalDivider()
+            }
+
+            // ── Open alerts to discuss ─────────────────────────────────────
+            if (summary.openAlerts.isNotEmpty()) {
+                Text(
+                    text = "Alerts to discuss (${summary.openAlerts.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.extendedColors.warning,
+                )
+                summary.openAlerts.forEach { alert ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.WarningAmber,
+                            contentDescription = null,
+                            tint = MaterialTheme.extendedColors.warning,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = "Potential duplicate: ${alert.matchingIngredient}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+                HorizontalDivider()
+            }
+
+            // ── Suggested questions ────────────────────────────────────────
+            if (summary.suggestedQuestions.isNotEmpty()) {
+                Text(
+                    text = "Questions to consider asking",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                summary.suggestedQuestions.forEach { question ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("❓", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            text = question.text,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
+        }
+
+        TextButton(
+            onClick = onDismiss,
+            modifier = Modifier.align(Alignment.End),
+        ) { Text("Close") }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
