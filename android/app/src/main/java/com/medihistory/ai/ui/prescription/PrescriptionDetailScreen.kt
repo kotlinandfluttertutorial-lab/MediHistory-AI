@@ -336,13 +336,14 @@ fun PrescriptionDetailScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     if (uiState.medicines.isEmpty()) {
                         Text(
-                            text = when (prescription.ocrStatus) {
-                                OcrStatus.PENDING, OcrStatus.PROCESSING ->
-                                    "Extract text to see medicines on this prescription."
-                                OcrStatus.NEEDS_REVIEW ->
-                                    "Review OCR fields to confirm medicines."
-                                else -> "No medicines recorded for this prescription."
-                            },
+                            text =
+                                when (prescription.ocrStatus) {
+                                    OcrStatus.PENDING, OcrStatus.PROCESSING ->
+                                        "Extract text to see medicines on this prescription."
+                                    OcrStatus.NEEDS_REVIEW ->
+                                        "Review OCR fields to confirm medicines."
+                                    else -> "No medicines recorded for this prescription."
+                                },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -356,8 +357,9 @@ fun PrescriptionDetailScreen(
                                 Text("•", style = MaterialTheme.typography.bodyMedium)
                                 Column {
                                     Text(
-                                        text = medicine.medicineName +
-                                            (medicine.strength?.let { " $it" } ?: ""),
+                                        text =
+                                            medicine.medicineName +
+                                                (medicine.strength?.let { " $it" } ?: ""),
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
                                     if (!medicine.dosageInstructions.isNullOrBlank()) {

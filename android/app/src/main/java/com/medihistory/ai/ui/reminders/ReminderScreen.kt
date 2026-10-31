@@ -18,8 +18,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -29,7 +27,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -296,11 +296,12 @@ private fun ReminderAdvisorDialog(
     // Time picker sub-dialog for the slot at editingIndex
     if (editingIndex >= 0 && editingIndex < times.size) {
         val current = times[editingIndex]
-        val timePickerState = rememberTimePickerState(
-            initialHour = current.hour,
-            initialMinute = current.minute,
-            is24Hour = true,
-        )
+        val timePickerState =
+            rememberTimePickerState(
+                initialHour = current.hour,
+                initialMinute = current.minute,
+                is24Hour = true,
+            )
         AlertDialog(
             onDismissRequest = { editingIndex = -1 },
             title = { Text("Set reminder time") },
@@ -341,9 +342,12 @@ private fun ReminderAdvisorDialog(
                 times.forEachIndexed { idx, time ->
                     Card(
                         onClick = { editingIndex = idx },
-                        modifier = Modifier.fillMaxWidth().semantics {
-                            contentDescription = "Reminder time ${time.format(formatter)}, tap to edit"
-                        },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .semantics {
+                                    contentDescription = "Reminder time ${time.format(formatter)}, tap to edit"
+                                },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
                     ) {
                         Row(
@@ -375,7 +379,6 @@ private fun ReminderAdvisorDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
-}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

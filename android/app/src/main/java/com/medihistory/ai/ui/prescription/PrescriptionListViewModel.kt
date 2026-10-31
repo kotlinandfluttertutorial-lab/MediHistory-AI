@@ -107,16 +107,18 @@ class PrescriptionListViewModel
 
         fun onSearchQueryChange(query: String) {
             _uiState.update { state ->
-                val groups = if (query.isBlank()) {
-                    groupFromSummaries(state.prescriptions, state.doctorGroups)
-                } else {
-                    val filtered = state.prescriptions.filter { rx ->
-                        rx.doctorName.contains(query, ignoreCase = true) ||
-                            rx.doctorSpecialty.contains(query, ignoreCase = true) ||
-                            rx.prescriptionDate.contains(query, ignoreCase = true)
+                val groups =
+                    if (query.isBlank()) {
+                        groupFromSummaries(state.prescriptions, state.doctorGroups)
+                    } else {
+                        val filtered =
+                            state.prescriptions.filter { rx ->
+                                rx.doctorName.contains(query, ignoreCase = true) ||
+                                    rx.doctorSpecialty.contains(query, ignoreCase = true) ||
+                                    rx.prescriptionDate.contains(query, ignoreCase = true)
+                            }
+                        groupFromSummaries(filtered, state.doctorGroups)
                     }
-                    groupFromSummaries(filtered, state.doctorGroups)
-                }
                 state.copy(searchQuery = query, doctorGroups = groups)
             }
         }
@@ -156,10 +158,10 @@ class PrescriptionListViewModel
                 .map { (doctorName, rxList) ->
                     val existingExpanded = existing.firstOrNull { it.doctorName == doctorName }?.isExpanded ?: true
                     DoctorGroup(
-                        doctorName   = doctorName,
-                        specialty    = rxList.firstOrNull()?.doctorSpecialty ?: "",
+                        doctorName = doctorName,
+                        specialty = rxList.firstOrNull()?.doctorSpecialty ?: "",
                         prescriptions = rxList,
-                        isExpanded   = existingExpanded,
+                        isExpanded = existingExpanded,
                     )
                 }
 

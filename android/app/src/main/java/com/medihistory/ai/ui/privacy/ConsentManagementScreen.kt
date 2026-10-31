@@ -70,18 +70,20 @@ fun ConsentManagementScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // ── Overview card ─────────────────────────────────────────────────
             Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    ),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -92,11 +94,12 @@ fun ConsentManagementScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Some features use the Google Gemini API to generate plain-language " +
-                            "summaries. Only patient-confirmed medicine names and doctor names " +
-                            "are sent — never raw prescription images, OCR text, or personal identifiers. " +
-                            "All AI-generated content is clearly labelled and must be verified with " +
-                            "your doctor or pharmacist before acting on it.",
+                        text =
+                            "Some features use the Google Gemini API to generate plain-language " +
+                                "summaries. Only patient-confirmed medicine names and doctor names " +
+                                "are sent — never raw prescription images, OCR text, or personal identifiers. " +
+                                "All AI-generated content is clearly labelled and must be verified with " +
+                                "your doctor or pharmacist before acting on it.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -110,28 +113,28 @@ fun ConsentManagementScreen(
             )
 
             ConsentFeatureRow(
-                featureName    = "Prescription Understanding (F11)",
-                description    = "Sends confirmed medicine names to Gemini to generate plain-language explanations.",
-                dataShared     = "Medicine names and strengths (confirmed by you)",
-                isEnabled      = true, // always-on for MVP; per-feature toggles in post-MVP
+                featureName = "Prescription Understanding (F11)",
+                description = "Sends confirmed medicine names to Gemini to generate plain-language explanations.",
+                dataShared = "Medicine names and strengths (confirmed by you)",
+                isEnabled = true, // always-on for MVP; per-feature toggles in post-MVP
             )
 
             HorizontalDivider()
 
             ConsentFeatureRow(
-                featureName    = "Medical History Narrator (F15)",
-                description    = "Sends your reviewed prescription timeline to Gemini to write a plain-language narrative.",
-                dataShared     = "Prescription dates, medicine names, doctor names (all confirmed by you)",
-                isEnabled      = true,
+                featureName = "Medical History Narrator (F15)",
+                description = "Sends your reviewed prescription timeline to Gemini to write a plain-language narrative.",
+                dataShared = "Prescription dates, medicine names, doctor names (all confirmed by you)",
+                isEnabled = true,
             )
 
             HorizontalDivider()
 
             ConsentFeatureRow(
-                featureName    = "Prepare for Visit (F12)",
-                description    = "Sends your current medicines and open alerts to Gemini to suggest questions for your doctor.",
-                dataShared     = "Medicine names, alert ingredient names (confirmed by you)",
-                isEnabled      = true,
+                featureName = "Prepare for Visit (F12)",
+                description = "Sends your current medicines and open alerts to Gemini to suggest questions for your doctor.",
+                dataShared = "Medicine names, alert ingredient names (confirmed by you)",
+                isEnabled = true,
             )
 
             // ── On-device features ────────────────────────────────────────────
@@ -142,43 +145,45 @@ fun ConsentManagementScreen(
             )
 
             ConsentFeatureRow(
-                featureName    = "Duplicate Alert Explainer (F13)",
-                description    = "Generates explanations from alert data stored on your device only.",
-                dataShared     = "Nothing — runs fully on-device",
-                isEnabled      = true,
+                featureName = "Duplicate Alert Explainer (F13)",
+                description = "Generates explanations from alert data stored on your device only.",
+                dataShared = "Nothing — runs fully on-device",
+                isEnabled = true,
             )
 
             HorizontalDivider()
 
             ConsentFeatureRow(
-                featureName    = "OCR Correction Assistant (F14)",
-                description    = "Suggests corrections by matching your confirmed doctor names against extracted text.",
-                dataShared     = "Nothing — runs fully on-device",
-                isEnabled      = true,
+                featureName = "OCR Correction Assistant (F14)",
+                description = "Suggests corrections by matching your confirmed doctor names against extracted text.",
+                dataShared = "Nothing — runs fully on-device",
+                isEnabled = true,
             )
 
             HorizontalDivider()
 
             ConsentFeatureRow(
-                featureName    = "Reminder Advisor (F16)",
-                description    = "Parses your confirmed dosage instructions to suggest reminder times.",
-                dataShared     = "Nothing — runs fully on-device",
-                isEnabled      = true,
+                featureName = "Reminder Advisor (F16)",
+                description = "Parses your confirmed dosage instructions to suggest reminder times.",
+                dataShared = "Nothing — runs fully on-device",
+                isEnabled = true,
             )
 
             Spacer(Modifier.height(8.dp))
 
             // ── Notice ────────────────────────────────────────────────────────
             Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = "Per-feature opt-out controls will be available in a future update. " +
-                        "To opt out of all AI features now, you can disable them by removing " +
-                        "your Gemini API key from the app settings.",
+                    text =
+                        "Per-feature opt-out controls will be available in a future update. " +
+                            "To opt out of all AI features now, you can disable them by removing " +
+                            "your Gemini API key from the app settings.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(12.dp),

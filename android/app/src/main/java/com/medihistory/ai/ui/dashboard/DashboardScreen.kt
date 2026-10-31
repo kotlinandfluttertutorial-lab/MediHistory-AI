@@ -230,9 +230,9 @@ fun DashboardScreen(
                     // ── 4. Prepare for visit card (F12) ────────────────────────
                     item {
                         PrepareForVisitCard(
-                            isLoading  = uiState.isVisitSummaryLoading,
+                            isLoading = uiState.isVisitSummaryLoading,
                             hasSummary = uiState.visitSummary != null,
-                            onPrepare  = {
+                            onPrepare = {
                                 viewModel.prepareForVisit(patientId)
                                 showVisitSheet = true
                             },
@@ -293,7 +293,7 @@ fun DashboardScreen(
             sheetState = visitSheetState,
         ) {
             VisitSummarySheetContent(
-                uiState   = uiState,
+                uiState = uiState,
                 onDismiss = { showVisitSheet = false },
             )
         }
@@ -883,14 +883,16 @@ private fun PrepareForVisitCard(
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "Prepare for your next doctor visit" },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "Prepare for your next doctor visit" },
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -900,10 +902,12 @@ private fun PrepareForVisitCard(
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Text(
-                    text = if (hasSummary)
-                        "Your pre-visit summary is ready"
-                    else
-                        "Get a summary of medicines and questions for your doctor",
+                    text =
+                        if (hasSummary) {
+                            "Your pre-visit summary is ready"
+                        } else {
+                            "Get a summary of medicines and questions for your doctor"
+                        },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -913,9 +917,10 @@ private fun PrepareForVisitCard(
             } else {
                 FilledTonalButton(
                     onClick = onPrepare,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Prepare for visit"
-                    },
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Prepare for visit"
+                        },
                 ) {
                     Text(text = if (hasSummary) "View" else "Prepare")
                 }
@@ -949,9 +954,10 @@ private fun VisitSummarySheetContent(
     val summary = uiState.visitSummary
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
@@ -961,9 +967,10 @@ private fun VisitSummarySheetContent(
 
         // Non-dismissible disclaimer
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            ),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                ),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
@@ -991,8 +998,9 @@ private fun VisitSummarySheetContent(
                         Text("•", style = MaterialTheme.typography.bodyMedium)
                         Column {
                             Text(
-                                text = med.medicineName +
-                                    (med.strength?.let { " $it" } ?: ""),
+                                text =
+                                    med.medicineName +
+                                        (med.strength?.let { " $it" } ?: ""),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             if (!med.dosageInstructions.isNullOrBlank()) {

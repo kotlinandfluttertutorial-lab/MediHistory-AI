@@ -115,8 +115,9 @@ class DoctorGroupViewModel
                                             doctor == null -> ""
                                             doctor.specialty == com.medihistory.ai.data.model.DoctorSpecialty.OTHER ->
                                                 doctor.specialtyOther ?: "Other"
-                                            else -> doctor.specialty.name.lowercase()
-                                                .replaceFirstChar { it.uppercase() }
+                                            else ->
+                                                doctor.specialty.name.lowercase()
+                                                    .replaceFirstChar { it.uppercase() }
                                         },
                                     prescriptionDate = prescription.prescriptionDate?.toString() ?: "Date unknown",
                                     medicineCount = medicineCountByRx[prescription.id] ?: 0,
@@ -307,11 +308,12 @@ private fun DoctorSummaryCard(
     prescriptionCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    val specialtyLabel = when {
-        doctor.specialty == com.medihistory.ai.data.model.DoctorSpecialty.OTHER ->
-            doctor.specialtyOther ?: "Other"
-        else -> doctor.specialty.name.lowercase().replaceFirstChar { it.uppercase() }
-    }
+    val specialtyLabel =
+        when {
+            doctor.specialty == com.medihistory.ai.data.model.DoctorSpecialty.OTHER ->
+                doctor.specialtyOther ?: "Other"
+            else -> doctor.specialty.name.lowercase().replaceFirstChar { it.uppercase() }
+        }
 
     ElevatedCard(
         modifier =

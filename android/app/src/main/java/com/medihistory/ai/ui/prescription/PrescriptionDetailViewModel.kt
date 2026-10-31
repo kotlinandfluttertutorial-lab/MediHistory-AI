@@ -15,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -67,7 +68,10 @@ class PrescriptionDetailViewModel
          * Sets [PrescriptionDetailUiState.error] if the record does not exist.
          * When a doctorId is present, also resolves the doctor name.
          */
-        fun load(id: String, patientId: String) {
+        fun load(
+            id: String,
+            patientId: String,
+        ) {
             viewModelScope.launch {
                 combine(
                     repository.observeByPatient(patientId),
@@ -75,9 +79,10 @@ class PrescriptionDetailViewModel
                 ) { prescriptions, allMedicines ->
                     val prescription = prescriptions.firstOrNull { it.id == id }
                     if (prescription != null) {
-                        val doctorName = prescription.doctorId?.let { did ->
-                            doctorRepository.getById(did, patientId)?.name
-                        }
+                        val doctorName =
+                            prescription.doctorId?.let { did ->
+                                doctorRepository.getById(did, patientId)?.name
+                            }
                         val medicines = allMedicines.filter { it.prescriptionId == id }
                         PrescriptionDetailUiState(
                             prescription = prescription,

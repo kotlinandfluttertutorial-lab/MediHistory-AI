@@ -99,9 +99,10 @@ fun PrescriptionListScreen(
                     onSearch = { },
                     active = false,
                     onActiveChange = { if (!it) viewModel.onToggleSearch() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
                     placeholder = { Text("Search by doctor, specialty, or date…") },
                     leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                 ) {}
@@ -163,9 +164,10 @@ fun PrescriptionListScreen(
                                     PrescriptionCard(
                                         prescription = prescription,
                                         onClick = { onPrescriptionClick(prescription.id) },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 4.dp),
                                     )
                                 }
                             }
@@ -192,11 +194,17 @@ fun PrescriptionListScreen(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 TextButton(
-                    onClick = { viewModel.onSortNewestFirst(); showSortSheet = false },
+                    onClick = {
+                        viewModel.onSortNewestFirst()
+                        showSortSheet = false
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Newest first") }
                 TextButton(
-                    onClick = { viewModel.onSortOldestFirst(); showSortSheet = false },
+                    onClick = {
+                        viewModel.onSortOldestFirst()
+                        showSortSheet = false
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Oldest first") }
                 TextButton(
