@@ -51,4 +51,30 @@ class DatabaseMigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrationFromVersionSevenAddsExplanationWithMatchingDefault() {
+        helper.createDatabase(testDb, 7).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO duplicate_alerts (
+                    id, patientId, medicineAId, medicineBId, matchingIngredient,
+                    matchType, confidence, isReviewed, reviewedAt, combinationNote, createdAt
+                ) VALUES (
+                    'alert-test', 'patient-test', 'medicine-a', 'medicine-b', 'ingredient',
+                    'EXACT', 0.95, 0, NULL, NULL, 1
+                )
+                """.trimIndent(),
+            )
+        }
+
+        helper.runMigrationsAndValidate(testDb, 8, true, MIGRATION_7_8).use { db ->
+            db.query("SELECT explanation FROM duplicate_alerts WHERE id = 'alert-test'").use { cursor ->
+                assert(cursor.moveToFirst()) { "Expected migrated alert row to be preserved" }
+                assert(cursor.getString(0) == "") {
+                    "Expected existing alerts to receive an empty explanation"
+                }
+            }
+        }
+    }
 }

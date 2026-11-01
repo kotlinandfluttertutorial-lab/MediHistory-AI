@@ -229,7 +229,7 @@ internal val MIGRATION_7_8 =
     object : Migration(7, 8) {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL(
-                "ALTER TABLE duplicate_alerts ADD COLUMN explanation TEXT",
+                "ALTER TABLE duplicate_alerts ADD COLUMN explanation TEXT DEFAULT ''",
             )
         }
     }

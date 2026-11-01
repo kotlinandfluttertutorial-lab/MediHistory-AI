@@ -4,8 +4,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,11 +18,16 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,13 +76,13 @@ fun MedicineListScreen(
 
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
     var selectedStatus by rememberSaveable { mutableStateOf<MedicineStatus?>(null) }
+    var showDuplicatesOnly by rememberSaveable { mutableStateOf(false) }
+    var showFilterSheet by rememberSaveable { mutableStateOf(false) }
+    val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Apply the status filter client-side (the DAO returns all medicines for the query;
-    // status filter is a lightweight in-memory step that avoids additional DB queries).
-    val displayedMedicines =
-        uiState.medicines.let { list ->
-            if (selectedStatus == null) list else list.filter { it.status == selectedStatus }
-        }
+    // Apply status filter client-side.
+    val displayedMedicines = uiState.medicines
+        .let { list -> if (selectedStatus == null) list else list.filter { it.status == selectedStatus } }
 
     Scaffold(
         modifier = modifier,
@@ -96,16 +103,10 @@ fun MedicineListScreen(
                         )
                     }
                     IconButton(
-                        onClick = { /* Filter bottom sheet — future ticket */ },
-                        modifier =
-                            Modifier.semantics {
-                                contentDescription = "Filter medicines"
-                            },
+                        onClick = { showFilterSheet = true },
+                        modifier = Modifier.semantics { contentDescription = "Filter medicines" },
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.FilterList,
-                            contentDescription = null,
-                        )
+                        Icon(imageVector = Icons.Outlined.FilterList, contentDescription = null)
                     }
                 },
             )
@@ -168,8 +169,8 @@ fun MedicineListScreen(
                     )
                 }
                 FilterChip(
-                    selected = false,
-                    onClick = { /* Duplicate alert filter — future ticket */ },
+                    selected = showDuplicatesOnly,
+                    onClick = { showDuplicatesOnly = !showDuplicatesOnly },
                     label = { Text("Duplicate alert") },
                 )
             }
@@ -204,15 +205,16 @@ fun MedicineListScreen(
                 displayedMedicines.isEmpty() -> {
                     EmptyStateView(
                         message =
-                            if (uiState.searchQuery.isBlank() && selectedStatus == null) {
+                            if (uiState.searchQuery.isBlank() && selectedStatus == null && !showDuplicatesOnly) {
                                 "No medicines yet"
                             } else {
-                                "No medicines match your search"
+                                "No medicines match your filters"
                             },
-                        actionLabel = "Clear search",
+                        actionLabel = "Clear filters",
                         onAction = {
                             viewModel.onSearchQueryChange("")
                             selectedStatus = null
+                            showDuplicatesOnly = false
                         },
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -238,6 +240,49 @@ fun MedicineListScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // ── Filter bottom sheet ───────────────────────────────────────────────────
+    if (showFilterSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showFilterSheet = false },
+            sheetState = filterSheetState,
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Filter medicines",
+                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                Text(
+                    text = "Status",
+                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = { selectedStatus = null; showFilterSheet = false },
+                    modifier = Modifier.fillMaxWidth()) { Text("All statuses") }
+                MedicineStatus.entries.forEach { status ->
+                    TextButton(
+                        onClick = { selectedStatus = status; showFilterSheet = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(status.name.lowercase().replaceFirstChar { it.uppercase() })
+                    }
+                }
+                androidx.compose.material3.HorizontalDivider()
+                TextButton(
+                    onClick = { showDuplicatesOnly = !showDuplicatesOnly; showFilterSheet = false },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (showDuplicatesOnly) "✓ Duplicate alerts only" else "Duplicate alerts only")
+                }
+                TextButton(
+                    onClick = { selectedStatus = null; showDuplicatesOnly = false; showFilterSheet = false },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Clear all filters") }
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

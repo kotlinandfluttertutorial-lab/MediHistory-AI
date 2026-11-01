@@ -86,11 +86,22 @@ class OcrReviewViewModel
             hasUserInteracted = false
             _uiState.update { it.copy(prescriptionId = prescriptionId, isLoading = true, error = null) }
 
-            // Resolve the patientId for later OcrStatus update — no content exposed.
+
+            // Resolve patientId and document path for the file viewer (Gap 9).
             viewModelScope.launch {
                 cachedPatientId = prescriptionDao.getPatientId(prescriptionId)
                     ?: sessionManager.getPatientId()
+                val prescription = cachedPatientId?.let { pid ->
+                    prescriptionDao.getById(prescriptionId, pid)
+                }
+                _uiState.update {
+                    it.copy(
+                        documentPath     = prescription?.documentPath,
+                        documentMimeType = prescription?.documentMimeType,
+                    )
+                }
             }
+
 
             extractedFieldDao
                 .observeByPrescription(prescriptionId)
