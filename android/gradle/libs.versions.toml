@@ -18,7 +18,7 @@ security-crypto    = "1.1.0-alpha06"
 junit              = "4.13.2"
 junit-ext          = "1.1.5"
 espresso           = "3.5.1"
-robolectric        = "4.12.2"
+robolectric        = "4.17"
 androidx-test-core = "1.6.1"
 
 [libraries]
