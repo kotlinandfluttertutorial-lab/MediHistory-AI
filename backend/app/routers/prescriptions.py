@@ -31,10 +31,13 @@ from app.schemas.prescription import (
     PrescriptionDetail,
     PrescriptionListItem,
     PrescriptionListResponse,
+    ProcessReviewRequest,
+    ProcessReviewResponse,
     UpdatePrescriptionRequest,
 )
 from app.services.medicine_service import MedicineService
 from app.services.prescription_service import PrescriptionService
+from app.services.review_processor_service import ReviewProcessorService
 
 router = APIRouter(prefix="/patients/me/prescriptions", tags=["prescriptions"])
 
@@ -50,6 +53,12 @@ def _get_medicine_service(
     db: AsyncSession = Depends(get_db),
 ) -> MedicineService:
     return MedicineService(db=db)
+
+
+def _get_review_processor_service(
+    db: AsyncSession = Depends(get_db),
+) -> ReviewProcessorService:
+    return ReviewProcessorService(db=db)
 
 
 # ---------------------------------------------------------------------------
@@ -299,6 +308,46 @@ async def trigger_ocr(
 ) -> OcrTriggerResponse:
     result = await service.trigger_ocr(prescription_id, patient_id)
     return OcrTriggerResponse(**result)
+
+
+# ---------------------------------------------------------------------------
+# Process review (server-side PostReviewProcessor — F-Migration)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/{prescription_id}/process-review",
+    response_model=ProcessReviewResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Apply confirmed OCR fields to doctor, prescription date, and medicines",
+)
+async def process_review(
+    prescription_id: str,
+    request: ProcessReviewRequest,
+    patient_id: Annotated[str, Depends(get_current_patient)],
+    review_service: Annotated[ReviewProcessorService, Depends(_get_review_processor_service)],
+) -> ProcessReviewResponse:
+    """
+    Server-side PostReviewProcessor endpoint.
+
+    After the patient confirms all OCR fields in the app, call this endpoint
+    with the reviewed fields. The server will:
+    - Resolve/create a Doctor row from confirmed doctor_name
+    - Update Prescription.doctor_id and prescription_date
+    - Create PrescriptionMedicine rows from confirmed medicine_name fields
+    - Run duplicate detection and persist new DuplicateAlert rows
+    - Advance ocr_status to COMPLETED
+
+    Medical safety: only REVIEWED fields with a non-null patient_value are used.
+    """
+    result = await review_service.process(
+        prescription_id=prescription_id,
+        patient_id=patient_id,
+        reviewed_fields=[f.model_dump() for f in request.reviewed_fields],
+    )
+    if "error" in result:
+        raise_http_error(404, "PRESCRIPTION_NOT_FOUND", "Prescription not found.")
+    return ProcessReviewResponse(**result)
 
 
 # ---------------------------------------------------------------------------

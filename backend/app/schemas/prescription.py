@@ -76,3 +76,29 @@ class PrescriptionListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+# ---------------------------------------------------------------------------
+# Process-review schemas (added for backend PostReviewProcessor migration)
+# ---------------------------------------------------------------------------
+
+class ReviewedField(BaseModel):
+    """A single OCR field after patient review."""
+    field_name: str
+    raw_value: Optional[str] = None
+    patient_value: Optional[str] = None
+    review_state: str  # REVIEWED | REJECTED | PENDING_REVIEW
+
+
+class ProcessReviewRequest(BaseModel):
+    """Request body for POST /prescriptions/{id}/process-review."""
+    reviewed_fields: list[ReviewedField]
+
+
+class ProcessReviewResponse(BaseModel):
+    """Response from the process-review endpoint."""
+    prescription_id: str
+    ocr_status: str
+    doctor_id: Optional[str] = None
+    medicines_created: int
+    alerts_created: int

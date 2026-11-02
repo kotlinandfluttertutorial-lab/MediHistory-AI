@@ -12,6 +12,7 @@ from fastapi import FastAPI
 
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.routers import (
+    ai_agents,
     auth,
     doctors,
     duplicates,
@@ -42,6 +43,7 @@ app = FastAPI(
         {"name": "reminders", "description": "Medication reminder operations"},
         {"name": "interactions", "description": "Drug interaction check (stub)"},
         {"name": "export", "description": "PDF export operations (stub)"},
+        {"name": "ai", "description": "AI agent endpoints (F11, F12, F15)"},
     ],
 )
 
@@ -69,3 +71,4 @@ app.include_router(history.router, prefix="/api/v1")
 app.include_router(reminders.router, prefix="/api/v1")
 app.include_router(interactions.router, prefix="/api/v1")
 app.include_router(export.router, prefix="/api/v1")
+app.include_router(ai_agents.router, prefix="/api/v1")
