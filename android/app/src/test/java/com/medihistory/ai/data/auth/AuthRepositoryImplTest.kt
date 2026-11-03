@@ -1,197 +1,160 @@
 package com.medihistory.ai.data.auth
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.Tasks
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
-import com.google.firebase.auth.AuthResult
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.inject.Provider
+import com.medihistory.ai.data.network.MediHistoryApiService
+import com.medihistory.ai.data.network.dto.RegisterResponse
+import com.medihistory.ai.data.network.dto.TokenResponse
+import com.medihistory.ai.data.security.SecurePreferences
+import com.medihistory.ai.data.security.SecurePreferencesStore
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import java.util.concurrent.Executor
-import java.util.concurrent.ScheduledThreadPoolExecutor
+import retrofit2.Response
 
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+/**
+ * Unit tests for [AuthRepositoryImpl] — backend JWT auth implementation.
+ *
+ * Uses [FakeApiService] and [FakeSecurePreferences] — no real network or Keystore.
+ * Synthetic credentials only.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AuthRepositoryImplTest {
-    private lateinit var auth: FakeFirebaseAuth
+
+    private lateinit var fakeApi: FakeApiService
+    private lateinit var fakePrefs: FakeSecurePreferences
     private lateinit var repository: AuthRepositoryImpl
 
     @Before
     fun setUp() {
-        auth = FakeFirebaseAuth()
-        repository = AuthRepositoryImpl(auth)
+        fakeApi = FakeApiService()
+        fakePrefs = FakeSecurePreferences()
+        repository = AuthRepositoryImpl(fakeApi, fakePrefs)
     }
 
     @Test
-    fun `login trims email and reports success`() =
-        runTest {
-            val result = repository.login("  user@example.test  ", "secret")
-
-            assertTrue(result.isSuccess)
-            assertEquals("user@example.test", auth.lastEmail)
-            assertEquals("secret", auth.lastPassword)
-        }
-
-    @Test
-    fun `login maps invalid credentials to friendly error`() =
-        runTest {
-            auth.signInTask =
-                Tasks.forException(
-                    FirebaseAuthInvalidCredentialsException("ERROR_INVALID_CREDENTIAL", "private detail"),
-                )
-
-            val result = repository.login("user@example.test", "wrong")
-
-            assertEquals("Incorrect email or password.", result.exceptionOrNull()?.message)
-        }
-
-    @Test
-    fun `login hides unexpected errors`() =
-        runTest {
-            auth.signInTask = Tasks.forException(IllegalStateException("private detail"))
-
-            val result = repository.login("user@example.test", "secret")
-
-            assertEquals("Sign-in failed. Please try again.", result.exceptionOrNull()?.message)
-        }
-
-    @Test
-    fun `register trims email and reports success`() =
-        runTest {
-            val result = repository.register("  user@example.test  ", "secret")
-
-            assertTrue(result.isSuccess)
-            assertEquals("user@example.test", auth.lastEmail)
-            assertEquals("secret", auth.lastPassword)
-        }
-
-    @Test
-    fun `register maps known errors to friendly messages`() =
-        runTest {
-            auth.createUserTask =
-                Tasks.forException(FirebaseAuthWeakPasswordException("ERROR_WEAK_PASSWORD", "private detail", ""))
-            assertEquals(
-                "Password is too weak. Use at least 6 characters.",
-                repository.register("user@example.test", "short").exceptionOrNull()?.message,
-            )
-
-            auth.createUserTask =
-                Tasks.forException(FirebaseAuthUserCollisionException("ERROR_EMAIL_ALREADY_IN_USE", "private detail"))
-            assertEquals(
-                "An account already exists for this email.",
-                repository.register("user@example.test", "secret").exceptionOrNull()?.message,
-            )
-
-            auth.createUserTask =
-                Tasks.forException(
-                    FirebaseAuthInvalidCredentialsException("ERROR_INVALID_EMAIL", "private detail"),
-                )
-            assertEquals(
-                "Invalid email address.",
-                repository.register("not-an-email", "secret").exceptionOrNull()?.message,
-            )
-        }
-
-    @Test
-    fun `register hides unexpected errors`() =
-        runTest {
-            auth.createUserTask = Tasks.forException(IllegalStateException("private detail"))
-
-            val result = repository.register("user@example.test", "secret")
-
-            assertEquals("Registration failed. Please try again.", result.exceptionOrNull()?.message)
-        }
-
-    @Test
-    fun `logout signs out and current user values reflect auth state`() =
-        runTest {
-            assertFalse(repository.isLoggedIn())
-            assertNull(repository.currentUserEmail())
-            assertNull(repository.currentUserId())
-
-            repository.logout()
-
-            assertTrue(auth.signedOut)
-        }
-
-    @Test
-    fun `auth module provides the initialized Firebase auth instance`() {
-        assertNotNull(AuthModule.provideFirebaseAuth())
+    fun `login success stores access token`() = runTest {
+        fakeApi.loginResponse = Response.success(
+            TokenResponse(accessToken = "synthetic-token-abc", refreshToken = "refresh-xyz")
+        )
+        val result = repository.login("test@synthetic.medihistory", "SyntheticPass123!")
+        assertTrue("login must succeed", result.isSuccess)
+        assertNotNull(fakePrefs.getString(SecurePreferences.KEY_ACCESS_TOKEN))
+        assertTrue(fakePrefs.getString(SecurePreferences.KEY_ACCESS_TOKEN)!!.isNotBlank())
     }
 
-    private class FakeFirebaseAuth :
-        FirebaseAuth(
-            firebaseApp(),
-            Provider { null },
-            Provider { null },
-            DIRECT_EXECUTOR,
-            DIRECT_EXECUTOR,
-            DIRECT_EXECUTOR,
-            ScheduledThreadPoolExecutor(0),
-            DIRECT_EXECUTOR,
-        ) {
-        private var user: FirebaseUser? = null
-        var signInTask: Task<AuthResult> = Tasks.forResult(null)
-        var createUserTask: Task<AuthResult> = Tasks.forResult(null)
-        var lastEmail: String? = null
-        var lastPassword: String? = null
-        var signedOut = false
+    @Test
+    fun `login failure returns failure result`() = runTest {
+        fakeApi.loginStatusCode = 401
+        val result = repository.login("wrong@synthetic.medihistory", "WrongPass!")
+        assertTrue("login must fail for 401", result.isFailure)
+        assertFalse("token must not be stored on failure",
+            fakePrefs.getString(SecurePreferences.KEY_ACCESS_TOKEN)?.isNotBlank() == true)
+    }
 
-        override fun signInWithEmailAndPassword(
-            email: String,
-            password: String,
-        ): Task<AuthResult> {
-            lastEmail = email
-            lastPassword = password
-            return signInTask
-        }
+    @Test
+    fun `register success then login stores token`() = runTest {
+        fakeApi.registerResponse = Response.success(
+            RegisterResponse(id = "uuid-test-001", email = "new@synthetic.medihistory")
+        )
+        fakeApi.loginResponse = Response.success(
+            TokenResponse(accessToken = "synthetic-reg-token", refreshToken = "refresh-reg")
+        )
+        val result = repository.register("new@synthetic.medihistory", "SyntheticNew123!")
+        assertTrue("register+login must succeed", result.isSuccess)
+        assertNotNull(fakePrefs.getString(SecurePreferences.KEY_ACCESS_TOKEN))
+    }
 
-        override fun createUserWithEmailAndPassword(
-            email: String,
-            password: String,
-        ): Task<AuthResult> {
-            lastEmail = email
-            lastPassword = password
-            return createUserTask
-        }
+    @Test
+    fun `register 409 returns failure with message about existing account`() = runTest {
+        fakeApi.registerStatusCode = 409
+        val result = repository.register("existing@synthetic.medihistory", "SyntheticPass123!")
+        assertTrue("register must fail for 409", result.isFailure)
+        assertTrue("error message must mention existing account",
+            result.exceptionOrNull()?.message?.contains("already exists", ignoreCase = true) == true)
+    }
 
-        override fun getCurrentUser(): FirebaseUser? = user
+    @Test
+    fun `logout clears access token`() = runTest {
+        fakePrefs.putString(SecurePreferences.KEY_ACCESS_TOKEN, "some-token")
+        repository.logout()
+        assertFalse(repository.isLoggedIn())
+    }
 
-        override fun signOut() {
-            signedOut = true
-            user = null
-        }
+    @Test
+    fun `isLoggedIn returns true when token present`() {
+        fakePrefs.putString(SecurePreferences.KEY_ACCESS_TOKEN, "valid-token")
+        assertTrue(repository.isLoggedIn())
+    }
 
-        companion object {
-            private val DIRECT_EXECUTOR = Executor { command -> command.run() }
+    @Test
+    fun `isLoggedIn returns false when no token`() {
+        assertFalse(repository.isLoggedIn())
+    }
 
-            private fun firebaseApp(): FirebaseApp {
-                val context: Context = ApplicationProvider.getApplicationContext()
-                val existing = FirebaseApp.getApps(context).firstOrNull { it.name == FirebaseApp.DEFAULT_APP_NAME }
-                return existing ?: FirebaseApp.initializeApp(
-                    context,
-                    FirebaseOptions.Builder()
-                        .setApplicationId("1:1234567890:android:unittest")
-                        .build(),
-                )!!
-            }
-        }
+    @Test
+    fun `network error returns user-friendly failure`() = runTest {
+        fakeApi.throwNetworkError = true
+        val result = repository.login("test@synthetic.medihistory", "SyntheticPass123!")
+        assertTrue("network error must return failure", result.isFailure)
+        assertTrue("error message must be user-friendly",
+            result.exceptionOrNull()?.message?.contains("server", ignoreCase = true) == true ||
+            result.exceptionOrNull()?.message?.contains("connection", ignoreCase = true) == true)
     }
 }
+
+// ---------------------------------------------------------------------------
+// Fake implementations — no real network or Keystore
+// ---------------------------------------------------------------------------
+
+private class FakeApiService : MediHistoryApiService {
+
+    var loginResponse: Response<TokenResponse>? = null
+    var loginStatusCode: Int = 200
+    var registerResponse: Response<RegisterResponse>? = null
+    var registerStatusCode: Int = 201
+    var throwNetworkError: Boolean = false
+
+    override suspend fun getOcrFields(
+        prescriptionId: String,
+    ): Response<com.medihistory.ai.data.network.dto.OcrFieldsResponse> =
+        Response.error(503, "{}".toResponseBody())
+
+    override suspend fun register(
+        request: com.medihistory.ai.data.network.dto.RegisterRequest
+    ): Response<RegisterResponse> {
+        if (throwNetworkError) throw java.io.IOException("Synthetic network error")
+        return registerResponse
+            ?: Response.error(registerStatusCode, "{}".toResponseBody())
+    }
+
+    override suspend fun login(
+        request: com.medihistory.ai.data.network.dto.LoginRequest
+    ): Response<TokenResponse> {
+        if (throwNetworkError) throw java.io.IOException("Synthetic network error")
+        return loginResponse
+            ?: Response.error(loginStatusCode, "{}".toResponseBody())
+    }
+
+    override suspend fun processReview(
+        prescriptionId: String,
+        request: com.medihistory.ai.data.network.dto.ProcessReviewRequest,
+    ): Response<com.medihistory.ai.data.network.dto.ProcessReviewResponse> =
+        Response.error(501, "{}".toResponseBody())
+
+    override suspend fun syncPrescriptions(request: com.medihistory.ai.data.network.dto.SyncPrescriptionsRequest): Response<com.medihistory.ai.data.network.dto.SyncResponse> = Response.error(501, "{}".toResponseBody())
+    override suspend fun syncDoctors(request: com.medihistory.ai.data.network.dto.SyncDoctorsRequest): Response<com.medihistory.ai.data.network.dto.SyncResponse> = Response.error(501, "{}".toResponseBody())
+    override suspend fun syncMedicines(request: com.medihistory.ai.data.network.dto.SyncMedicinesRequest): Response<com.medihistory.ai.data.network.dto.SyncResponse> = Response.error(501, "{}".toResponseBody())
+}
+
+private class FakeSecurePreferences : SecurePreferencesStore {
+    private val store = mutableMapOf<String, String>()
+    override fun getString(key: String): String? = store[key]
+    override fun putString(key: String, value: String) { store[key] = value }
+    override fun remove(key: String) { store.remove(key) }
+    override fun clear() { store.clear() }
+}
+

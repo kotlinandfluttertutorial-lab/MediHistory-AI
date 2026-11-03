@@ -1,31 +1,25 @@
 package com.medihistory.ai.data.auth
 
-import com.google.firebase.auth.FirebaseAuth
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Hilt module that provides Firebase Auth dependencies.
+ * Hilt module that binds [AuthRepository] to [AuthRepositoryImpl].
  *
- * [FirebaseAuth] is a singleton — FirebaseAuth.getInstance() returns the same object every
- * time, but wrapping it in a Hilt singleton ensures it is testable via injection.
+ * [AuthRepositoryImpl] is now backed by the FastAPI backend JWT system.
+ * [MediHistoryApiService] is provided by [NetworkModule].
+ * [SecurePreferencesStore] is provided by [SecurityModule].
  *
- * [AuthRepository] is bound to [AuthRepositoryImpl] which delegates to [FirebaseAuth].
+ * Firebase Auth has been removed — the backend handles authentication directly.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AuthModule {
+
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
-
-    companion object {
-        @Provides
-        @Singleton
-        fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
-    }
 }

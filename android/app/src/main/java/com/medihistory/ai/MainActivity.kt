@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.work.WorkManager
 import com.medihistory.ai.data.auth.AuthRepository
 import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.repository.PatientRepository
@@ -80,6 +81,10 @@ class MainActivity : ComponentActivity() {
                                     updatedAt = System.currentTimeMillis(),
                                 ),
                             )
+                        // Schedule background sync whenever the session is active.
+                        com.medihistory.ai.worker.SyncWorker.schedule(
+                            WorkManager.getInstance(applicationContext)
+                        )
                         }
                     }
                 }

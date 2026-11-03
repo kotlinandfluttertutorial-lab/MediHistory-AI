@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.medihistory.ai.BuildConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -234,6 +235,38 @@ internal val MIGRATION_7_8 =
         }
     }
 
+/**
+ * Migration from v8 to v9 — adds sync_queue table for the Android↔backend SyncWorker.
+ *
+ * The sync queue stores pending push operations (entity type + entity ID) rather than
+ * adding an `isDirty` flag to every entity. This is simpler and doesn't require
+ * migrations on prescription, doctor, and medicine tables simultaneously.
+ *
+ * Each time a local entity is created/updated, a row is inserted here.
+ * [SyncWorker] reads the queue, calls the backend, and deletes successful rows.
+ */
+internal val MIGRATION_8_9 =
+    object : Migration(8, 9) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `sync_queue` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `entityType` TEXT NOT NULL,
+                    `entityId` TEXT NOT NULL,
+                    `patientId` TEXT NOT NULL,
+                    `operation` TEXT NOT NULL DEFAULT 'UPSERT',
+                    `createdAt` INTEGER NOT NULL,
+                    `retryCount` INTEGER NOT NULL DEFAULT 0
+                )
+                """.trimIndent(),
+            )
+            database.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_sync_queue_patientId` ON `sync_queue` (`patientId`)",
+            )
+        }
+    }
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -241,21 +274,66 @@ object DatabaseModule {
     @Singleton
     fun provideMediHistoryDatabase(
         @ApplicationContext context: Context,
-    ): MediHistoryDatabase =
-        Room.databaseBuilder(
+    ): MediHistoryDatabase {
+        val builder = Room.databaseBuilder(
             context,
             MediHistoryDatabase::class.java,
             MediHistoryDatabase.DATABASE_NAME,
+        ).addMigrations(
+            MIGRATION_1_2,
+            MIGRATION_2_3,
+            MIGRATION_3_4,
+            MIGRATION_4_5,
+            MIGRATION_5_6,
+            MIGRATION_6_7,
+            MIGRATION_7_8,
+            MIGRATION_8_9,
         )
-            .addMigrations(
-                MIGRATION_1_2,
-                MIGRATION_2_3,
-                MIGRATION_3_4,
-                MIGRATION_4_5,
-                MIGRATION_5_6,
-                MIGRATION_6_7,
-                MIGRATION_7_8,
-            )
-            .build()
+
+        // Wire SQLCipher when encryption is enabled (AD-001).
+        // Key derivation: the passphrase is derived from the Android Keystore
+        // (EncryptedSharedPreferences stores it — never hardcoded).
+        // Production note: evaluate key rotation / invalidation strategy before launch.
+        if (BuildConfig.ENABLE_ROOM_ENCRYPTION) {
+            val passphrase = getOrCreatePassphrase(context)
+            val factory = net.sqlcipher.database.SupportFactory(passphrase)
+            builder.openHelperFactory(factory)
+        }
+
+        return builder.build()
+    }
+
+    /**
+     * Returns the SQLCipher passphrase for this device, creating and storing it
+     * in EncryptedSharedPreferences the first time it is called.
+     *
+     * Security:
+     * - The passphrase is 64 random bytes stored in EncryptedSharedPreferences.
+     * - EncryptedSharedPreferences is backed by the Android Keystore.
+     * - The passphrase is NEVER logged or transmitted.
+     * - Key invalidation (e.g. after biometric change) requires re-encryption —
+     *   evaluate this scenario before production launch (AD-001).
+     */
+    private fun getOrCreatePassphrase(context: Context): ByteArray {
+        val prefs = androidx.security.crypto.EncryptedSharedPreferences.create(
+            context,
+            "medihistory_cipher_prefs",
+            androidx.security.crypto.MasterKey.Builder(context)
+                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
+                .build(),
+            androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+        val key = "room_passphrase"
+        val stored = prefs.getString(key, null)
+        if (stored != null) {
+            return android.util.Base64.decode(stored, android.util.Base64.NO_WRAP)
+        }
+        val passphrase = ByteArray(64).also { java.security.SecureRandom().nextBytes(it) }
+        prefs.edit()
+            .putString(key, android.util.Base64.encodeToString(passphrase, android.util.Base64.NO_WRAP))
+            .apply()
+        return passphrase
+    }
     // fallbackToDestructiveMigration() intentionally omitted — migrations are always explicit
 }

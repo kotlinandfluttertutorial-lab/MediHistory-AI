@@ -102,3 +102,21 @@ class ProcessReviewResponse(BaseModel):
     doctor_id: Optional[str] = None
     medicines_created: int
     alerts_created: int
+
+
+# ---------------------------------------------------------------------------
+# OCR fields schemas (Feature A — server-side Gemini OCR)
+# ---------------------------------------------------------------------------
+
+class OcrFieldResult(BaseModel):
+    """A single field extracted by server-side OCR."""
+    field_name: str
+    raw_value: Optional[str] = None
+    confidence: float
+    source_reference: str
+
+
+class OcrFieldsResponse(BaseModel):
+    """Response body for the synchronous OCR extraction endpoint."""
+    prescription_id: str
+    fields: list[OcrFieldResult]

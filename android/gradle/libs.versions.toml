@@ -18,11 +18,15 @@ work               = "2.9.0"
 security-crypto    = "1.1.0-alpha06"
 timber             = "5.0.1"
 firebase-bom       = "33.1.2"
+retrofit           = "2.11.0"
+okhttp             = "4.12.0"
+moshi              = "1.15.1"
 mlkit-text-recognition = "16.0.1"
 google-genai-kotlin   = "1.8.0"
 
 appcompat               = "1.7.0"
 generativeai            = "0.9.0"
+sqlcipher               = "4.5.4"
 junit              = "4.13.2"
 junit-ext          = "1.1.5"
 espresso           = "3.5.1"
@@ -107,6 +111,18 @@ mlkit-text-recognition          = { group = "com.google.mlkit",            name 
 
 # AppCompat — required to resolve resources transitively needed by ML Kit
 androidx-appcompat              = { group = "androidx.appcompat",          name = "appcompat",                       version.ref = "appcompat" }
+
+# SQLCipher — encrypted Room database (gated by BuildConfig.ENABLE_ROOM_ENCRYPTION)
+# Evaluate key derivation and invalidation strategy before enabling in production (AD-001).
+sqlcipher                       = { group = "net.zetetic",                 name = "android-database-sqlcipher",      version.ref = "sqlcipher" }
+
+# Retrofit + OkHttp — HTTP client for Android↔backend integration
+retrofit-core                   = { group = "com.squareup.retrofit2",      name = "retrofit",                        version.ref = "retrofit" }
+retrofit-converter-moshi        = { group = "com.squareup.retrofit2",      name = "converter-moshi",                 version.ref = "retrofit" }
+okhttp-core                     = { group = "com.squareup.okhttp3",        name = "okhttp",                          version.ref = "okhttp" }
+okhttp-logging-interceptor      = { group = "com.squareup.okhttp3",        name = "logging-interceptor",             version.ref = "okhttp" }
+moshi-core                      = { group = "com.squareup.moshi",          name = "moshi",                           version.ref = "moshi" }
+moshi-kotlin                    = { group = "com.squareup.moshi",          name = "moshi-kotlin",                    version.ref = "moshi" }
 
 # Google Generative AI (Gemini) SDK for Android
 google-genai-kotlin             = { group = "com.google.genai",            name = "google-genai-kotlin",             version.ref = "google-genai-kotlin" }

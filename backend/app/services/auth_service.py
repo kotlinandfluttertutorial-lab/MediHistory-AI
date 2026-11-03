@@ -30,7 +30,12 @@ from app.models.refresh_token import RefreshToken
 
 # Raises KeyError at import time if the variable is not set.
 _SECRET_KEY: str = os.environ["JWT_SECRET_KEY"]
-_ALGORITHM = "HS256"
+_JWT_PRIVATE_KEY: str | None = os.environ.get("JWT_PRIVATE_KEY")
+_JWT_PUBLIC_KEY: str | None = os.environ.get("JWT_PUBLIC_KEY")
+# RS256 when RSA key pair is present; HS256 for dev/CI.
+_ALGORITHM = "RS256" if (_JWT_PRIVATE_KEY and _JWT_PUBLIC_KEY) else "HS256"
+_SIGN_KEY = _JWT_PRIVATE_KEY if _ALGORITHM == "RS256" else _SECRET_KEY
+_VERIFY_KEY = _JWT_PUBLIC_KEY if _ALGORITHM == "RS256" else _SECRET_KEY
 _TOKEN_TTL_HOURS = 1
 
 # Settings — read from environment with defaults matching config.py
@@ -56,7 +61,7 @@ def _make_access_token(patient_id: str) -> str:
         "exp": now + timedelta(seconds=_ACCESS_TOKEN_TTL_SECONDS),
         "iat": now,
     }
-    return jwt.encode(payload, _SECRET_KEY, algorithm=_ALGORITHM)
+    return jwt.encode(payload, _SIGN_KEY, algorithm=_ALGORITHM)
 
 
 def _make_refresh_token(patient_id: str) -> str:
@@ -67,7 +72,7 @@ def _make_refresh_token(patient_id: str) -> str:
         "exp": now + timedelta(days=_REFRESH_TOKEN_TTL_DAYS),
         "iat": now,
     }
-    return jwt.encode(payload, _SECRET_KEY, algorithm=_ALGORITHM)
+    return jwt.encode(payload, _SIGN_KEY, algorithm=_ALGORITHM)
 
 
 class AuthService:
@@ -94,7 +99,7 @@ class AuthService:
             "exp": now + timedelta(hours=_TOKEN_TTL_HOURS),
             "iat": now,
         }
-        return jwt.encode(payload, _SECRET_KEY, algorithm=_ALGORITHM)
+        return jwt.encode(payload, _SIGN_KEY, algorithm=_ALGORITHM)
 
     # ------------------------------------------------------------------
     # Real user registration and authentication
@@ -179,7 +184,7 @@ class AuthService:
 
         try:
             payload = jwt.decode(
-                refresh_token_str, _SECRET_KEY, algorithms=[_ALGORITHM]
+                refresh_token_str, _VERIFY_KEY, algorithms=[_ALGORITHM]
             )
         except jwt.ExpiredSignatureError:
             raise_http_error(401, "TOKEN_EXPIRED", "Refresh token has expired.")
@@ -218,7 +223,7 @@ class AuthService:
         db = self._db
 
         try:
-            jwt.decode(refresh_token_str, _SECRET_KEY, algorithms=[_ALGORITHM])
+            jwt.decode(refresh_token_str, _VERIFY_KEY, algorithms=[_ALGORITHM])
         except jwt.InvalidTokenError:
             # Token is already invalid; nothing to revoke.
             return
@@ -231,3 +236,4 @@ class AuthService:
         if db_token is not None:
             db_token.revoked = True
             await db.commit()
+

@@ -1,39 +1,35 @@
 package com.medihistory.ai.data.auth
 
 /**
- * Contract for Firebase authentication operations.
+ * Contract for authentication operations.
  *
- * Implementations must NEVER log email addresses, passwords, or tokens.
- * Tokens are managed exclusively by FirebaseAuth — never stored manually.
+ * Implementation bridges the Android app to the backend JWT auth system.
+ * Tokens are stored exclusively in EncryptedSharedPreferences.
+ * Passwords are NEVER stored or logged.
+ * Email is used only as a display hint — never as an auth credential passed to third parties.
  */
 interface AuthRepository {
-    /** Signs in an existing user with email and password. */
-    suspend fun login(
-        email: String,
-        password: String,
-    ): Result<Unit>
+    /** Signs in with the backend JWT system. */
+    suspend fun login(email: String, password: String): Result<Unit>
 
-    /** Creates a new account with email and password. */
-    suspend fun register(
-        email: String,
-        password: String,
-    ): Result<Unit>
+    /** Creates a new backend account and signs in. */
+    suspend fun register(email: String, password: String): Result<Unit>
 
-    /** Signs out the current user. */
+    /** Clears the stored JWT and signs out. */
     suspend fun logout()
 
-    /** Returns true when a Firebase user is currently signed in. */
+    /** Returns true when a valid backend JWT is stored. */
     fun isLoggedIn(): Boolean
 
     /**
-     * Returns the email address of the signed-in user, or null.
-     * Used only for display — never passed to backend as an auth credential.
-     */
-    fun currentUserEmail(): String?
-
-    /**
-     * Returns the Firebase UID of the signed-in user, or null.
-     * This is used as the patient ID — it is stable, unique, and never PII.
+     * Returns the stored patient ID (backend UUID), or null.
+     * Set after successful login/register.
      */
     fun currentUserId(): String?
+
+    /**
+     * Returns the stored display email, or null.
+     * Used only for greeting — never passed to the backend as a credential.
+     */
+    fun currentUserEmail(): String?
 }

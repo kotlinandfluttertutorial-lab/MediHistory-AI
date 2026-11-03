@@ -73,6 +73,15 @@ val enableGeminiOcr: Boolean =
             ?: "false"
     ).toBoolean()
 
+// Room encryption via SQLCipher — evaluate AD-001 key derivation strategy before enabling.
+// Set enable.room.encryption=true in local.properties to test encrypted builds.
+val enableRoomEncryption: Boolean =
+    (
+        localProperties.getProperty("enable.room.encryption")
+            ?: System.getenv("ENABLE_ROOM_ENCRYPTION")
+            ?: "false"
+    ).toBoolean()
+
 android {
     namespace = "com.medihistory.ai"
     compileSdk = 34
@@ -97,6 +106,7 @@ android {
         buildConfigField("boolean", "ENABLE_INTERACTION_CHECK", "$enableInteractionCheck")
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
         buildConfigField("boolean", "ENABLE_GEMINI_OCR", "$enableGeminiOcr")
+        buildConfigField("boolean", "ENABLE_ROOM_ENCRYPTION", "$enableRoomEncryption")
 
         // Room schema export — keeps annotationProcessorOptions path for compatibility.
         // The ksp { } block below is the active path when using KSP.
@@ -193,6 +203,18 @@ dependencies {
 
     // AppCompat — required to satisfy resource references pulled in by ML Kit text-recognition
     implementation(libs.androidx.appcompat)
+
+    // SQLCipher — encrypted Room database (enabled via BuildConfig.ENABLE_ROOM_ENCRYPTION)
+    // Evaluate AD-001 key derivation strategy before enabling in production.
+    implementation(libs.sqlcipher)
+
+    // Retrofit + OkHttp — Android↔backend HTTP integration layer
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.moshi)
+    implementation(libs.okhttp.core)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.moshi.core)
+    implementation(libs.moshi.kotlin)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
@@ -227,9 +249,9 @@ dependencies {
     implementation(libs.generativeai)
     implementation(libs.google.genai.kotlin)
 
-    // Firebase — BOM manages all Firebase library versions
+    // Firebase — BOM manages all Firebase library versions (Analytics only; Auth removed)
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
+    implementation(libs.firebase.analytics)
 
     // Unit tests
     testImplementation(libs.junit)

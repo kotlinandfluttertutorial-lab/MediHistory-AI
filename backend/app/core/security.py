@@ -9,6 +9,11 @@ HTTP status codes:
   404 — cross-patient resource access (caller is responsible for this check)
 
 Note: 403 is intentionally not used, to avoid leaking resource existence.
+
+Algorithm: RS256 when JWT_PRIVATE_KEY / JWT_PUBLIC_KEY env vars are set;
+falls back to HS256 + JWT_SECRET_KEY for development/CI environments.
+This allows a zero-downtime migration path: generate an RSA key pair,
+set the env vars, and the server switches automatically.
 """
 
 import os
@@ -18,8 +23,18 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+# ---------------------------------------------------------------------------
+# Algorithm selection — RS256 preferred, HS256 for dev/CI fallback
+# ---------------------------------------------------------------------------
+
+_JWT_PRIVATE_KEY: str | None = os.environ.get("JWT_PRIVATE_KEY")
+_JWT_PUBLIC_KEY: str | None = os.environ.get("JWT_PUBLIC_KEY")
 _SECRET_KEY: str = os.environ["JWT_SECRET_KEY"]
-_ALGORITHM = "HS256"
+
+# Use RS256 when both RSA keys are present; otherwise HS256.
+_ALGORITHM = "RS256" if (_JWT_PRIVATE_KEY and _JWT_PUBLIC_KEY) else "HS256"
+_SIGN_KEY = _JWT_PRIVATE_KEY if _ALGORITHM == "RS256" else _SECRET_KEY
+_VERIFY_KEY = _JWT_PUBLIC_KEY if _ALGORITHM == "RS256" else _SECRET_KEY
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -45,7 +60,7 @@ async def get_current_patient(
     try:
         payload = jwt.decode(
             credentials.credentials,
-            _SECRET_KEY,
+            _VERIFY_KEY,
             algorithms=[_ALGORITHM],
         )
         patient_id: str | None = payload.get("sub")

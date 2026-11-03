@@ -13,6 +13,7 @@ import com.medihistory.ai.data.dao.ExtractedFieldDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.model.ExtractedFieldEntity
 import com.medihistory.ai.data.model.OcrStatus
+import com.medihistory.ai.data.network.MediHistoryApiService
 import com.medihistory.ai.data.ocr.OcrService
 import com.medihistory.ai.data.ocr.ReviewState
 import dagger.assisted.Assisted
@@ -41,6 +42,8 @@ class OcrWorker
         private val ocrService: OcrService,
         private val prescriptionDao: PrescriptionDao,
         private val extractedFieldDao: ExtractedFieldDao,
+        /** Backend API — null when BACKEND_BASE_URL is blank or NetworkModule not configured. */
+        private val apiService: MediHistoryApiService?,
     ) : CoroutineWorker(context, params) {
         companion object {
             const val KEY_PRESCRIPTION_ID = "prescription_id"
@@ -87,42 +90,79 @@ class OcrWorker
             prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.PROCESSING)
 
             return try {
-                val result = ocrService.extract(documentPath, mimeType, prescriptionId)
-                if (result.isSuccess) {
-                    val entities =
-                        result.fields.map { field ->
-                            ExtractedFieldEntity(
-                                id = "$prescriptionId-${field.fieldName}",
-                                prescriptionId = prescriptionId,
-                                fieldName = field.fieldName,
-                                rawValue = field.rawValue,
-                                patientValue = null,
-                                confidence = field.confidence,
-                                // All fields start as PENDING_REVIEW — patient must review every field.
-                                reviewState = ReviewState.PENDING_REVIEW,
-                                sourceReference = field.sourceReference,
-                            )
-                        }
-                    extractedFieldDao.insertAll(entities)
+                // ── Backend OCR (backend-first, on-device fallback) ─────────────
+                // Try the backend server first — Gemini key lives in the server env,
+                // not in the APK. Falls back to on-device ML Kit on 503 or network error.
+                val backendFields = tryBackendOcr(prescriptionId)
+                val extractedFields: List<ExtractedFieldEntity>
+                val newStatus: OcrStatus
 
-                    val newStatus =
-                        if (result.pendingReviewCount > 0) {
-                            OcrStatus.NEEDS_REVIEW
-                        } else {
-                            OcrStatus.REVIEWED
-                        }
-                    prescriptionDao.updateOcrStatus(prescriptionId, patientId, newStatus)
-                    Result.success()
+                if (backendFields != null) {
+                    extractedFields = backendFields
+                    newStatus = if (backendFields.any { it.rawValue != null }) {
+                        OcrStatus.NEEDS_REVIEW
+                    } else {
+                        OcrStatus.REVIEWED
+                    }
                 } else {
-                    // OCR service returned an error. Log the error type only — never field values.
-                    prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.ERROR)
-                    Result.failure()
+                    // Fallback: on-device ML Kit
+                    val result = ocrService.extract(documentPath, mimeType, prescriptionId)
+                    if (!result.isSuccess) {
+                        prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.ERROR)
+                        return Result.failure()
+                    }
+                    extractedFields = result.fields.map { field ->
+                        ExtractedFieldEntity(
+                            id = "$prescriptionId-${field.fieldName}",
+                            prescriptionId = prescriptionId,
+                            fieldName = field.fieldName,
+                            rawValue = field.rawValue,
+                            patientValue = null,
+                            confidence = field.confidence,
+                            reviewState = ReviewState.PENDING_REVIEW,
+                            sourceReference = field.sourceReference,
+                        )
+                    }
+                    newStatus = if (result.pendingReviewCount > 0) OcrStatus.NEEDS_REVIEW
+                    else OcrStatus.REVIEWED
                 }
+
+                extractedFieldDao.insertAll(extractedFields)
+                prescriptionDao.updateOcrStatus(prescriptionId, patientId, newStatus)
+                Result.success()
             } catch (e: Exception) {
                 // Catch-all: record the failure. NEVER log exception message if it could
                 // contain document content, medicine names, or patient identifiers.
                 prescriptionDao.updateOcrStatus(prescriptionId, patientId, OcrStatus.ERROR)
                 Result.failure()
+            }
+        }
+
+        /**
+         * Attempts to run OCR via the backend server.
+         * Returns mapped [ExtractedFieldEntity] rows on HTTP 200, or null on 503/error.
+         * Privacy: field values are transmitted over HTTPS; nothing is logged here.
+         */
+        private suspend fun tryBackendOcr(prescriptionId: String): List<ExtractedFieldEntity>? {
+            val service = apiService ?: return null
+            return try {
+                val response = service.getOcrFields(prescriptionId)
+                if (!response.isSuccessful || response.code() == 503) return null
+                val body = response.body() ?: return null
+                body.fields.map { field ->
+                    ExtractedFieldEntity(
+                        id            = "$prescriptionId-${field.fieldName}",
+                        prescriptionId = prescriptionId,
+                        fieldName     = field.fieldName,
+                        rawValue      = field.rawValue,
+                        patientValue  = null,
+                        confidence    = field.confidence,
+                        reviewState   = ReviewState.PENDING_REVIEW,
+                        sourceReference = field.sourceReference,
+                    )
+                }
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                null // network unavailable — fall back to on-device OCR
             }
         }
     }
