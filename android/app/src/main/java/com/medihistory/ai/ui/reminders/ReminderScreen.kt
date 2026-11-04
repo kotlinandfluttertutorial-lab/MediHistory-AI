@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -96,11 +95,9 @@ fun ReminderScreen(
             TopAppBar(
                 title = { Text(text = "Reminders") },
                 actions = {
-                    IconButton(onClick = { /* Add reminder — future ticket */ }) {
+                    // Add icon in top bar mirrors the FAB — opens the same medicine picker.
+                    IconButton(onClick = { viewModel.onShowMedicinePicker() }) {
                         Icon(Icons.Filled.Add, contentDescription = "Add reminder")
-                    }
-                    IconButton(onClick = { /* Options */ }) {
-                        Icon(Icons.Outlined.MoreVert, contentDescription = "More options")
                     }
                 },
             )

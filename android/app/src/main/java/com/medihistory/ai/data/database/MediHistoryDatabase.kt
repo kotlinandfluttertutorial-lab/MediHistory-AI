@@ -11,6 +11,7 @@ import com.medihistory.ai.data.dao.MedicineDao
 import com.medihistory.ai.data.dao.PatientDao
 import com.medihistory.ai.data.dao.PrescriptionDao
 import com.medihistory.ai.data.dao.ReminderDao
+import com.medihistory.ai.data.dao.SyncQueueDao
 import com.medihistory.ai.data.model.Doctor
 import com.medihistory.ai.data.model.DoseRecordEntity
 import com.medihistory.ai.data.model.DuplicateAlert
@@ -19,6 +20,7 @@ import com.medihistory.ai.data.model.Medicine
 import com.medihistory.ai.data.model.Patient
 import com.medihistory.ai.data.model.Prescription
 import com.medihistory.ai.data.model.Reminder
+import com.medihistory.ai.data.model.SyncQueueEntity
 
 /**
  * MediHistory Room database — version 8.
@@ -32,6 +34,7 @@ import com.medihistory.ai.data.model.Reminder
  *  6 → added duplicate_alerts table (MA-37, DuplicateAlertDao)
  *  7 → added reminders and dose_records tables (MA-41, ReminderDao, DoseRecordDao)
  *  8 → added explanation column to duplicate_alerts (F13, DuplicateExplainerEngine)
+ *  9 → added sync_queue table for Android↔backend SyncWorker
  *
  * Schema exports are written to android/app/schemas/ and committed to VCS.
  *
@@ -48,8 +51,9 @@ import com.medihistory.ai.data.model.Reminder
         DuplicateAlert::class,
         Reminder::class,
         DoseRecordEntity::class,
+        SyncQueueEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -69,6 +73,8 @@ abstract class MediHistoryDatabase : RoomDatabase() {
     abstract fun reminderDao(): ReminderDao
 
     abstract fun doseRecordDao(): DoseRecordDao
+
+    abstract fun syncQueueDao(): SyncQueueDao
 
     companion object {
         const val DATABASE_NAME = "medihistory.db"

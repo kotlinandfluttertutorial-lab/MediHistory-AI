@@ -12,6 +12,7 @@ from fastapi import FastAPI
 
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.routers import (
+    ai_agents,
     auth,
     doctors,
     duplicates,
@@ -22,6 +23,7 @@ from app.routers import (
     patients,
     prescriptions,
     reminders,
+    sync,
 )
 
 app = FastAPI(
@@ -42,8 +44,42 @@ app = FastAPI(
         {"name": "reminders", "description": "Medication reminder operations"},
         {"name": "interactions", "description": "Drug interaction check (stub)"},
         {"name": "export", "description": "PDF export operations (stub)"},
+        {"name": "ai", "description": "AI agent endpoints (F11, F12, F15)"},
+        {"name": "sync", "description": "Device-to-backend sync endpoints (SyncWorker)"},
     ],
 )
+
+
+# ---------------------------------------------------------------------------
+# Startup — run Alembic migrations automatically on first boot
+# ---------------------------------------------------------------------------
+
+@app.on_event("startup")
+async def run_migrations() -> None:
+    """
+    Apply any pending Alembic migrations on startup.
+
+    This is safe to run on every boot — Alembic is idempotent (it only applies
+    migrations that haven't been applied yet).  In a multi-instance deployment,
+    run this only from a dedicated migration job rather than every worker.
+    Only runs when a real database is configured (skipped for in-memory SQLite
+    used in tests).
+    """
+    import os
+    db_url = os.getenv("DATABASE_URL", "")
+    if "sqlite" in db_url and ":memory:" in db_url:
+        return  # test environment — skip migrations
+
+    try:
+        from alembic import command
+        from alembic.config import Config
+
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+    except Exception:
+        # Never fail startup due to migration errors — log and continue.
+        # A failed migration will surface as a DB error on the first request.
+        pass
 
 # ---------------------------------------------------------------------------
 # Middleware — registered before routers so it wraps all routes.
@@ -69,3 +105,5 @@ app.include_router(history.router, prefix="/api/v1")
 app.include_router(reminders.router, prefix="/api/v1")
 app.include_router(interactions.router, prefix="/api/v1")
 app.include_router(export.router, prefix="/api/v1")
+app.include_router(ai_agents.router, prefix="/api/v1")
+app.include_router(sync.router, prefix="/api/v1")

@@ -243,5 +243,6 @@ private class FakeOcrWorkerFactory(
             ocrService = ocrService,
             prescriptionDao = prescriptionDao,
             extractedFieldDao = extractedFieldDao,
+            apiService = null,   // no backend in unit tests — exercises on-device OCR path
         )
 }

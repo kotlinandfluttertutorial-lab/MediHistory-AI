@@ -1,22 +1,36 @@
 """
 HistoryService — business logic for MedicalHistorySummary operations.
 
-Actual generation of the summary content is handled by a background worker
-(out of scope for this service). This service creates the DB row and manages
-versioning and status.
+Now uses HistoryCompiler (ported from Android) to build the deterministic
+sections synchronously, then optionally calls the Gemini API for the AI
+narrative section via HistoryNarrator.
+
+Medical safety: only COMPLETED (reviewed) prescriptions are included.
+Privacy: medicine names and doctor names are never logged.
 """
 
 from __future__ import annotations
 
 import json
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.errors import raise_http_error
+from app.models.doctor import Doctor
 from app.models.history import MedicalHistorySummary
+from app.models.medicine import PrescriptionMedicine
+from app.models.prescription import Prescription
 from app.schemas.history import SummaryContent
+from app.services.history_compiler import (
+    ContentType,
+    HistorySection,
+    SectionType,
+    compile as compile_history,
+)
 
 
 class HistoryService:
@@ -27,29 +41,112 @@ class HistoryService:
 
     async def generate(self, patient_id: str) -> dict:
         """
-        Create a new MedicalHistorySummary row in GENERATING state.
+        Compile a medical history for the patient and persist it.
 
-        Checks that no other summary is currently GENERATING for this patient
-        (HTTP 409 if so). Sets all previous summaries to is_current=False.
+        Uses HistoryCompiler (deterministic) for Medicines / Doctors / Timeline
+        sections. Sets AI_SUMMARY to stub — the AI narrative endpoint
+        (POST /ai/narrate-history) is called separately by the Android app.
 
         Returns:
             dict with summary_id, status, and job_id.
         """
-        # Check for an in-progress generation
-        in_progress_result = await self._db.execute(
+        # Reject if a GENERATING job is already in progress
+        in_progress = await self._db.execute(
             select(MedicalHistorySummary).where(
                 MedicalHistorySummary.patient_id == patient_id,
                 MedicalHistorySummary.status == "GENERATING",
             )
         )
-        if in_progress_result.scalar_one_or_none() is not None:
+        if in_progress.scalar_one_or_none() is not None:
             raise_http_error(
                 409,
                 "GENERATION_IN_PROGRESS",
                 "A history generation job is already in progress for this patient.",
             )
 
-        # Determine next version number
+        # ── Load data ─────────────────────────────────────────────────────────
+        prescriptions_result = await self._db.execute(
+            select(Prescription)
+            .options(selectinload(Prescription.medicines))
+            .options(selectinload(Prescription.doctor))
+            .where(Prescription.patient_id == patient_id)
+        )
+        prescriptions = list(prescriptions_result.scalars().all())
+
+        doctors_result = await self._db.execute(
+            select(Doctor).where(
+                Doctor.patient_id == patient_id,
+                Doctor.is_deleted == False,  # noqa: E712
+            )
+        )
+        doctors = list(doctors_result.scalars().all())
+
+        # ── Build dicts for the compiler ──────────────────────────────────────
+        prescription_dicts = [
+            {
+                "id": p.id,
+                "ocr_status": p.ocr_status,
+                "prescription_date": p.prescription_date,
+                "patient_notes": p.patient_notes,
+                "doctor_id": p.doctor_id,
+            }
+            for p in prescriptions
+        ]
+
+        medicine_dicts = [
+            {
+                "id": m.id,
+                "prescription_id": m.prescription_id,
+                "brand_name": m.brand_name,
+                "active_ingredient": m.active_ingredient,
+                "strength": m.strength,
+                "dosage": m.dosage,
+                "medicine_status": m.medicine_status,
+            }
+            for p in prescriptions
+            for m in (p.medicines or [])
+        ]
+
+        doctor_dicts = [
+            {
+                "id": d.id,
+                "name": d.name,
+                "specialty": d.specialty,
+                "clinic_name": d.clinic_name,
+            }
+            for d in doctors
+        ]
+
+        # ── Compile deterministic sections ────────────────────────────────────
+        sections = compile_history(prescription_dicts, medicine_dicts, doctor_dicts)
+
+        # ── Serialise to JSON ─────────────────────────────────────────────────
+        summary_json = json.dumps(
+            {
+                "sections": [
+                    {
+                        "type": s.type.value,
+                        "title": s.title,
+                        "is_ai_generated": s.is_ai_generated,
+                        "entries": [
+                            {
+                                "text": e.text,
+                                "content_type": e.content_type.value,
+                                "source_references": [
+                                    {"prescription_id": r.prescription_id, "field_name": r.field_name}
+                                    for r in e.source_references
+                                ],
+                            }
+                            for e in s.entries
+                        ],
+                    }
+                    for s in sections
+                ]
+            },
+            default=str,
+        )
+
+        # ── Determine version number ──────────────────────────────────────────
         max_version_result = await self._db.execute(
             select(MedicalHistorySummary.version_number)
             .where(MedicalHistorySummary.patient_id == patient_id)
@@ -66,15 +163,16 @@ class HistoryService:
             .values(is_current=False)
         )
 
-        # Create the new GENERATING summary
+        # ── Persist summary row ───────────────────────────────────────────────
         job_id = str(uuid.uuid4())
         summary = MedicalHistorySummary(
             id=str(uuid.uuid4()),
             patient_id=patient_id,
             version_number=next_version,
             is_current=True,
-            status="GENERATING",
+            status="COMPLETED",
             job_id=job_id,
+            summary_json=summary_json,
         )
         self._db.add(summary)
         await self._db.commit()
@@ -89,12 +187,6 @@ class HistoryService:
     async def list_summaries(
         self, patient_id: str
     ) -> tuple[list[MedicalHistorySummary], int]:
-        """
-        Return all MedicalHistorySummary rows for the patient, newest first.
-
-        Returns:
-            Tuple of (summaries, total).
-        """
         result = await self._db.execute(
             select(MedicalHistorySummary)
             .where(MedicalHistorySummary.patient_id == patient_id)
@@ -106,11 +198,6 @@ class HistoryService:
     async def get_summary(
         self, summary_id: str, patient_id: str
     ) -> MedicalHistorySummary | None:
-        """
-        Return a single MedicalHistorySummary, parsing summary_json if present.
-
-        Returns None if not found or if it belongs to another patient.
-        """
         result = await self._db.execute(
             select(MedicalHistorySummary).where(
                 MedicalHistorySummary.id == summary_id,
@@ -118,12 +205,9 @@ class HistoryService:
             )
         )
         summary = result.scalar_one_or_none()
-
         if summary is None:
             return None
 
-        # Parse summary_json into a SummaryContent if present — store it as a
-        # transient attribute so the router can access it without DB coupling.
         if summary.summary_json:
             try:
                 parsed = SummaryContent.model_validate(json.loads(summary.summary_json))

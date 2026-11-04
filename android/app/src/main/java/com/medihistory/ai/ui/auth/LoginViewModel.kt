@@ -17,169 +17,154 @@ import javax.inject.Inject
 /**
  * ViewModel for [LoginScreen].
  *
- * Handles both sign-in and account-creation (register) flows via Firebase Auth.
- * After successful authentication it:
- *  1. Stores the Firebase UID as the patient ID in [SessionManager].
- *  2. Upserts a [Patient] row in Room so foreign-key constraints on downstream
- *     tables (prescriptions, medicines, etc.) are always satisfied.
+ * Handles both sign-in and account-creation (register) flows against the
+ * FastAPI backend JWT auth system (replaces Firebase Auth).
  *
  * Security invariants:
  * - Passwords are cleared from state as soon as authentication succeeds.
- * - Error messages are pre-sanitised by [AuthRepository] — no raw exceptions reach the UI.
- * - [isAuthenticated] flips to true only after both Firebase and Room writes succeed.
+ * - Error messages are pre-sanitised by [AuthRepository] — no raw server text reaches UI.
+ * - [isAuthenticated] flips to true only after both the network call and Room bootstrap succeed.
  *
- * Privacy: email and UID are NEVER logged.
+ * Privacy: email is NEVER logged.
  */
 @HiltViewModel
-class LoginViewModel
-    @Inject
-    constructor(
-        private val authRepository: AuthRepository,
-        private val patientRepository: PatientRepository,
-        private val sessionManager: SessionManager,
-    ) : ViewModel() {
-        private val _uiState = MutableStateFlow(LoginUiState())
-        val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+class LoginViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val patientRepository: PatientRepository,
+    private val sessionManager: SessionManager,
+) : ViewModel() {
 
-        // -------------------------------------------------------------------------
-        // Field updates
-        // -------------------------------------------------------------------------
+    private val _uiState = MutableStateFlow(LoginUiState())
+    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-        fun onEmailChange(email: String) {
-            _uiState.update { it.copy(email = email, error = null) }
-        }
+    // -------------------------------------------------------------------------
+    // Field updates
+    // -------------------------------------------------------------------------
 
-        fun onPasswordChange(password: String) {
-            _uiState.update { it.copy(password = password, error = null) }
-        }
+    fun onEmailChange(email: String) {
+        _uiState.update { it.copy(email = email, error = null) }
+    }
 
-        fun onConfirmPasswordChange(confirmPassword: String) {
-            _uiState.update { it.copy(confirmPassword = confirmPassword, error = null) }
-        }
+    fun onPasswordChange(password: String) {
+        _uiState.update { it.copy(password = password, error = null) }
+    }
 
-        /** Toggles between sign-in and register modes, clearing all fields and errors. */
-        fun onToggleMode() {
-            _uiState.update { LoginUiState(isRegisterMode = !it.isRegisterMode) }
-        }
+    fun onConfirmPasswordChange(confirmPassword: String) {
+        _uiState.update { it.copy(confirmPassword = confirmPassword, error = null) }
+    }
 
-        // -------------------------------------------------------------------------
-        // Primary actions
-        // -------------------------------------------------------------------------
+    fun onToggleMode() {
+        _uiState.update { LoginUiState(isRegisterMode = !it.isRegisterMode) }
+    }
 
-        fun onPrimaryAction() {
-            if (_uiState.value.isRegisterMode) onRegisterClicked() else onLoginClicked()
-        }
+    // -------------------------------------------------------------------------
+    // Primary actions
+    // -------------------------------------------------------------------------
 
-        private fun onLoginClicked() {
-            val state = _uiState.value
-            if (state.isLoading) return
+    fun onPrimaryAction() {
+        if (_uiState.value.isRegisterMode) onRegisterClicked() else onLoginClicked()
+    }
 
-            val emailTrimmed = state.email.trim()
-            val error = validateLoginFields(emailTrimmed, state.password)
-            if (error != null) {
-                _uiState.update { it.copy(error = error) }
-                return
-            }
+    private fun onLoginClicked() {
+        val state = _uiState.value
+        if (state.isLoading) return
 
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            viewModelScope.launch {
-                authRepository.login(emailTrimmed, state.password).fold(
-                    onSuccess = { finaliseAuth(emailTrimmed) },
-                    onFailure = { throwable ->
-                        _uiState.update {
-                            it.copy(isLoading = false, error = throwable.message ?: "Sign-in failed.")
-                        }
-                    },
-                )
-            }
-        }
+        val emailTrimmed = state.email.trim()
+        val error = validateLoginFields(emailTrimmed, state.password)
+        if (error != null) { _uiState.update { it.copy(error = error) }; return }
 
-        private fun onRegisterClicked() {
-            val state = _uiState.value
-            if (state.isLoading) return
-
-            val emailTrimmed = state.email.trim()
-            val error = validateRegisterFields(emailTrimmed, state.password, state.confirmPassword)
-            if (error != null) {
-                _uiState.update { it.copy(error = error) }
-                return
-            }
-
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            viewModelScope.launch {
-                authRepository.register(emailTrimmed, state.password).fold(
-                    onSuccess = { finaliseAuth(emailTrimmed) },
-                    onFailure = { throwable ->
-                        _uiState.update {
-                            it.copy(isLoading = false, error = throwable.message ?: "Registration failed.")
-                        }
-                    },
-                )
-            }
-        }
-
-        /**
-         * Called after a successful Firebase auth operation.
-         *
-         * 1. Reads the Firebase UID and stores it as the patient ID.
-         * 2. Upserts a Patient row — this guarantees the FK constraint on prescriptions,
-         *    medicines, and all other patient-scoped tables is always satisfied.
-         * 3. Clears credentials from state and sets [isAuthenticated] = true.
-         *
-         * If the Room write fails (e.g. disk full) we still let the user in — the
-         * patient row will be created on the next successful login.
-         */
-        private suspend fun finaliseAuth(email: String) {
-            val uid = authRepository.currentUserId()
-            if (uid != null) {
-                sessionManager.setPatientId(uid)
-                val existing = patientRepository.getById(uid)
-                if (existing == null) {
-                    val patient =
-                        Patient(
-                            id = uid,
-                            name = email.substringBefore('@'), // display name until the patient sets one
-                            createdAt = System.currentTimeMillis(),
-                            updatedAt = System.currentTimeMillis(),
-                        )
-                    runCatching { patientRepository.insert(patient) }
-                    // Failure here is non-fatal — the patient can still use the app;
-                    // the row will be created on next insert attempt.
-                }
-            }
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isAuthenticated = true,
-                    password = "",
-                    confirmPassword = "",
-                    error = null,
-                )
-            }
-        }
-
-        // -------------------------------------------------------------------------
-        // Validation helpers
-        // -------------------------------------------------------------------------
-
-        private fun validateLoginFields(
-            email: String,
-            password: String,
-        ): String? {
-            if (email.isBlank()) return "Email is required."
-            if (!email.contains('@')) return "Enter a valid email address."
-            if (password.isBlank()) return "Password is required."
-            return null
-        }
-
-        private fun validateRegisterFields(
-            email: String,
-            password: String,
-            confirm: String,
-        ): String? {
-            validateLoginFields(email, password)?.let { return it }
-            if (password.length < 6) return "Password must be at least 6 characters."
-            if (password != confirm) return "Passwords do not match."
-            return null
+        _uiState.update { it.copy(isLoading = true, error = null) }
+        viewModelScope.launch {
+            authRepository.login(emailTrimmed, state.password).fold(
+                onSuccess = { finaliseAuth(emailTrimmed) },
+                onFailure = { throwable ->
+                    _uiState.update {
+                        it.copy(isLoading = false, error = throwable.message ?: "Sign-in failed.")
+                    }
+                },
+            )
         }
     }
+
+    private fun onRegisterClicked() {
+        val state = _uiState.value
+        if (state.isLoading) return
+
+        val emailTrimmed = state.email.trim()
+        val error = validateRegisterFields(emailTrimmed, state.password, state.confirmPassword)
+        if (error != null) { _uiState.update { it.copy(error = error) }; return }
+
+        _uiState.update { it.copy(isLoading = true, error = null) }
+        viewModelScope.launch {
+            authRepository.register(emailTrimmed, state.password).fold(
+                onSuccess = { finaliseAuth(emailTrimmed) },
+                onFailure = { throwable ->
+                    _uiState.update {
+                        it.copy(isLoading = false, error = throwable.message ?: "Registration failed.")
+                    }
+                },
+            )
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Post-auth bootstrap
+    // -------------------------------------------------------------------------
+
+    /**
+     * Called after a successful backend auth operation.
+     *
+     * 1. Reads the patient ID from [AuthRepository] (backend UUID).
+     *    Falls back to a deterministic email-derived ID while the server
+     *    doesn't yet return the UUID in the login response.
+     * 2. Stores the patient ID in [SessionManager] so all Room queries are scoped.
+     * 3. Upserts a Patient row in Room so FK constraints are always satisfied.
+     * 4. Clears credentials from state and marks [isAuthenticated] = true.
+     */
+    private suspend fun finaliseAuth(email: String) {
+        val uid = authRepository.currentUserId()
+            ?: email.trim().lowercase().replace(Regex("[^a-z0-9]"), "").take(36)
+        sessionManager.setPatientId(uid)
+
+        if (patientRepository.getById(uid) == null) {
+            runCatching {
+                patientRepository.insert(
+                    Patient(
+                        id = uid,
+                        name = email.substringBefore('@').ifBlank { "User" },
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                    )
+                )
+            }
+        }
+
+        _uiState.update {
+            it.copy(
+                isLoading       = false,
+                isAuthenticated = true,
+                password        = "",
+                confirmPassword = "",
+                error           = null,
+            )
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Validation helpers
+    // -------------------------------------------------------------------------
+
+    private fun validateLoginFields(email: String, password: String): String? {
+        if (email.isBlank()) return "Email is required."
+        if (!email.contains('@')) return "Enter a valid email address."
+        if (password.isBlank()) return "Password is required."
+        return null
+    }
+
+    private fun validateRegisterFields(email: String, password: String, confirm: String): String? {
+        validateLoginFields(email, password)?.let { return it }
+        if (password.length < 6) return "Password must be at least 6 characters."
+        if (password != confirm) return "Passwords do not match."
+        return null
+    }
+}

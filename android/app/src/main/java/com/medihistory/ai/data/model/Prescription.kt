@@ -60,4 +60,10 @@ data class Prescription(
     val createdAt: Long = System.currentTimeMillis(),
     /** Unix epoch milliseconds — updated on every write. */
     val updatedAt: Long = System.currentTimeMillis(),
+    /**
+     * True while this record has local changes not yet pushed to the backend.
+     * Cleared by [SyncWorker] after a successful upsert.
+     */
+    @androidx.room.ColumnInfo(defaultValue = "1")
+    val isDirty: Boolean = true,
 )

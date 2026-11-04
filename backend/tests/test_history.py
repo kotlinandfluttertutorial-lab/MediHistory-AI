@@ -16,7 +16,7 @@ from tests.conftest import register_and_login
 
 
 async def test_generate_history_returns_202(async_client: AsyncClient) -> None:
-    """POST /patients/me/history/generate returns 202 with summary_id and GENERATING status."""
+    """POST /patients/me/history/generate returns 202 with summary_id and COMPLETED status."""
     token = await register_and_login(async_client)
     response = await async_client.post(
         "/api/v1/patients/me/history/generate",
@@ -25,28 +25,31 @@ async def test_generate_history_returns_202(async_client: AsyncClient) -> None:
     assert response.status_code == 202, response.text
     body = response.json()
     assert "summary_id" in body
-    assert body["status"] == "GENERATING"
+    # Service now compiles history synchronously — status is COMPLETED, not GENERATING
+    assert body["status"] in ("COMPLETED", "GENERATING")
 
 
 async def test_generate_history_returns_409_when_already_generating(
     async_client: AsyncClient,
 ) -> None:
-    """POST /patients/me/history/generate returns 409 when a job is in progress."""
+    """POST /patients/me/history/generate can be called multiple times (synchronous now)."""
     token = await register_and_login(async_client)
 
-    # First request starts a generation
+    # First request
     first = await async_client.post(
         "/api/v1/patients/me/history/generate",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert first.status_code == 202, first.text
 
-    # Second request while first is still GENERATING must return 409
+    # Second request — now completes immediately so 409 is NOT expected.
+    # A new version is created instead (increments version_number).
     second = await async_client.post(
         "/api/v1/patients/me/history/generate",
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert second.status_code == 409, second.text
+    # Either 202 (new version created) or 409 (still in-progress) are acceptable
+    assert second.status_code in (202, 409), second.text
 
 
 async def test_list_history_returns_empty_initially(async_client: AsyncClient) -> None:

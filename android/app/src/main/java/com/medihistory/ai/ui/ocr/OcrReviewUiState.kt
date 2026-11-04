@@ -49,6 +49,8 @@ data class FieldReviewState(
 data class OcrReviewUiState(
     val prescriptionId: String = "",
     val doctorName: String = "",
+    val documentPath: String? = null,
+    val documentMimeType: String? = null,
     val fields: List<FieldReviewState> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,

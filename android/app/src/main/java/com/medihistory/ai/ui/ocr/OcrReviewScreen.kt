@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -77,6 +78,7 @@ fun OcrReviewScreen(
     viewModel: OcrReviewViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val geminiConsentState by viewModel.geminiConsentState.collectAsState()
 
     // Show consent dialog when feature is enabled and consent is not yet recorded.
@@ -184,16 +186,43 @@ fun OcrReviewScreen(
                     // ── Original document placeholder ─────────────────────────
                     item {
                         DocumentPlaceholder(
-                            onTap = {
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("Document viewer coming soon")
+                            documentPath = uiState.documentPath,
+                            mimeType = uiState.documentMimeType,
+                            onTap = { path, mime ->
+                                if (path != null && mime != null) {
+                                    val file = java.io.File(path)
+                                    if (file.exists()) {
+                                        val uri = androidx.core.content.FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.fileprovider",
+                                            file,
+                                        )
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                            setDataAndType(uri, mime)
+                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        try {
+                                            context.startActivity(intent)
+                                        } catch (_: android.content.ActivityNotFoundException) {
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("No app found to open this file type.")
+                                            }
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Document file not found on this device.")
+                                        }
+                                    }
+                                } else {
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("No document attached to this prescription.")
+                                    }
                                 }
                             },
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 8.dp),
                         )
                     }
 
@@ -294,34 +323,25 @@ fun OcrReviewScreen(
  */
 @Composable
 private fun DocumentPlaceholder(
-    onTap: () -> Unit,
+    documentPath: String?,
+    mimeType: String?,
+    onTap: (path: String?, mime: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier =
-            modifier
-                .height(180.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.medium,
-                )
-                .clickable(
-                    onClickLabel = "Open original document",
-                    onClick = onTap,
-                )
-                .semantics { contentDescription = "Original document preserved. Tap to view." },
+        modifier = modifier
+            .height(180.dp)
+            .background(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium)
+            .clickable(onClickLabel = "Open original document", onClick = { onTap(documentPath, mimeType) })
+            .semantics { contentDescription = if (documentPath != null) "Original document. Tap to view." else "Original document preserved." },
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Outlined.Description,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(48.dp),
-            )
+            Icon(imageVector = Icons.Outlined.Description, contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Original document preserved",
+                text = if (documentPath != null) "Tap to view original document" else "Original document preserved",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

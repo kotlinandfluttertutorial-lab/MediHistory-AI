@@ -8,6 +8,9 @@ import com.medihistory.ai.data.model.DoctorSpecialty
 import com.medihistory.ai.data.model.DuplicateAlert
 import com.medihistory.ai.data.model.ExtractedFieldEntity
 import com.medihistory.ai.data.model.Medicine
+import com.medihistory.ai.data.network.MediHistoryApiService
+import com.medihistory.ai.data.network.dto.ProcessReviewRequest
+import com.medihistory.ai.data.network.dto.ReviewedFieldDto
 import com.medihistory.ai.data.model.MedicineStatus
 import com.medihistory.ai.data.repository.DoctorRepository
 import com.medihistory.ai.data.repository.DuplicateAlertRepository
@@ -45,6 +48,8 @@ class PostReviewProcessor
         private val medicineRepository: MedicineRepository,
         private val duplicateAlertRepository: DuplicateAlertRepository,
         private val duplicateExplainerEngine: DuplicateExplainerEngine,
+        /** Backend API � null when BACKEND_BASE_URL is blank (offline / dev). */
+        private val apiService: MediHistoryApiService? = null,
     ) : PostReviewProcessorInterface {
         /**
          * Runs the processor for a completed review session.
@@ -61,6 +66,14 @@ class PostReviewProcessor
             // Snapshot the current extracted fields (Flow emits immediately for Room).
             val allFields: List<ExtractedFieldEntity> =
                 extractedFieldDao.observeByPrescription(prescriptionId).first()
+
+            // -- Backend sync (backend-first, local fallback) ----------------------
+            // If the backend is reachable, delegate processing to the server so the
+            // Gemini key stays server-side and results are persisted centrally.
+            // On success, skip the local Room processing below.
+            if (apiService != null && tryBackendProcess(prescriptionId, patientId, allFields)) {
+                return
+            }
 
             // Only REVIEWED fields with a non-null patientValue are acted on.
             val reviewed: Map<String, ExtractedFieldEntity> =
@@ -245,4 +258,37 @@ class PostReviewProcessor
                 }
             }
         }
+
+        /**
+         * Calls the backend [MediHistoryApiService.processReview] endpoint.
+         * Returns true if the backend successfully processed (HTTP 200).
+         * Returns false on any network error so the caller falls back to local Room processing.
+         * Privacy: field values travel over HTTPS only; nothing is logged here.
+         */
+        private suspend fun tryBackendProcess(
+            prescriptionId: String,
+            patientId: String,
+            allFields: List<ExtractedFieldEntity>,
+        ): Boolean {
+            val service = apiService ?: return false
+            return try {
+                val fieldDtos = allFields.map { f ->
+                    ReviewedFieldDto(
+                        fieldName    = f.fieldName,
+                        rawValue     = f.rawValue,
+                        patientValue = f.patientValue,
+                        reviewState  = f.reviewState.name,
+                    )
+                }
+                val response = service.processReview(
+                    prescriptionId = prescriptionId,
+                    request        = ProcessReviewRequest(reviewedFields = fieldDtos),
+                )
+                response.isSuccessful
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                false  // network unavailable � fall back to local processing
+            }
+        }
     }
+
+// ─────────────────────────────────────────────────────────────────────────────

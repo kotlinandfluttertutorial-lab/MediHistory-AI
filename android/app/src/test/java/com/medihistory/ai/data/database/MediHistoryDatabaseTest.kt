@@ -41,7 +41,7 @@ class MediHistoryDatabaseTest {
     }
 
     @Test
-    fun `should report schema version 7`() {
+    fun `should report schema version 9`() {
         val context: Context = ApplicationProvider.getApplicationContext()
         db =
             Room.inMemoryDatabaseBuilder(context, MediHistoryDatabase::class.java)
@@ -49,8 +49,8 @@ class MediHistoryDatabaseTest {
                 .build()
         val version = db!!.openHelper.readableDatabase.version
         assertEquals(
-            "Schema version must be 8 (explanation column added to duplicate_alerts)",
-            8,
+            "Schema version must be 9 (sync_queue table added)",
+            9,
             version,
         )
     }
