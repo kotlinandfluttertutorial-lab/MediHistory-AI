@@ -1,0 +1,76 @@
+# MediHistory AI — Staging Docker Compose
+# For EC2 t3.micro deployment with local PostgreSQL.
+#
+# Security:
+# - All secrets via .env file (never hardcoded here)
+# - PostgreSQL NOT exposed externally (internal network only)
+# - Backend runs as non-root (see Dockerfile)
+# - Access logs disabled (--no-access-log)
+# - Uploads on named volume (not bind-mounted to public path)
+#
+# Usage:
+#   cp .env.staging .env && nano .env  (fill in secrets)
+#   docker compose -f docker-compose.staging.yml up -d
+#   docker compose -f docker-compose.staging.yml exec backend alembic upgrade head
+
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medihistory}
+      POSTGRES_USER: ${POSTGRES_USER:-medihistory_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Port intentionally NOT exposed — only the backend container reaches it
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medihistory_user} -d ${POSTGRES_DB:-medihistory}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"   # localhost only — Nginx proxies inbound
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-medihistory_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-medihistory}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      UPLOAD_DIR: /app/uploads
+      WORKERS: ${WORKERS:-1}    # 1 worker on t3.micro (1 GB RAM)
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local

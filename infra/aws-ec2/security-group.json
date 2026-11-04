@@ -1,0 +1,35 @@
+{
+  "_comment": "MediHistory AI staging security group — import into AWS Console or use with AWS CLI",
+  "_usage": "aws ec2 create-security-group --group-name medihistory-staging --description 'MediHistory AI staging' && aws ec2 authorize-security-group-ingress --group-id SG_ID --cli-input-json file://security-group.json",
+  "SecurityGroupRules": [
+    {
+      "IpProtocol": "tcp",
+      "FromPort": 22,
+      "ToPort": 22,
+      "IpRanges": [
+        {
+          "CidrIp": "YOUR_IP/32",
+          "_comment": "REPLACE with your IP: curl ifconfig.me"
+        }
+      ],
+      "Description": "SSH — your IP only"
+    },
+    {
+      "IpProtocol": "tcp",
+      "FromPort": 80,
+      "ToPort": 80,
+      "IpRanges": [{ "CidrIp": "0.0.0.0/0" }],
+      "Ipv6Ranges": [{ "CidrIpv6": "::/0" }],
+      "Description": "HTTP — redirects to HTTPS"
+    },
+    {
+      "IpProtocol": "tcp",
+      "FromPort": 443,
+      "ToPort": 443,
+      "IpRanges": [{ "CidrIp": "0.0.0.0/0" }],
+      "Ipv6Ranges": [{ "CidrIpv6": "::/0" }],
+      "Description": "HTTPS"
+    }
+  ],
+  "_note": "Port 8000 (FastAPI) is intentionally NOT in this security group. Nginx proxies inbound traffic to localhost:8000 — the app is never directly exposed."
+}
